@@ -40,7 +40,7 @@
 
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
-  --app-max-width: 414px;
+  --app-max-width: 402px;
 }
 
 * { box-sizing: border-box; }
@@ -89,12 +89,12 @@ body {
 
 #app {
   position: relative;
-  aspect-ratio: 393 / 852;
-  width: 393px;
+  aspect-ratio: 1206 / 2622;
+  width: 402px;
   max-width: calc(100vw - 24px);
   max-height: calc(100vh - 24px);
-  height: min(852px, calc(100vh - 24px), calc((100vw - 24px) * (852 / 393)));
-  border-radius: 46px;
+  height: min(874px, calc(100vh - 24px), calc((100vw - 24px) * (2622 / 1206)));
+  border-radius: 48px;
   background: var(--color-surface);
   overflow: hidden;
   box-shadow:
@@ -113,7 +113,7 @@ body {
   top: 11px;
   left: 50%;
   transform: translateX(-50%);
-  width: 116px;
+  width: 120px;
   height: 28px;
   background: #000000;
   border-radius: 20px;
