@@ -79,21 +79,18 @@ body {
   padding: 0;
   background: #090d16 !important;
   min-height: 100vh;
-  height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  overflow: hidden;
 }
 
 #app {
   position: relative;
+  /* 嚴格鎖定 2622 x 1206 (19.5 : 9) iPhone 16 Pro 解析度比例 */
   aspect-ratio: 1206 / 2622;
-  width: 402px;
-  max-width: calc(100vw - 24px);
-  max-height: calc(100vh - 24px);
-  height: min(874px, calc(100vh - 24px), calc((100vw - 24px) * (2622 / 1206)));
+  width: min(402px, calc((100vh - 36px) * (1206 / 2622)), calc(100vw - 36px));
+  height: calc(min(402px, calc((100vh - 36px) * (1206 / 2622)), calc(100vw - 36px)) * (2622 / 1206));
   border-radius: 48px;
   background: var(--color-surface);
   overflow: hidden;
