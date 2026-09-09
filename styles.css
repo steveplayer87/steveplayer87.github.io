@@ -77,68 +77,33 @@ svg { width: 100%; height: 100%; display: block; }
 body {
   margin: 0;
   padding: 0;
-  background: #090d16 !important;
+  background: #0f172a;
   min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  min-height: 100dvh;
   box-sizing: border-box;
 }
 
 #app {
-  position: relative;
-  /* 嚴格鎖定 2622 x 1206 (19.5 : 9) iPhone 16 Pro 解析度比例 */
-  aspect-ratio: 1206 / 2622;
-  width: min(402px, calc((100vh - 36px) * (1206 / 2622)), calc(100vw - 36px));
-  height: calc(min(402px, calc((100vh - 36px) * (1206 / 2622)), calc(100vw - 36px)) * (2622 / 1206));
-  border-radius: 48px;
-  background: var(--color-surface);
-  overflow: hidden;
-  box-shadow:
-    0 25px 70px -15px rgba(0, 0, 0, 0.8),
-    0 0 0 10px #1e293b,
-    0 0 0 12px #334155;
+  height: 100dvh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  flex-shrink: 0;
-  margin: auto;
+  width: 100%;
+  max-width: var(--app-max-width, 402px);
+  margin: 0 auto;
+  background: var(--color-surface);
+  position: relative;
+  border-radius: 0;
+  box-shadow: 0 0 35px rgba(0, 0, 0, 0.35);
+  overflow-x: hidden;
 }
 
-#app::before {
-  content: '';
-  position: absolute;
-  top: 11px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 120px;
-  height: 28px;
-  background: #000000;
-  border-radius: 20px;
-  z-index: 100;
-  pointer-events: none;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
-}
-
-@media screen and (max-width: 480px) and (hover: none) and (pointer: coarse) {
+@media (max-width: 480px) {
   body {
-    background: var(--color-surface) !important;
-    display: block;
-    min-height: 100dvh;
-    height: 100dvh;
-    overflow: auto;
+    background: var(--color-surface);
   }
   #app {
-    width: 100% !important;
-    height: 100dvh !important;
-    max-width: 100% !important;
-    max-height: 100% !important;
-    aspect-ratio: auto !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-    margin: 0 !important;
-  }
-  #app::before {
-    display: none !important;
+    box-shadow: none;
   }
 }
 
@@ -153,7 +118,7 @@ body {
   z-index: 2;
 }
 .header-text { padding: 3px 0; border-radius: 12px; transition: background 220ms ease, padding 220ms ease; }
-.header-date { margin: 0 0 2px; font-size: 12px; color: var(--color-ink-soft); letter-spacing: 0.02em; transition: color 220ms ease, text-shadow 220ms ease; }
+.header-date { display: none !important; }
 .header-greeting { font-size: 21px; font-weight: 800; letter-spacing: -0.01em; color: var(--color-ink); transition: color 220ms ease, text-shadow 220ms ease; }
 #app.is-night .header-text { padding: 4px 10px; background: linear-gradient(135deg, rgba(44,66,112,0.94), rgba(35,44,72,0.98)); box-shadow: 0 5px 16px rgba(35,44,72,0.18); }
 #app.is-night .header-date, #app.is-night .header-greeting { color: #fff; text-shadow: 0 1px 0 rgba(0,0,0,0.3), 0 0 7px rgba(255,255,255,0.14); }
@@ -413,7 +378,7 @@ body {
 
 .empty-hint { text-align: center; color: var(--color-ink-faint); font-size: 13px; padding: 40px 20px; line-height: 1.6; }
 
-.fab { position: absolute; right: 18px; bottom: calc(80px + var(--safe-bottom)); width: 52px; height: 52px; border-radius: 50%; border: none; background: var(--color-denim); color: #fff; box-shadow: 0 10px 20px -6px rgba(44,66,112,0.5); display: flex; align-items: center; justify-content: center; z-index: 10; }
+.fab { position: fixed; right: max(18px, calc((100vw - var(--app-max-width, 402px))/2 + 18px)); bottom: calc(88px + var(--safe-bottom)); width: 52px; height: 52px; border-radius: 50%; border: none; background: var(--color-denim); color: #fff; box-shadow: 0 10px 20px -6px rgba(44,66,112,0.5); display: flex; align-items: center; justify-content: center; z-index: 10; }
 .fab svg { width: 24px; height: 24px; }
 
 /* =========================== Inspiration placeholder =========================== */
@@ -438,10 +403,10 @@ body {
 .c-standby-flag { position: absolute; top: 12px; right: 12px; font-size: 10px; font-weight: 700; background: var(--color-surface-2); color: var(--color-ink-faint); padding: 3px 8px; border-radius: 20px; }
 
 /* =========================== Modals =========================== */
-.modal-overlay { position: absolute; inset: 0; background: rgba(20,24,38,0.44); display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.28s ease; z-index: 50; border-radius: inherit; overflow: hidden; }
+.modal-overlay { position: fixed; inset: 0; background: rgba(20,24,38,0.44); display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.28s ease; z-index: 50; }
 .modal-overlay.is-open { opacity: 1; pointer-events: auto; }
 .modal-sheet {
-  display: none; width: 100%; max-width: 100%; max-height: 88%;
+  display: none; width: 100%; max-width: var(--app-max-width, 402px); max-height: 86dvh;
   background: var(--color-bg); border-radius: 26px 26px 0 0; box-shadow: var(--shadow-sheet);
   padding: 10px 20px calc(24px + var(--safe-bottom)); overflow-y: auto;
   transform: translateY(100%);
@@ -455,7 +420,7 @@ body {
 .modal-sheet.is-active { display: block; }
 .modal-sheet.is-shown { transform: translateY(0); }
 .modal-sheet.is-dragging { transition: none; }
-.modal-sheet-tall { max-height: 92%; }
+.modal-sheet-tall { max-height: 92dvh; }
 .modal-handle { width: 36px; height: 4px; border-radius: 3px; background: var(--color-line); margin: 4px auto 12px; }
 .modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
 .modal-head h2 { font-size: 17px; font-weight: 800; }
@@ -545,18 +510,17 @@ img.notif-thumb { padding: 0; background-color: transparent; }
 .day-detail-row .ddr-name { font-size: 14px; font-weight: 700; }
 
 /* =========================== Toast =========================== */
-.toast { position: absolute; left: 50%; bottom: calc(88px + var(--safe-bottom)); transform: translate(-50%, 12px); background: var(--color-ink); color: #fff; font-size: 13px; font-weight: 600; padding: 10px 18px; border-radius: 30px; opacity: 0; pointer-events: none; transition: all 0.25s ease; z-index: 80; white-space: nowrap; max-width: 86%; overflow: hidden; text-overflow: ellipsis; }
+.toast { position: fixed; left: 50%; bottom: calc(96px + var(--safe-bottom)); transform: translate(-50%, 12px); background: var(--color-ink); color: #fff; font-size: 13px; font-weight: 600; padding: 10px 18px; border-radius: 30px; opacity: 0; pointer-events: none; transition: all 0.25s ease; z-index: 80; white-space: nowrap; max-width: 86vw; overflow: hidden; text-overflow: ellipsis; }
 .toast.is-shown { opacity: 1; transform: translate(-50%, 0); }
 
 .is-hidden { display: none !important; }
 
 /* =========================== Splash screen =========================== */
 #splashScreen {
-  position: absolute; inset: 0; z-index: 100;
+  position: fixed; inset: 0; z-index: 100;
   background: var(--color-bg);
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
   opacity: 1; transition: opacity 0.35s ease;
-  border-radius: inherit;
 }
 #splashScreen.splash-fade-out { opacity: 0; pointer-events: none; }
 .splash-icon { width: 64px; height: 64px; color: var(--color-denim); }
@@ -696,6 +660,8 @@ img.notif-thumb { padding: 0; background-color: transparent; }
 
 /* =========================== Round 3: home shell and shared controls =========================== */
 html, body { overflow-x: hidden; overscroll-behavior-x: none; }
+body.home-page { background: linear-gradient(180deg, #CFE0F5 0, #EFF4FB 24%, var(--color-bg) 38%); }
+body.home-page.night-page { background: linear-gradient(180deg, #232C48 0, #364066 24%, var(--color-bg) 38%); }
 #app.is-home-view .app-header {
   background: linear-gradient(180deg, #CFE0F5 0%, #EFF4FB 100%);
   border-radius: 0;
@@ -843,6 +809,8 @@ html, body { overflow-x: hidden; overscroll-behavior-x: none; }
   pointer-events: none;
 }
 #app.is-home-view.is-night-view::before { background: linear-gradient(180deg, #232C48 0%, #364066 100%); }
+body.home-page { background: #fff; }
+body.home-page.night-page { background: #fff; }
 #app.is-home-view .app-header {
   align-items: flex-start;
   padding: calc(var(--safe-top) + 5px) 20px 13px;
@@ -1478,12 +1446,12 @@ html, body { overflow-x: hidden; overscroll-behavior-x: none; }
 #app.is-home-view #mainScroll { overscroll-behavior-y: contain; }
 
 
-#app.is-home-view { background: #8E9FEA; }
-#app.is-home-view.night-page { background: #30247A; }
+body.home-page { background: #8E9FEA; }
+body.home-page.night-page { background: #30247A; }
 
 .badge-dot[hidden] { display: none !important; }
 
-#app.is-home-view #view-home { min-height: 100%; }
+#app.is-home-view #view-home { min-height: calc(100dvh + 96px); }
 
 
 #app.is-home-view .scene-sky.is-rain::before,
