@@ -238,11 +238,31 @@
       </div>
     </section>
 
-    <!-- ---- More (consumables live here) ---- -->
+    <!-- ---- More (Hairstyle & consumables live here) ---- -->
     <section class="view" id="view-more">
-      <p class="section-title">生活耗材</p>
-      <p class="section-intro">固定週期用品，到期會提醒你更換</p>
-      <div class="consumable-grid" id="consumableGrid"></div>
+      <!-- 髮型記錄 -->
+      <div class="more-section-block">
+        <div class="more-section-header">
+          <div>
+            <p class="section-title">髮型記錄</p>
+            <p class="section-intro">記錄造型照片、修剪週期與設計師備忘</p>
+          </div>
+          <button type="button" class="btn-primary-sm" id="btnOpenAddHaircut">
+            <span data-icon="plus"></span><span>+ 新增髮型</span>
+          </button>
+        </div>
+        <div class="haircut-cycle-summary" id="haircutCycleSummary"></div>
+        <div class="haircut-gallery-grid" id="haircutGalleryGrid"></div>
+      </div>
+
+      <hr class="more-section-divider">
+
+      <!-- 生活耗材 -->
+      <div class="more-section-block">
+        <p class="section-title">生活耗材</p>
+        <p class="section-intro">固定週期用品，到期會提醒你更換</p>
+        <div class="consumable-grid" id="consumableGrid"></div>
+      </div>
     </section>
 
   </main>
@@ -341,6 +361,11 @@
           <button type="button" class="segment-btn" data-len="長">長</button>
           <button type="button" class="segment-btn" data-len="短">短</button>
         </div>
+      </div>
+
+      <div class="field">材質
+        <div class="chip-row chip-row-form" id="materialPickerChips"></div>
+        <input type="text" id="fieldMaterialCustom" placeholder="可選標籤或自訂材質（例：80%棉 20%麻、純棉）">
       </div>
 
       <div class="field">標籤（可複選，會用在衣櫥的篩選器／搜尋）
@@ -659,6 +684,71 @@
         <button type="button" class="btn-secondary" id="btnStyleGallerySelectCancel">取消</button>
       </div>
     </div>
+  </div>
+
+  <!-- Haircut Add/Edit Modal -->
+  <div class="modal-sheet modal-sheet-tall" id="modal-haircut" data-modal>
+    <div class="modal-handle"></div>
+    <div class="modal-head"><h2 id="haircutModalTitle">新增髮型記錄</h2><button class="modal-close" data-close>✕</button></div>
+    <form class="form" id="haircutForm">
+      <label class="photo-upload" id="haircutPhotoArea">
+        <input type="file" accept="image/*" id="haircutPhotoInput" hidden>
+        <span class="photo-placeholder" id="haircutPhotoPreview">
+          <span data-icon="camera"></span>
+          <span>上傳髮型照片（正面/側面皆可）</span>
+        </span>
+      </label>
+
+      <label class="field">造型／理髮日期
+        <input type="date" id="fieldHaircutDate" required>
+      </label>
+
+      <label class="field">髮型名稱／樣式
+        <input type="text" id="fieldHaircutStyle" placeholder="例如：日系碎蓋、微捲波紋燙、兩側推高漸層" required>
+      </label>
+
+      <div class="field-row">
+        <label class="field">設計師／理髮師
+          <input type="text" id="fieldHaircutStylist" placeholder="例如：Leo、Ken">
+        </label>
+        <label class="field">沙龍／理髮店名
+          <input type="text" id="fieldHaircutSalon" placeholder="例如：Aura Hair、經典理髮">
+        </label>
+      </div>
+
+      <div class="field-row">
+        <label class="field">長度／推剪分段
+          <input type="text" id="fieldHaircutLength" placeholder="例如：兩側 3mm 漸層、長度微遮眉">
+        </label>
+        <label class="field">修剪週期（天）
+          <input type="number" id="fieldHaircutCycle" value="28" min="7" max="180" placeholder="天數（預設 28 天）">
+        </label>
+      </div>
+
+      <label class="field">備註／整理心得
+        <textarea id="fieldHaircutNotes" rows="3" placeholder="例如：這次燙的弧度剛好、吹乾後抓啞光髮蠟很立體，下次兩側維持 3mm…"></textarea>
+      </label>
+
+      <button type="submit" class="btn-primary" id="btnHaircutSubmit">儲存髮型記錄</button>
+      <div class="settings-actions is-hidden" id="haircutExtraActions">
+        <button type="button" class="btn-secondary btn-danger" id="btnDeleteHaircut">刪除這筆紀錄</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Stain Log Modal -->
+  <div class="modal-sheet" id="modal-stain" data-modal>
+    <div class="modal-handle"></div>
+    <div class="modal-head"><h2>記錄除污漬護理</h2><button class="modal-close" data-close>✕</button></div>
+    <form class="form" id="stainForm">
+      <label class="field">除污日期
+        <input type="date" id="fieldStainDate" required>
+      </label>
+      <label class="field">污漬部位／處理備註（選填）
+        <input type="text" id="fieldStainNote" placeholder="例如：領口油漬、袖口咖啡漬、彩漂局部去漬">
+      </label>
+      <button type="submit" class="btn-primary">儲存除污紀錄</button>
+    </form>
   </div>
 
   <!-- Generic confirm (used by notification row taps) -->

@@ -40,6 +40,11 @@ const ICONS = {
   sheets: `<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="7.5" width="18" height="11" rx="3" stroke="currentColor" stroke-width="1.6"/><path d="M3 12.5h18" stroke="currentColor" stroke-width="1.4"/><path d="M7.5 7.5V6a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v1.5" stroke="currentColor" stroke-width="1.4"/></svg>`,
   toothbrush: `<svg viewBox="0 0 24 24" fill="none"><rect x="10.5" y="9" width="3" height="12" rx="1.5" stroke="currentColor" stroke-width="1.6"/><rect x="9" y="4" width="6" height="6" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M10 4V2M12 4V1.5M14 4V2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>`,
   razor: `<svg viewBox="0 0 24 24" fill="none"><rect x="5" y="4" width="14" height="5" rx="1.5" stroke="currentColor" stroke-width="1.6"/><path d="M8 6.5h8" stroke="currentColor" stroke-width="1.2"/><path d="M12 9v11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M8.5 20h7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`,
+  scissors: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>`,
+  wind: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1 1 11 8H2"/><path d="M12.6 19.4A2 2 0 1 0 14 16H2"/></svg>`,
+  sparkles: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4M19 17v4M3 5h4M17 19h4"/></svg>`,
+  layers: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>`,
+  flip: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg>`,
 };
 function applyStaticIcons() {
   document.querySelectorAll('[data-icon]').forEach(el => {
@@ -341,6 +346,7 @@ function defaultState() {
     laundry: { lastWashDate: todayStr(), cycleDays: 2, snoozedUntil: null, history: [] },
     wishlist: [],
     styleGallery: [],
+    haircuts: [],
     drafts: { addItem: null, wishlist: null },
   };
 }
@@ -371,6 +377,7 @@ function loadState() {
       laundry: Object.assign({}, base.laundry, parsed.laundry || {}),
       wishlist: Array.isArray(parsed.wishlist) ? parsed.wishlist : [],
       styleGallery: Array.isArray(parsed.styleGallery) ? parsed.styleGallery : [],
+      haircuts: Array.isArray(parsed.haircuts) ? parsed.haircuts : [],
       drafts: Object.assign({}, base.drafts, parsed.drafts || {}),
     };
   } catch (e) {
@@ -851,6 +858,7 @@ function renderAll() {
   renderHistory();
   renderWardrobe();
   renderConsumables();
+  renderHairstyleSection();
   renderNotifications();
   renderWishlist();
   renderAvatar();
@@ -1542,6 +1550,128 @@ function openDayDetail(dateStr, entry) {
   openModal('modal-day');
 }
 
+/* ---- Hairstyle ('更多' tab) ---- */
+function renderHairstyleSection() {
+  const summaryEl = document.getElementById('haircutCycleSummary');
+  const gridEl = document.getElementById('haircutGalleryGrid');
+  if (!summaryEl || !gridEl) return;
+
+  const haircuts = (Array.isArray(state.haircuts) ? state.haircuts : []).slice().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+  if (!haircuts.length) {
+    summaryEl.innerHTML = `
+      <div class="haircut-cycle-head">
+        <span class="haircut-cycle-title">修剪週期追蹤</span>
+        <span class="haircut-days-large" style="font-size:20px;">尚未記錄</span>
+      </div>
+      <p style="font-size:12px;color:rgba(255,255,255,0.7);margin:0">點擊右上角「+ 新增髮型」記錄您的剪髮與造型歷史。</p>
+    `;
+    gridEl.innerHTML = `<p class="empty-hint" style="grid-column:1/-1;text-align:center;padding:24px 0;color:var(--color-ink-faint)">還沒有髮型記錄，新增第一筆吧！</p>`;
+    return;
+  }
+
+  const latest = haircuts[0];
+  const days = Math.max(0, daysBetween(latest.date, todayStr()));
+  const cycle = Number(latest.cycleDays) || 28;
+  const progress = Math.min(100, Math.round((days / cycle) * 100));
+  const nextDate = addDays(latest.date, cycle);
+  const remaining = cycle - days;
+
+  let subText = '';
+  if (remaining > 0) {
+    subText = `預計下次：${fmtDate(nextDate)}（還有 ${remaining} 天）`;
+  } else if (remaining === 0) {
+    subText = `今天已達到預計週期！建議預約修剪`;
+  } else {
+    subText = `已超過週期 ${Math.abs(remaining)} 天，建議預約修剪`;
+  }
+
+  summaryEl.innerHTML = `
+    <div class="haircut-cycle-head">
+      <div>
+        <span class="haircut-cycle-title">距上次理髮</span>
+        <div class="haircut-days-large">${days} <span style="font-size:15px;font-weight:600">天</span></div>
+      </div>
+      <div style="text-align:right">
+        <span class="haircut-cycle-title">上次日期</span>
+        <div style="font-size:14px;font-weight:700;color:#fff">${fmtDate(latest.date)}</div>
+      </div>
+    </div>
+    <div class="haircut-progress-track">
+      <div class="haircut-progress-bar" style="width:${progress}%;"></div>
+    </div>
+    <div class="haircut-cycle-sub">
+      <span>週期：${cycle} 天</span>
+      <span>${subText}</span>
+    </div>
+  `;
+
+  gridEl.innerHTML = '';
+  haircuts.forEach(h => {
+    const card = document.createElement('div');
+    card.className = 'haircut-card';
+    card.innerHTML = `
+      <div class="haircut-card-photo" style="${h.image ? `background-image:url('${h.image}')` : ''}">
+        ${!h.image ? `<div class="haircut-card-photo-placeholder">${ICONS.scissors}</div>` : ''}
+      </div>
+      <div class="haircut-card-body">
+        <div class="haircut-card-date">${fmtDate(h.date)}</div>
+        <div class="haircut-card-style">${escapeHtml(h.style)}</div>
+        ${(h.stylist || h.salon) ? `<div class="haircut-card-meta">${escapeHtml([h.stylist, h.salon].filter(Boolean).join(' · '))}</div>` : ''}
+        ${h.length ? `<div class="haircut-card-meta" style="color:var(--color-denim-deep);font-weight:600">${escapeHtml(h.length)}</div>` : ''}
+        ${h.notes ? `<div class="haircut-card-notes">${escapeHtml(h.notes)}</div>` : ''}
+      </div>
+    `;
+    card.addEventListener('click', () => openHaircutModal(h.id));
+    gridEl.appendChild(card);
+  });
+}
+
+function openHaircutModal(editId = null) {
+  editingHaircutId = editId;
+  pendingHaircutPhoto = null;
+  const form = document.getElementById('haircutForm');
+  form.reset();
+
+  const preview = document.getElementById('haircutPhotoPreview');
+  preview.removeAttribute('style');
+  preview.classList.remove('has-photo');
+  preview.innerHTML = `<span data-icon="camera"></span><span>上傳髮型照片（正面/側面皆可）</span>`;
+  applyStaticIcons();
+
+  const title = document.getElementById('haircutModalTitle');
+  const submitBtn = document.getElementById('btnHaircutSubmit');
+  const extraActions = document.getElementById('haircutExtraActions');
+
+  if (editId) {
+    const h = (state.haircuts || []).find(x => x.id === editId);
+    if (!h) return;
+    title.textContent = '編輯髮型記錄';
+    submitBtn.textContent = '儲存修改';
+    extraActions.classList.remove('is-hidden');
+    document.getElementById('fieldHaircutDate').value = h.date || todayStr();
+    document.getElementById('fieldHaircutStyle').value = h.style || '';
+    document.getElementById('fieldHaircutStylist').value = h.stylist || '';
+    document.getElementById('fieldHaircutSalon').value = h.salon || '';
+    document.getElementById('fieldHaircutLength').value = h.length || '';
+    document.getElementById('fieldHaircutCycle').value = h.cycleDays || 28;
+    document.getElementById('fieldHaircutNotes').value = h.notes || '';
+    if (h.image) {
+      pendingHaircutPhoto = h.image;
+      preview.setAttribute('style', `background-image:url('${h.image}')`);
+      preview.classList.add('has-photo');
+      preview.innerHTML = '';
+    }
+  } else {
+    title.textContent = '新增髮型記錄';
+    submitBtn.textContent = '儲存髮型記錄';
+    extraActions.classList.add('is-hidden');
+    document.getElementById('fieldHaircutDate').value = todayStr();
+    document.getElementById('fieldHaircutCycle').value = 28;
+  }
+  openModal('modal-haircut');
+}
+
 /* ---- Consumables ('更多' tab) ---- */
 function renderConsumables() {
   const grid = document.getElementById('consumableGrid');
@@ -2145,15 +2275,41 @@ function openItemDetail(itemId) {
   const body = document.getElementById('itemDetailBody');
   const statusLabel = { clean:'乾淨', resting:'暫存衣架', dirty:'待洗', retired:'典藏中' }[item.status] || '';
   const lengthLabel = (item.tags || []).find(t => LENGTH_TAGS.includes(t)) || '';
-  const showingBack = false;
+  const isGarment = item.category === 'top' || item.category === 'bottom';
+  const hasBack = !!item.imageBack;
+  const deodList = Array.isArray(item.deodorizeHistory) ? item.deodorizeHistory : [];
+  const stainList = Array.isArray(item.stainHistory) ? item.stainHistory : [];
+  const lastDeod = deodList[0] || null;
+
   body.innerHTML = `
-    <div class="detail-photo-wrap">
-      <div class="detail-photo" id="detailPhotoEl" style="${itemPhotoStyle(item)}${item.image ? '' : 'display:flex;align-items:center;justify-content:center;color:var(--color-ink-faint)'}">${item.image ? '' : `<div style="width:64px;height:64px">${categoryIcon(item.category)}</div>`}</div>
-      ${item.imageBack ? `<button class="detail-flip-btn" id="btnFlipPhoto">看背面</button>` : ''}
+    <div class="detail-photo-wrap" id="detailPhotoContainer">
+      <div class="card-25d ${isGarment ? 'garment-25d' : ''}" id="card25d">
+        <div class="card-face card-face-front" id="cardFaceFront" style="${itemPhotoStyle(item)}${item.image ? '' : 'display:flex;align-items:center;justify-content:center;color:var(--color-ink-faint)'}">
+          ${item.image ? '' : `<div style="width:64px;height:64px">${categoryIcon(item.category)}</div>`}
+        </div>
+        ${hasBack ? `
+          <div class="card-face card-face-back" id="cardFaceBack" style="background-image:url('${item.imageBack}')"></div>
+        ` : ''}
+      </div>
+      ${hasBack ? `
+        <div class="card-flip-badge" id="cardFlipBadge"><span>正面</span> 1/2</div>
+        <button class="detail-flip-btn" id="btnFlipPhoto">翻轉看背面</button>
+      ` : ''}
       <button class="detail-edit-btn" id="btnEditItem"></button>
     </div>
+    ${hasBack ? `
+      <div class="card-swipe-hint">
+        <span class="icon-inline">${ICONS.flip}</span>
+        <span>左右滑動卡片可 3D 翻轉正反面</span>
+      </div>
+    ` : ''}
     <p class="detail-name">${escapeHtml(item.name)}</p>
     ${item.brand ? `<p class="detail-brand">${brandIconMarkup(item, 'medium')}<span>${escapeHtml(item.brand)}</span></p>` : ''}
+    ${item.material ? `
+      <div class="detail-material-row">
+        <span class="material-tag"><span class="icon-inline">${ICONS.layers}</span><span>材質：${escapeHtml(item.material)}</span></span>
+      </div>
+    ` : ''}
     <p class="detail-tags">${categoryLabel(item.category)}${lengthLabel ? ' · ' + lengthLabel : ''}${item.tags && item.tags.length ? ' · ' + item.tags.filter(t => t !== lengthLabel).map(escapeHtml).join('、') : ''} · ${statusLabel}</p>
     ${item.extraWash && ['dirty', 'resting'].includes(item.status) ? '<p class="wash-boost-current">已標記：加強清洗</p>' : ''}
     <div class="detail-stats">
@@ -2162,11 +2318,35 @@ function openItemDetail(itemId) {
       <div class="detail-stat"><b>${item.lastWornDate ? fmtDate(item.lastWornDate) : '—'}</b><span>最近穿著</span></div>
     </div>
     <div class="detail-actions" id="detailActionsPrimary"></div>
+
+    <div class="care-section-title">
+      <span>日常護理與保養</span>
+      ${lastDeod ? `<span style="font-size:11px;font-weight:600;color:var(--color-ink-faint)">最近除臭：${fmtDate(lastDeod)}</span>` : ''}
+    </div>
+    <div class="care-quick-actions">
+      <button type="button" class="btn-care btn-care-deodorize" id="btnQuickDeodorize">
+        <span class="icon-inline">${ICONS.wind}</span>
+        <span>今天有除臭</span>
+      </button>
+      <button type="button" class="btn-care btn-care-stain" id="btnQuickStain">
+        <span class="icon-inline">${ICONS.sparkles}</span>
+        <span>記錄去污漬</span>
+      </button>
+    </div>
+
     <div class="detail-meta">
       ${item.purchaseDate ? `購買日期：${fmtDate(item.purchaseDate)}<br>` : ''}
       ${item.price != null ? `價格：$${item.price}<br>` : ''}
       加入衣櫥：${new Date(item.createdAt).toLocaleDateString('zh-TW')}
     </div>
+    ${deodList.length ? `
+      <p class="wear-history-heading">除臭歷史（共 ${deodList.length} 次）</p>
+      <div class="wear-history-list">${deodList.slice(0, 20).map(d => `<div class="wear-history-row wash-history-row"><span>${fmtDate(d)}</span><span class="care-history-tag">日常除臭</span></div>`).join('')}</div>
+    ` : ''}
+    ${stainList.length ? `
+      <p class="wear-history-heading">除污漬紀錄（共 ${stainList.length} 次）</p>
+      <div class="wear-history-list">${stainList.slice(0, 20).map(s => `<div class="wear-history-row wash-history-row"><span>${fmtDate(s.date)}</span><span class="care-history-tag care-history-tag-stain">${escapeHtml(s.note || '局部去漬')}</span></div>`).join('')}</div>
+    ` : ''}
     ${item.wearHistory && item.wearHistory.length ? `
       <p class="wear-history-heading">穿著歷史（共 ${item.wearHistory.length} 次）</p>
       <div class="wear-history-list">${item.wearHistory.slice(0, 30).map(d => `<div class="wear-history-row">${fmtDate(d)}</div>`).join('')}</div>
@@ -2179,14 +2359,84 @@ function openItemDetail(itemId) {
   body.querySelector('#btnEditItem').innerHTML = ICONS.edit;
   body.querySelector('#btnEditItem').addEventListener('click', () => openAddModal(item.id));
 
-  let flipped = showingBack;
-  const flipBtn = body.querySelector('#btnFlipPhoto');
-  if (flipBtn) {
-    flipBtn.addEventListener('click', () => {
-      flipped = !flipped;
-      const photoEl = document.getElementById('detailPhotoEl');
-      photoEl.style.backgroundImage = `url('${flipped ? item.imageBack : item.image}')`;
-      flipBtn.textContent = flipped ? '看正面' : '看背面';
+  // 2.5D interactive flip physics
+  if (hasBack) {
+    const card = body.querySelector('#card25d');
+    const badge = body.querySelector('#cardFlipBadge');
+    const flipBtn = body.querySelector('#btnFlipPhoto');
+    let isFlipped = false;
+    let startX = 0;
+    let dragging = false;
+
+    function updateFlipUI() {
+      card.classList.toggle('is-flipped', isFlipped);
+      card.style.transform = '';
+      if (badge) badge.innerHTML = isFlipped ? '<span>背面</span> 2/2' : '<span>正面</span> 1/2';
+      if (flipBtn) flipBtn.textContent = isFlipped ? '翻轉看正面' : '翻轉看背面';
+    }
+
+    if (flipBtn) {
+      flipBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        isFlipped = !isFlipped;
+        updateFlipUI();
+      });
+    }
+
+    // Touch & pointer gesture
+    card.addEventListener('pointerdown', (e) => {
+      if (e.target.closest('#btnEditItem') || e.target.closest('#btnFlipPhoto')) return;
+      dragging = true;
+      startX = e.clientX;
+      card.classList.add('is-dragging');
+      if (card.setPointerCapture) {
+        try { card.setPointerCapture(e.pointerId); } catch (_) {}
+      }
+    });
+
+    card.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      const dx = e.clientX - startX;
+      const baseDeg = isFlipped ? 180 : 0;
+      const currentDeg = baseDeg + (dx * 0.45);
+      card.style.transform = `rotateY(${currentDeg}deg)`;
+    });
+
+    const finishDrag = (e) => {
+      if (!dragging) return;
+      dragging = false;
+      card.classList.remove('is-dragging');
+      const dx = e.clientX - startX;
+      if (Math.abs(dx) > 35) {
+        if (dx < -35) isFlipped = true;
+        else if (dx > 35) isFlipped = false;
+      }
+      updateFlipUI();
+    };
+
+    card.addEventListener('pointerup', finishDrag);
+    card.addEventListener('pointercancel', finishDrag);
+  }
+
+  // Quick care actions
+  const btnQuickDeodorize = body.querySelector('#btnQuickDeodorize');
+  if (btnQuickDeodorize) {
+    btnQuickDeodorize.addEventListener('click', () => {
+      item.deodorizeHistory = Array.isArray(item.deodorizeHistory) ? item.deodorizeHistory : [];
+      item.deodorizeHistory.unshift(todayStr());
+      saveState();
+      toast('已記錄今日除臭');
+      openItemDetail(item.id);
+    });
+  }
+
+  const btnQuickStain = body.querySelector('#btnQuickStain');
+  if (btnQuickStain) {
+    btnQuickStain.addEventListener('click', () => {
+      activeStainItemId = item.id;
+      document.getElementById('fieldStainDate').value = todayStr();
+      document.getElementById('fieldStainNote').value = '';
+      openModal('modal-stain');
     });
   }
 
@@ -2212,6 +2462,12 @@ function openItemDetail(itemId) {
   }
   openModal('modal-item');
 }
+
+const COMMON_MATERIALS = ['純棉', '聚酯纖維', '亞麻', '羊毛', '蠶絲', '丹寧/牛仔', '天絲/莫代爾', '羽絨', '尼龍', '混紡'];
+let pendingMaterial = '';
+let activeStainItemId = null;
+let editingHaircutId = null;
+let pendingHaircutPhoto = null;
 
 let pendingPhoto = null;
 let pendingPhotoBack = null;
@@ -2243,10 +2499,12 @@ function setPhotoPreview(wrap, src, emptyLabel) {
 }
 function autoSaveAddItemDraft() {
   const name = document.getElementById('fieldName')?.value.trim() || '';
+  const material = (pendingMaterial || document.getElementById('fieldMaterialCustom')?.value || '').trim();
   const draft = {
     name,
     category: pendingCategory,
     tags: pendingTags.slice(),
+    material,
     purchaseDate: document.getElementById('fieldPurchaseDate')?.value || '',
     price: document.getElementById('fieldPrice')?.value ? Number(document.getElementById('fieldPrice').value) : null,
     archiveDirect: !!document.getElementById('fieldArchiveDirect')?.checked,
@@ -2262,6 +2520,7 @@ function autoSaveAddItemDraft() {
         name: draft.name || item.name,
         category: draft.category,
         tags: draft.tags,
+        material: draft.material,
         purchaseDate: draft.purchaseDate,
         price: draft.price,
         image: draft.image || item.image,
@@ -2345,6 +2604,33 @@ function renderTagPickerChips() {
       formDirty = true;
       renderTagPickerChips();
       renderLengthToggle();
+      autoSaveAddItemDraft();
+    });
+    row.appendChild(chip);
+  });
+}
+
+function renderMaterialPickerChips() {
+  const row = document.getElementById('materialPickerChips');
+  if (!row) return;
+  row.innerHTML = '';
+  COMMON_MATERIALS.forEach(mat => {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'chip' + (pendingMaterial === mat ? ' is-active' : '');
+    chip.textContent = mat;
+    chip.addEventListener('click', () => {
+      if (pendingMaterial === mat) {
+        pendingMaterial = '';
+        const customInput = document.getElementById('fieldMaterialCustom');
+        if (customInput) customInput.value = '';
+      } else {
+        pendingMaterial = mat;
+        const customInput = document.getElementById('fieldMaterialCustom');
+        if (customInput) customInput.value = mat;
+      }
+      formDirty = true;
+      renderMaterialPickerChips();
       autoSaveAddItemDraft();
     });
     row.appendChild(chip);
@@ -2453,6 +2739,8 @@ function openAddModal(editId = null) {
   editingItemId = editId;
   pendingPhoto = null;
   pendingPhotoBack = null;
+  pendingMaterial = '';
+  document.getElementById('fieldMaterialCustom').value = '';
   pendingBrandName = '';
   pendingBrandIcon = null;
   pendingCategory = 'top';
@@ -2476,6 +2764,8 @@ function openAddModal(editId = null) {
   if (savedDraft) {
     pendingCategory = savedDraft.category || 'top';
     pendingTags = Array.isArray(savedDraft.tags) ? savedDraft.tags.slice() : [];
+    pendingMaterial = savedDraft.material || '';
+    document.getElementById('fieldMaterialCustom').value = pendingMaterial;
     document.getElementById('fieldName').value = savedDraft.name || '';
     document.getElementById('fieldPurchaseDate').value = savedDraft.purchaseDate || '';
     document.getElementById('fieldPrice').value = savedDraft.price ?? '';
@@ -2492,6 +2782,8 @@ function openAddModal(editId = null) {
     const item = findItem(editId);
     pendingCategory = item.category;
     pendingTags = (item.tags || []).slice();
+    pendingMaterial = item.material || '';
+    document.getElementById('fieldMaterialCustom').value = pendingMaterial;
     syncBrandForm(item.brand || '', item.brandIcon || null);
     document.getElementById('addModalTitle').textContent = '編輯單品';
     document.getElementById('addFormSubmitBtn').textContent = '儲存修改';
@@ -2520,6 +2812,7 @@ function openAddModal(editId = null) {
   renderCategoryPickerChips();
   renderLengthToggle();
   renderTagPickerChips();
+  renderMaterialPickerChips();
   formDirty = false; // the population above doesn't count as a user edit
   openModal('modal-add');
 }
@@ -3443,10 +3736,17 @@ function wireEvents() {
     autoSaveAddItemDraft();
   });
 
-  ['fieldName', 'fieldPurchaseDate', 'fieldPrice', 'fieldArchiveDirect'].forEach(id => {
+  ['fieldName', 'fieldPurchaseDate', 'fieldPrice', 'fieldArchiveDirect', 'fieldMaterialCustom'].forEach(id => {
     const el = document.getElementById(id);
+    if (!el) return;
     el.addEventListener('input', () => { formDirty = true; autoSaveAddItemDraft(); });
     el.addEventListener('change', () => { formDirty = true; autoSaveAddItemDraft(); });
+  });
+  document.getElementById('fieldMaterialCustom')?.addEventListener('input', e => {
+    pendingMaterial = e.target.value.trim();
+    formDirty = true;
+    renderMaterialPickerChips();
+    autoSaveAddItemDraft();
   });
 
   // add / edit item form
@@ -3455,6 +3755,7 @@ function wireEvents() {
     if (!name) { toast('請輸入名稱'); return false; }
     const category = pendingCategory;
     const tags = pendingTags.slice();
+    const material = (pendingMaterial || document.getElementById('fieldMaterialCustom')?.value || '').trim();
     const purchaseDate = document.getElementById('fieldPurchaseDate').value;
     const priceVal = document.getElementById('fieldPrice').value;
     const price = priceVal ? Number(priceVal) : null;
@@ -3465,14 +3766,15 @@ function wireEvents() {
 
     if (editingItemId) {
       const item = findItem(editingItemId);
-      Object.assign(item, { name, category, tags, purchaseDate, price, image: pendingPhoto || item.image, imageBack: pendingPhotoBack, brand, brandIcon });
+      Object.assign(item, { name, category, tags, material, purchaseDate, price, image: pendingPhoto || item.image, imageBack: pendingPhotoBack, brand, brandIcon });
       toast('已儲存修改');
     } else {
       state.items.push({
-        id: uid(), name, category, tags, purchaseDate, price,
+        id: uid(), name, category, tags, material, purchaseDate, price,
         image: pendingPhoto, imageBack: pendingPhotoBack, brand, brandIcon,
         wearCount: 0, totalWearCount: 0, status: archiveDirect ? 'retired' : 'clean',
         lastWornDate: null, wornToday: false, wearHistory: [], createdAt: Date.now(),
+        deodorizeHistory: [], stainHistory: [],
       });
       toast(archiveDirect ? '已加入典藏' : '已加入衣櫥');
     }
@@ -3487,6 +3789,82 @@ function wireEvents() {
     e.preventDefault();
     saveItemForm();
   });
+
+  // stain form submit
+  document.getElementById('stainForm')?.addEventListener('submit', e => {
+    e.preventDefault();
+    if (!activeStainItemId) return;
+    const item = findItem(activeStainItemId);
+    if (!item) return;
+    const date = document.getElementById('fieldStainDate').value || todayStr();
+    const note = document.getElementById('fieldStainNote').value.trim() || '局部去漬';
+    item.stainHistory = Array.isArray(item.stainHistory) ? item.stainHistory : [];
+    item.stainHistory.unshift({ date, note });
+    saveState();
+    toast('已記錄除污漬護理');
+    forceCloseModal({ skipPersist: true });
+    openItemDetail(item.id);
+  });
+
+  // haircut tracker events
+  document.getElementById('btnOpenAddHaircut')?.addEventListener('click', () => openHaircutModal());
+
+  document.getElementById('haircutPhotoInput')?.addEventListener('change', async e => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    toast('處理髮型照片中…');
+    try {
+      pendingHaircutPhoto = await compressImageFile(file, 800, 0.85);
+      const preview = document.getElementById('haircutPhotoPreview');
+      preview.setAttribute('style', `background-image:url('${pendingHaircutPhoto}')`);
+      preview.classList.add('has-photo');
+      preview.innerHTML = '';
+    } catch (_) {
+      toast('照片處理失敗，請換一張試試');
+    }
+  });
+
+  document.getElementById('haircutForm')?.addEventListener('submit', e => {
+    e.preventDefault();
+    const date = document.getElementById('fieldHaircutDate').value || todayStr();
+    const style = document.getElementById('fieldHaircutStyle').value.trim();
+    if (!style) { toast('請輸入髮型名稱'); return; }
+    const stylist = document.getElementById('fieldHaircutStylist').value.trim();
+    const salon = document.getElementById('fieldHaircutSalon').value.trim();
+    const length = document.getElementById('fieldHaircutLength').value.trim();
+    const cycleDays = Number(document.getElementById('fieldHaircutCycle').value) || 28;
+    const notes = document.getElementById('fieldHaircutNotes').value.trim();
+
+    state.haircuts = Array.isArray(state.haircuts) ? state.haircuts : [];
+    if (editingHaircutId) {
+      const h = state.haircuts.find(x => x.id === editingHaircutId);
+      if (h) {
+        Object.assign(h, { date, style, stylist, salon, length, cycleDays, notes, image: pendingHaircutPhoto || h.image || null });
+        toast('已更新髮型記錄');
+      }
+    } else {
+      state.haircuts.unshift({
+        id: uid(), date, style, stylist, salon, length, cycleDays, notes,
+        image: pendingHaircutPhoto || null, createdAt: Date.now()
+      });
+      toast('已新增髮型記錄');
+    }
+    saveState();
+    renderHairstyleSection();
+    forceCloseModal({ skipPersist: true });
+  });
+
+  document.getElementById('btnDeleteHaircut')?.addEventListener('click', () => {
+    if (!editingHaircutId) return;
+    if (confirm('確定要刪除這筆髮型記錄嗎？')) {
+      state.haircuts = (state.haircuts || []).filter(x => x.id !== editingHaircutId);
+      saveState();
+      renderHairstyleSection();
+      forceCloseModal({ skipPersist: true });
+      toast('已刪除髮型記錄');
+    }
+  });
+
   document.getElementById('btnUnsavedDiscard').addEventListener('click', () => {
     if (unsavedContext === 'wishlist') {
       if (editingWishlistId && wishlistEditSnapshot) {
