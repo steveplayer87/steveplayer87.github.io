@@ -45,6 +45,7 @@ const ICONS = {
   sparkles: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4M19 17v4M3 5h4M17 19h4"/></svg>`,
   layers: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>`,
   flip: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg>`,
+  wand: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m15 4-2 4 4-2Z"/><path d="m20 9-4 2 2 4Z"/><path d="M17.8 11.8 3 21"/><path d="m7 4 1 2 2 1-2 1-1 2-1-2-2-1 2-1Z"/></svg>`,
 };
 function applyStaticIcons() {
   document.querySelectorAll('[data-icon]').forEach(el => {
@@ -347,6 +348,7 @@ function defaultState() {
     wishlist: [],
     styleGallery: [],
     haircuts: [],
+    geminiApiKey: '',
     drafts: { addItem: null, wishlist: null },
   };
 }
@@ -378,6 +380,7 @@ function loadState() {
       wishlist: Array.isArray(parsed.wishlist) ? parsed.wishlist : [],
       styleGallery: Array.isArray(parsed.styleGallery) ? parsed.styleGallery : [],
       haircuts: Array.isArray(parsed.haircuts) ? parsed.haircuts : [],
+      geminiApiKey: typeof parsed.geminiApiKey === 'string' ? parsed.geminiApiKey : (localStorage.getItem('gemini_api_key') || ''),
       drafts: Object.assign({}, base.drafts, parsed.drafts || {}),
     };
   } catch (e) {
@@ -475,6 +478,16 @@ function activateView(view) {
   document.getElementById('mainScroll').classList.toggle('is-retired-scroll', view === 'wardrobe' && document.getElementById('view-wardrobe')?.classList.contains('is-retired-view'));
   document.getElementById('mainScroll').scrollTop = 0;
   syncHomeRackExpansion();
+  if (view === 'history') {
+    renderHistory();
+  } else if (view === 'wardrobe') {
+    renderWardrobe();
+  } else if (view === 'more') {
+    renderHaircuts();
+    renderConsumables();
+  } else if (view === 'home') {
+    renderHome();
+  }
 }
 function restoreHistoryView(view) {
   if (view && document.getElementById('view-' + view)) {
@@ -584,6 +597,7 @@ function setTodaySlot(slot, itemId) {
   saveState();
   renderHome();
   renderWardrobe();
+  renderHistory();
 }
 function recordLaundryEvent(date = todayStr(), options = {}) {
   state.laundry = state.laundry || { lastWashDate: date, cycleDays: 2, snoozedUntil: null, history: [] };
@@ -1375,8 +1389,11 @@ function buildItemCard(item, opts) {
 let uiCalMonth = (() => { const d = new Date(); return { y: d.getFullYear(), m: d.getMonth() }; })();
 
 function allOotdEntries() {
-  const entries = state.ootdHistory.slice();
-  if (ALL_SLOTS.some(s => state.today[s])) entries.push(state.today);
+  const today = todayStr();
+  const entries = (state.ootdHistory || []).filter(e => e.date !== today).slice();
+  if (ALL_SLOTS.some(s => state.today[s])) {
+    entries.push({ ...state.today, date: today });
+  }
   return entries;
 }
 
@@ -2544,6 +2561,11 @@ function readSettingsDraft() {
   };
   if (!document.getElementById('settingName')) return;
   state.profile.name = document.getElementById('settingName').value.trim();
+  const keyInput = document.getElementById('settingGeminiApiKey');
+  if (keyInput) {
+    state.geminiApiKey = keyInput.value.trim();
+    if (state.geminiApiKey) localStorage.setItem('gemini_api_key', state.geminiApiKey);
+  }
   state.profile.washThresholds = {
     bottom: readPicker('pickThresholdBottom'),
     outer: readPicker('pickThresholdOuter'),
@@ -3282,6 +3304,8 @@ function wireEvents() {
   }
   document.getElementById('btnSettings').addEventListener('click', () => {
     document.getElementById('settingName').value = state.profile.name || '';
+    const keyEl = document.getElementById('settingGeminiApiKey');
+    if (keyEl) keyEl.value = state.geminiApiKey || '';
     setPickerBtn('pickThresholdBottom', state.profile.washThresholds.bottom);
     setPickerBtn('pickThresholdOuter', state.profile.washThresholds.outer);
     setPickerBtn('pickThresholdShoes', state.profile.washThresholds.shoes);
@@ -3986,12 +4010,371 @@ function wireEvents() {
 }
 
 /* ============================================================
+   GEMINI AI STUDIO & PHOTO RETOUCH
+   ============================================================ */
+let aiOriginalPhoto = null;
+let aiProcessedPhoto = null;
+
+function studioCutoutCanvas(dataUrl) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+
+        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imgData.data;
+        const w = canvas.width;
+        const h = canvas.height;
+
+        const samplePoints = [
+          [4, 4], [w - 5, 4], [4, h - 5], [w - 5, h - 5],
+          [Math.floor(w / 2), 4], [Math.floor(w / 2), h - 5],
+          [4, Math.floor(h / 2)], [w - 5, Math.floor(h / 2)],
+        ];
+        let bgR = 0, bgG = 0, bgB = 0;
+        samplePoints.forEach(([x, y]) => {
+          const idx = (y * w + x) * 4;
+          bgR += data[idx];
+          bgG += data[idx + 1];
+          bgB += data[idx + 2];
+        });
+        bgR /= samplePoints.length;
+        bgG /= samplePoints.length;
+        bgB /= samplePoints.length;
+
+        const tolerance = 46;
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i], g = data[i + 1], b = data[i + 2];
+          const dist = Math.sqrt((r - bgR) ** 2 + (g - bgG) ** 2 + (b - bgB) ** 2);
+          if (dist < tolerance) {
+            data[i] = 255;
+            data[i + 1] = 255;
+            data[i + 2] = 255;
+          } else if (dist < tolerance + 18) {
+            const ratio = (dist - tolerance) / 18;
+            data[i] = Math.round(data[i] * ratio + 255 * (1 - ratio));
+            data[i + 1] = Math.round(data[i + 1] * ratio + 255 * (1 - ratio));
+            data[i + 2] = Math.round(data[i + 2] * ratio + 255 * (1 - ratio));
+          }
+        }
+        ctx.putImageData(imgData, 0, 0);
+        resolve(canvas.toDataURL('image/jpeg', 0.88));
+      } catch (err) {
+        reject(err);
+      }
+    };
+    img.onerror = reject;
+    img.src = dataUrl;
+  });
+}
+
+function enhanceLightingCanvas(dataUrl) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+
+        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imgData.data;
+
+        for (let i = 0; i < data.length; i += 4) {
+          let r = data[i], g = data[i + 1], b = data[i + 2];
+
+          // Lift shadow
+          if (r < 110) r = Math.min(255, r * 1.15);
+          if (g < 110) g = Math.min(255, g * 1.15);
+          if (b < 110) b = Math.min(255, b * 1.15);
+
+          // Contrast curve
+          r = ((r - 128) * 1.10) + 128;
+          g = ((g - 128) * 1.10) + 128;
+          b = ((b - 128) * 1.10) + 128;
+
+          // Saturation
+          const avg = (r + g + b) / 3;
+          r = avg + (r - avg) * 1.14;
+          g = avg + (g - avg) * 1.14;
+          b = avg + (b - avg) * 1.14;
+
+          data[i] = Math.max(0, Math.min(255, Math.round(r)));
+          data[i + 1] = Math.max(0, Math.min(255, Math.round(g)));
+          data[i + 2] = Math.max(0, Math.min(255, Math.round(b)));
+        }
+        ctx.putImageData(imgData, 0, 0);
+        resolve(canvas.toDataURL('image/jpeg', 0.88));
+      } catch (err) {
+        reject(err);
+      }
+    };
+    img.onerror = reject;
+    img.src = dataUrl;
+  });
+}
+
+async function callGeminiVision(dataUrl, apiKey) {
+  const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
+  if (!match) throw new Error('圖片格式無效');
+  const mimeType = match[1];
+  const base64Data = match[2];
+
+  const models = ['gemini-2.5-flash', 'gemini-1.5-flash'];
+  let lastErr = null;
+
+  for (const model of models) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{
+            parts: [
+              { inline_data: { mime_type: mimeType, data: base64Data } },
+              {
+                text: '你是一個專業的衣物分析師。請分析這張衣物照片，並只輸出 JSON 格式（嚴格不要包含 markdown 標籤或程式碼區塊符號，不要輸出其他文字）：\n' +
+                      '{\n' +
+                      '  "name": "適當且生活化的繁體中文品名，例如：純白重磅短袖T恤、深藍微破直筒牛仔褲",\n' +
+                      '  "category": "必須是以下六種之一：top、bottom、outer、shoes、hat、accessory",\n' +
+                      '  "material": "衣服材質標籤，例如：純棉、棉麻、牛仔丹寧、羊毛、聚酯纖維、防風機能布",\n' +
+                      '  "tags": ["2至4個標籤，例如：休閒, 重磅, 寬版, 短"],\n' +
+                      '  "brand": "若有可清楚辨識的品牌LOGO請填寫（例如 UNIQLO、Nike、GU、ZARA），若無請填空字串",\n' +
+                      '  "length": "若為上衣或褲子請填長或短，若非則填空字串"\n' +
+                      '}'
+              }
+            ]
+          }]
+        })
+      });
+
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`Gemini API 回應錯誤 (${res.status}): ${errText}`);
+      }
+      const data = await res.json();
+      const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      const cleanJson = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+      return JSON.parse(cleanJson);
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  throw lastErr;
+}
+
+function wireGeminiAiStudio() {
+  const modalId = 'modal-gemini-ai';
+  const previewImg = document.getElementById('aiProcessedPreviewImg');
+  const loadingOverlay = document.getElementById('aiLoadingOverlay');
+  const loadingText = document.getElementById('aiLoadingText');
+  const keyBanner = document.getElementById('aiKeyBanner');
+  const inlineKeyInput = document.getElementById('inlineGeminiKey');
+
+  function openGeminiStudio() {
+    if (!pendingPhoto) {
+      toast('請先上傳衣物照片');
+      document.getElementById('photoInput').click();
+      return;
+    }
+    aiOriginalPhoto = pendingPhoto;
+    aiProcessedPhoto = pendingPhoto;
+    previewImg.src = aiProcessedPhoto;
+    document.getElementById('btnShowProcessed').classList.add('is-active');
+    document.getElementById('btnShowOriginal').classList.remove('is-active');
+    if (!state.geminiApiKey) {
+      keyBanner.classList.remove('is-hidden');
+    } else {
+      keyBanner.classList.add('is-hidden');
+    }
+    modalReturnTo = 'modal-add';
+    openModal(modalId);
+  }
+
+  const openBtn = document.getElementById('btnOpenAiRetouch');
+  if (openBtn) openBtn.addEventListener('click', openGeminiStudio);
+
+  const quickCutoutBtn = document.getElementById('btnQuickStudioCutout');
+  if (quickCutoutBtn) {
+    quickCutoutBtn.addEventListener('click', async () => {
+      if (!pendingPhoto) {
+        toast('請先上傳衣物照片');
+        document.getElementById('photoInput').click();
+        return;
+      }
+      toast('正在進行白底棚拍處理…');
+      try {
+        const cutout = await studioCutoutCanvas(pendingPhoto);
+        pendingPhoto = cutout;
+        const wrap = document.getElementById('photoPreviewWrap');
+        wrap.setAttribute('style', `background-color:#fff;background-image:url('${pendingPhoto}')`);
+        wrap.classList.add('has-photo');
+        wrap.innerHTML = '';
+        autoSaveAddItemDraft();
+        formDirty = true;
+        toast('已完成白底棚拍');
+      } catch (e) {
+        toast('修圖失敗，請重試');
+      }
+    });
+  }
+
+  const saveKeyBtn = document.getElementById('btnSaveInlineKey');
+  if (saveKeyBtn) {
+    saveKeyBtn.addEventListener('click', () => {
+      const val = inlineKeyInput.value.trim();
+      if (val) {
+        state.geminiApiKey = val;
+        localStorage.setItem('gemini_api_key', val);
+        saveState();
+        keyBanner.classList.add('is-hidden');
+        toast('已儲存 Gemini API Key');
+      }
+    });
+  }
+
+  const toggleProcessed = document.getElementById('btnShowProcessed');
+  const toggleOriginal = document.getElementById('btnShowOriginal');
+  if (toggleProcessed && toggleOriginal) {
+    toggleProcessed.addEventListener('click', () => {
+      toggleProcessed.classList.add('is-active');
+      toggleOriginal.classList.remove('is-active');
+      previewImg.src = aiProcessedPhoto;
+    });
+
+    toggleOriginal.addEventListener('click', () => {
+      toggleOriginal.classList.add('is-active');
+      toggleProcessed.classList.remove('is-active');
+      previewImg.src = aiOriginalPhoto;
+    });
+  }
+
+  const studioCutoutBtn = document.getElementById('btnAiStudioCutout');
+  if (studioCutoutBtn) {
+    studioCutoutBtn.addEventListener('click', async () => {
+      loadingText.textContent = '智慧白底棚拍處理中…';
+      loadingOverlay.classList.remove('is-hidden');
+      try {
+        const result = await studioCutoutCanvas(aiOriginalPhoto);
+        aiProcessedPhoto = result;
+        previewImg.src = aiProcessedPhoto;
+        toggleProcessed.classList.add('is-active');
+        toggleOriginal.classList.remove('is-active');
+        toast('智慧白底棚拍完成');
+      } catch (err) {
+        toast('修圖處理失敗');
+      } finally {
+        loadingOverlay.classList.add('is-hidden');
+      }
+    });
+  }
+
+  const enhanceLightingBtn = document.getElementById('btnAiEnhanceLighting');
+  if (enhanceLightingBtn) {
+    enhanceLightingBtn.addEventListener('click', async () => {
+      loadingText.textContent = '光影與色彩校正中…';
+      loadingOverlay.classList.remove('is-hidden');
+      try {
+        const result = await enhanceLightingCanvas(aiProcessedPhoto || aiOriginalPhoto);
+        aiProcessedPhoto = result;
+        previewImg.src = aiProcessedPhoto;
+        toggleProcessed.classList.add('is-active');
+        toggleOriginal.classList.remove('is-active');
+        toast('光影與色彩已增強');
+      } catch (err) {
+        toast('處理失敗');
+      } finally {
+        loadingOverlay.classList.add('is-hidden');
+      }
+    });
+  }
+
+  const autoDetectBtn = document.getElementById('btnAiAutoDetect');
+  if (autoDetectBtn) {
+    autoDetectBtn.addEventListener('click', async () => {
+      if (!state.geminiApiKey) {
+        keyBanner.classList.remove('is-hidden');
+        inlineKeyInput.focus();
+        toast('請先填寫 Gemini API Key 才能使用自動辨識');
+        return;
+      }
+      loadingText.textContent = 'Gemini 正在分析衣物品名、分類與材質…';
+      loadingOverlay.classList.remove('is-hidden');
+      try {
+        const info = await callGeminiVision(aiOriginalPhoto, state.geminiApiKey);
+        if (info.name) document.getElementById('fieldName').value = info.name;
+        if (info.category && FIXED_CATEGORIES.includes(info.category)) {
+          pendingCategory = info.category;
+          renderCategoryPickerChips();
+          renderLengthToggle();
+        }
+        if (info.material) {
+          pendingMaterial = info.material;
+          document.getElementById('fieldMaterialCustom').value = pendingMaterial;
+          renderMaterialPickerChips();
+        }
+        if (Array.isArray(info.tags) && info.tags.length) {
+          pendingTags = Array.from(new Set(pendingTags.concat(info.tags.map(t => String(t).trim()))));
+          renderTagPickerChips();
+        }
+        if (info.length && (pendingCategory === 'top' || pendingCategory === 'bottom')) {
+          if (!pendingTags.includes(info.length)) {
+            pendingTags = pendingTags.filter(t => !LENGTH_TAGS.includes(t)).concat([info.length]);
+            renderLengthToggle();
+            renderTagPickerChips();
+          }
+        }
+        if (info.brand) {
+          document.getElementById('fieldBrand').value = info.brand;
+          syncBrandForm(info.brand, null);
+        }
+        formDirty = true;
+        autoSaveAddItemDraft();
+        toast(`Gemini 已辨識：${info.name || '已自動填入資料'}`);
+      } catch (err) {
+        toast('Gemini 辨識失敗，請檢查 API Key 或網路連線');
+      } finally {
+        loadingOverlay.classList.add('is-hidden');
+      }
+    });
+  }
+
+  const applyBtn = document.getElementById('btnApplyAiPhoto');
+  if (applyBtn) {
+    applyBtn.addEventListener('click', () => {
+      if (aiProcessedPhoto) {
+        pendingPhoto = aiProcessedPhoto;
+        const wrap = document.getElementById('photoPreviewWrap');
+        wrap.setAttribute('style', `background-color:#fff;background-image:url('${pendingPhoto}')`);
+        wrap.classList.add('has-photo');
+        wrap.innerHTML = '';
+        autoSaveAddItemDraft();
+        formDirty = true;
+        toast('已套用修圖照片');
+      }
+      closeModal();
+    });
+  }
+}
+
+/* ============================================================
    INIT
    ============================================================ */
 function init() {
   applyStaticIcons();
   wireEvents();
   wirePhotoAdjust();
+  wireGeminiAiStudio();
   renderCategoryChips();
   ensureNewDay();
   historySnapshot = cloneState(state);

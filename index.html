@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="衣櫥助手">
-<link rel="stylesheet" href="styles.css?v=20260825a">
+<link rel="stylesheet" href="styles.css?v=20260909b">
 </head>
 <body>
 
@@ -248,7 +248,7 @@
             <p class="section-intro">記錄造型照片、修剪週期與設計師備忘</p>
           </div>
           <button type="button" class="btn-primary-sm" id="btnOpenAddHaircut">
-            <span data-icon="plus"></span><span>+ 新增髮型</span>
+            <span class="btn-icon" data-icon="plus"></span><span>新增髮型</span>
           </button>
         </div>
         <div class="haircut-cycle-summary" id="haircutCycleSummary"></div>
@@ -335,6 +335,16 @@
         </span>
       </label>
       <p class="photo-back-hint" id="photoBackHint" hidden>已加入背面照片 ✓</p>
+      <div class="photo-tools-row" id="photoAiToolsRow">
+        <button type="button" class="btn-ai-magic" id="btnOpenAiRetouch">
+          <span class="icon-inline" data-icon="sparkles"></span>
+          <span>Gemini AI 智慧修圖</span>
+        </button>
+        <button type="button" class="btn-ai-secondary" id="btnQuickStudioCutout">
+          <span class="icon-inline" data-icon="wind"></span>
+          <span>白底棚拍</span>
+        </button>
+      </div>
       <button type="button" class="link-more-btn is-hidden" id="btnReadjustPhoto">重新調整照片裁切／縮放</button>
 
       <label class="field">名稱
@@ -519,6 +529,13 @@
           <p class="field-label-standalone">配件幾次該洗？</p>
           <button type="button" class="threshold-picker-btn" id="pickThresholdAccessory" data-cat="accessory">8</button>
         </div>
+      <div class="settings-section">
+        <div class="settings-label-row">
+          <p class="field-label-standalone">Google Gemini API Key</p>
+          <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener" class="link-more-btn" style="padding:0">免費取得 Key</a>
+        </div>
+        <input type="password" id="settingGeminiApiKey" placeholder="貼上 AI Studio API Key（選填，保存在本地）" autocomplete="off">
+        <p class="settings-helper">設定後即可在新增單品時使用 Gemini 智慧修圖、去背棚拍與衣物自動辨識。</p>
       </div>
 
       <button type="submit" class="btn-primary">儲存設定</button>
@@ -751,6 +768,79 @@
     </form>
   </div>
 
+  <!-- Gemini AI Studio Modal -->
+  <div class="modal-sheet modal-sheet-tall" id="modal-gemini-ai" data-modal>
+    <div class="modal-handle"></div>
+    <div class="modal-head">
+      <div class="modal-title-with-badge">
+        <h2>Gemini AI 影像工作室</h2>
+        <span class="ai-badge"><span class="icon-inline" data-icon="sparkles"></span> AI</span>
+      </div>
+      <button class="modal-close" data-close>✕</button>
+    </div>
+    <div class="ai-studio-body">
+      <div class="ai-preview-container" id="aiPreviewContainer">
+        <div class="ai-preview-card" id="aiPreviewCard">
+          <img id="aiProcessedPreviewImg" src="" alt="AI 修圖預覽">
+          <div class="ai-loading-overlay is-hidden" id="aiLoadingOverlay">
+            <div class="ai-spinner"></div>
+            <p id="aiLoadingText">Gemini 運算中…</p>
+          </div>
+        </div>
+        <div class="ai-view-toggle">
+          <button type="button" class="ai-toggle-btn is-active" id="btnShowProcessed">修圖後</button>
+          <button type="button" class="ai-toggle-btn" id="btnShowOriginal">原圖</button>
+        </div>
+      </div>
+
+      <div class="ai-tools-grid">
+        <button type="button" class="ai-tool-card" id="btnAiStudioCutout">
+          <span class="ai-tool-icon" data-icon="sparkles"></span>
+          <div class="ai-tool-text">
+            <b>智慧白底棚拍</b>
+            <small>清除雜亂背景，平整純白並保留衣服邊緣</small>
+          </div>
+        </button>
+
+        <button type="button" class="ai-tool-card" id="btnAiAutoDetect">
+          <span class="ai-tool-icon" data-icon="wand"></span>
+          <div class="ai-tool-text">
+            <b>Gemini 辨識自動填寫</b>
+            <small>分析衣服外觀，自動填寫名稱、分類、材質與標籤</small>
+          </div>
+        </button>
+
+        <button type="button" class="ai-tool-card" id="btnAiEnhanceLighting">
+          <span class="ai-tool-icon" data-icon="wind"></span>
+          <div class="ai-tool-text">
+            <b>光影校正與色彩增強</b>
+            <small>消除色偏陰影，還原織物真實飽和度與立體感</small>
+          </div>
+        </button>
+      </div>
+
+      <!-- Key notice / quick input if not set -->
+      <div class="ai-key-banner is-hidden" id="aiKeyBanner">
+        <div class="ai-key-banner-head">
+          <span class="icon-inline" data-icon="sparkles"></span>
+          <span>設定 Gemini API Key 啟用深度視覺辨識</span>
+        </div>
+        <div class="ai-key-input-row">
+          <input type="password" id="inlineGeminiKey" placeholder="貼上 Gemini API Key">
+          <button type="button" class="btn-primary-sm" id="btnSaveInlineKey">儲存</button>
+        </div>
+        <div class="ai-key-banner-help">
+          <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">免費領取 Google AI Studio Key</a>
+        </div>
+      </div>
+
+      <div class="ai-action-buttons">
+        <button type="button" class="btn-primary" id="btnApplyAiPhoto">套用此修圖照片</button>
+        <button type="button" class="btn-secondary" id="btnDiscardAiPhoto" data-close>取消</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Generic confirm (used by notification row taps) -->
   <div class="modal-sheet" id="modal-confirm" data-modal>
     <div class="modal-handle"></div>
@@ -763,7 +853,7 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="seed-items.js?v=20260825a"></script>
-<script src="app.js?v=20260825a"></script>
+<script src="seed-items.js?v=20260909b"></script>
+<script src="app.js?v=20260909b"></script>
 </body>
 </html>
