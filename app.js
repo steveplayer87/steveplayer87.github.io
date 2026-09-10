@@ -97,13 +97,18 @@ const CONSUMABLE_DEFS = [
 ];
 const LENGTH_TAGS = ['長', '短'];
 const CONSUMABLE_IMAGES = {
-  towelA: 'assets/c-towel.jpg',
-  towelB: 'assets/c-towel.jpg',
+  towelA: 'assets/c-towel-a.jpg',
+  towelB: 'assets/c-towel-b.jpg',
   sheets: 'assets/c-sheets.jpg',
   toothbrush: 'assets/c-toothbrush.jpg',
   razor: 'assets/c-razor.jpg',
 };
-function consumableImage(c) { return c.image || CONSUMABLE_IMAGES[c.id] || ''; }
+function consumableImage(c) {
+  if (!c) return '';
+  if (c.id === 'towelA' && (!c.image || c.image === 'assets/c-towel.jpg')) return 'assets/c-towel-a.jpg';
+  if (c.id === 'towelB' && (!c.image || c.image === 'assets/c-towel.jpg')) return 'assets/c-towel-b.jpg';
+  return c.image || CONSUMABLE_IMAGES[c.id] || '';
+}
 
 /* ---------------------------- Category helpers ---------------------------- */
 function allCategoryIds() { return FIXED_CATEGORIES.concat(state.customCategories.map(c => c.id)); }
@@ -414,6 +419,8 @@ function normalizeLoadedState() {
     c.history = Array.isArray(c.history) ? c.history : [];
     c.laundryPending = !!c.laundryPending;
     c.laundryAt = c.laundryAt || null;
+    if (c.id === 'towelA' && (!c.image || c.image === 'assets/c-towel.jpg')) c.image = 'assets/c-towel-a.jpg';
+    if (c.id === 'towelB' && (!c.image || c.image === 'assets/c-towel.jpg')) c.image = 'assets/c-towel-b.jpg';
   });
   state.drafts = Object.assign({ addItem: null, wishlist: null }, state.drafts || {});
 }
@@ -1183,7 +1190,9 @@ function renderChipList(listId, emptyId, items, opts) {
       const chip = document.createElement('button');
       chip.className = 'rack-chip is-pinned';
       chip.type = 'button';
-      chip.innerHTML = `<span class="rack-chip-thumb">${ICONS[towel.icon] || ''}</span><span class="rack-chip-text">${escapeHtml(towel.name)}・已用 ${daysUsed(towel)} 天</span>`;
+      const towelImg = consumableImage(towel);
+      const thumbHtml = towelImg ? `<img src="${towelImg}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">` : (ICONS[towel.icon] || '');
+      chip.innerHTML = `<span class="rack-chip-thumb">${thumbHtml}</span><span class="rack-chip-text">${escapeHtml(towel.name)}・已用 ${daysUsed(towel)} 天</span>`;
       chip.addEventListener('click', e => { e.stopPropagation(); openConsumableDetail(towel.id); });
       list.appendChild(chip);
     }
@@ -1760,8 +1769,11 @@ function openConsumableDetail(id) {
       </div>`;
     actionLabel = isLaundryConsumable(c) ? '提前丟到洗衣籃' : (overdue ? '已更換，重新計算' : '提前更換／清洗');
   }
+  const imgUrl = consumableImage(c);
+  const photoHtml = imgUrl ? `<div class="consumable-detail-photo-wrap"><img src="${imgUrl}" alt="" class="consumable-detail-photo"></div>` : '';
   body.innerHTML = `
     <div class="modal-head"><h2>${escapeHtml(c.name)}</h2><button class="modal-close" data-close>✕</button></div>
+    ${photoHtml}
     ${statsHtml}
     <button class="btn-primary" id="btnResetConsumable"${c.laundryPending ? ' disabled' : ''}>${actionLabel}</button>
     <p class="detail-meta">上次更換日期：${lastReplacedLabel}</p>

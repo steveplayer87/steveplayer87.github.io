@@ -658,6 +658,21 @@ img.notif-thumb { padding: 0; background-color: transparent; }
   .consumable-card .c-icon { height: 58px; }
 }
 
+.consumable-detail-photo-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 4px 0 14px;
+}
+.consumable-detail-photo {
+  max-height: 180px;
+  width: auto;
+  border-radius: 14px;
+  box-shadow: 0 4px 16px rgba(28, 35, 51, 0.12);
+  object-fit: contain;
+  background: #fff;
+}
+
 
 /* =========================== Round 3: home shell and shared controls =========================== */
 html, body { overflow-x: hidden; overscroll-behavior-x: none; }
