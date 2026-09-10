@@ -10,32 +10,16 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="衣櫥助手">
-<link rel="stylesheet" href="styles.css?v=20260910b">
-<script>
-(function() {
-  function fit() {
-    if (window.matchMedia('(max-width: 480px) and (pointer: coarse)').matches) {
-      document.documentElement.style.removeProperty('--preview-scale');
-      return;
-    }
-    var pad = 16;
-    var s = Math.min(1, (window.innerWidth - pad) / 402, (window.innerHeight - pad) / 874);
-    document.documentElement.style.setProperty('--preview-scale', Math.max(0.15, s).toFixed(4));
-  }
-  fit();
-  window.addEventListener('resize', fit);
-  window.addEventListener('orientationchange', fit);
-})();
-</script>
+<link rel="stylesheet" href="styles.css?v=20260910c">
 </head>
 <body>
-
-<div id="app">
 
 <div id="splashScreen">
   <span class="splash-icon" data-icon="wardrobe"></span>
   <p class="splash-text">載入中...</p>
 </div>
+
+<div id="app">
 
   <!-- ===== Header ===== -->
   <header class="app-header">
@@ -301,9 +285,10 @@
       <span class="tab-icon" data-icon="more"></span><span>更多</span>
     </button>
   </nav>
+</div>
 
-  <!-- ===== Modal: overlay root ===== -->
-  <div class="modal-overlay" id="modalOverlay">
+<!-- ===== Modal: overlay root ===== -->
+<div class="modal-overlay" id="modalOverlay">
 
   <!-- Try-on picker -->
   <div class="modal-sheet" id="modal-tryon" data-modal>
@@ -867,11 +852,9 @@
 
 </div>
 
-  <div class="toast" id="toast"></div>
+<div class="toast" id="toast"></div>
 
-</div> <!-- #app -->
-
-<script src="seed-items.js?v=20260910b"></script>
-<script src="app.js?v=20260910b"></script>
+<script src="seed-items.js?v=20260910c"></script>
+<script src="app.js?v=20260910c"></script>
 </body>
 </html>
