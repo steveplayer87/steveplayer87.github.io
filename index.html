@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="衣櫥助手">
-<link rel="stylesheet" href="styles.css?v=20260921e">
+<link rel="stylesheet" href="styles.css?v=20260921f">
 </head>
 <body>
 
@@ -176,12 +176,15 @@
         <svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
       </button>
       <div class="select-bar is-hidden" id="selectBar">
-        <p id="selectCount">已選 0 件</p>
+        <div class="select-bar-top">
+          <p id="selectCount">已選 0 件</p>
+          <button type="button" class="btn-secondary" id="btnSelectAll">全選</button>
+        </div>
         <div class="select-bar-actions">
-          <button class="btn-secondary" id="btnSelectAll">全選</button>
-          <button class="btn-secondary" id="btnSelectRetire">移入典藏</button>
-          <button class="btn-secondary btn-danger" id="btnSelectDelete">刪除</button>
-          <button class="btn-secondary" id="btnSelectCancel">取消</button>
+          <button type="button" class="btn-secondary" id="btnSelectWash">送洗</button>
+          <button type="button" class="btn-secondary" id="btnSelectTemp">移至暫存</button>
+          <button type="button" class="btn-secondary" id="btnSelectRetire">移入典藏</button>
+          <button type="button" class="btn-secondary btn-danger" id="btnSelectDelete">刪除</button>
         </div>
       </div>
     </section>
@@ -261,7 +264,7 @@
       <div class="more-section-block">
         <div class="more-section-header">
           <div>
-            <p class="section-title">髮型記錄</p>
+            <p class="section-title" style="display:inline-flex;align-items:center;gap:6px;"><span class="icon-inline" data-icon="scissors" style="width:18px;height:18px;"></span>髮型記錄</p>
             <p class="section-intro">記錄造型照片、修剪週期與設計師備忘</p>
           </div>
           <button type="button" class="btn-primary-sm" id="btnOpenAddHaircut">
@@ -486,8 +489,8 @@
     </div>
     <div class="filter-invert-bar">
       <button type="button" class="filter-invert-btn" id="btnFilterInvert">
-        <span class="icon-inline" data-icon="invert"></span>
-        <span id="filterInvertLabel">反向排除模式：關閉</span>
+        <span class="icon-inline" data-icon="flip"></span>
+        <span id="filterInvertLabel">反向排除</span>
       </button>
     </div>
     <div class="filter-section" id="filterStatusSection">
@@ -504,21 +507,40 @@
       <div class="chip-row chip-row-form" id="filterCategoryChips"></div>
     </div>
     <div class="filter-section" id="filterColorSection">
-      <p class="filter-label">顏色</p>
+      <div class="filter-section-header">
+        <p class="filter-label">顏色</p>
+        <button type="button" class="filter-more-btn" id="btnManageColors" title="管理顏色">···</button>
+      </div>
       <div class="chip-row chip-row-form filter-color-chips" id="filterColorChips"></div>
     </div>
     <div class="filter-section" id="filterBrandSection">
-      <p class="filter-label">品牌</p>
+      <div class="filter-section-header">
+        <p class="filter-label">品牌</p>
+        <button type="button" class="filter-more-btn" id="btnManageBrands" title="管理品牌">···</button>
+      </div>
       <div class="chip-row chip-row-form" id="filterBrandChips"></div>
     </div>
     <div class="filter-section">
-      <p class="filter-label">標籤（含長／短）</p>
+      <div class="filter-section-header">
+        <p class="filter-label">標籤（含長／短）</p>
+        <button type="button" class="filter-more-btn" id="btnManageTags" title="管理標籤">···</button>
+      </div>
       <div class="chip-row chip-row-form" id="filterTagChips"></div>
     </div>
     <div class="settings-actions">
       <button class="btn-secondary" id="btnFilterClear">清除篩選</button>
       <button class="btn-primary" id="btnFilterApply">套用</button>
     </div>
+  </div>
+
+  <!-- Manage Filter Attributes (Colors / Brands / Tags) Modal -->
+  <div class="modal-sheet" id="modal-manage-props" data-modal>
+    <div class="modal-handle"></div>
+    <div class="modal-head">
+      <h2 id="managePropsTitle">管理標籤</h2>
+      <button class="modal-close" data-close>✕</button>
+    </div>
+    <div class="manage-props-body" id="managePropsBody" style="padding:10px 0 16px;"></div>
   </div>
 
   <!-- Notifications -->
@@ -617,6 +639,24 @@
         <p class="settings-helper">設定後即可在新增單品時使用 Gemini 智慧修圖、去背棚拍與衣物自動辨識。</p>
       </div>
 
+      <!-- Weather Scenario Simulator -->
+      <div class="settings-section">
+        <p class="field-label-standalone">天氣情境模擬與預覽</p>
+        <p class="settings-helper">點選快速切換各種天氣與日夜情境，即時預覽主頁天空與氛圍。</p>
+        <div class="weather-sim-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;">
+          <button type="button" class="btn-secondary weather-sim-btn" data-sim="clear_day">☀️ 晴天・白天</button>
+          <button type="button" class="btn-secondary weather-sim-btn" data-sim="clear_night">🌙 晴天・夜晚</button>
+          <button type="button" class="btn-secondary weather-sim-btn" data-sim="cloudy_day">☁️ 陰天・白天</button>
+          <button type="button" class="btn-secondary weather-sim-btn" data-sim="cloudy_night">☁️ 陰天・夜晚</button>
+          <button type="button" class="btn-secondary weather-sim-btn" data-sim="rain_day">🌧️ 雨天・白天</button>
+          <button type="button" class="btn-secondary weather-sim-btn" data-sim="rain_night">🌧️ 雨天・夜晚</button>
+          <button type="button" class="btn-secondary weather-sim-btn" data-sim="heavy_day">⛈️ 大雨・白天</button>
+          <button type="button" class="btn-secondary weather-sim-btn" data-sim="heavy_night">⛈️ 大雨・夜晚</button>
+          <button type="button" class="btn-secondary weather-sim-btn" data-sim="sun_shower" style="grid-column:1 / -1;">🌦️ 晴時多雲偶陣雨</button>
+          <button type="button" class="btn-secondary weather-sim-btn" data-sim="real" style="grid-column:1 / -1;border-style:dashed;">🔄 跟隨真實天氣（恢復定位）</button>
+        </div>
+      </div>
+
       <button type="submit" class="btn-primary">儲存設定</button>
     </form>
     <div class="settings-footer">
@@ -632,8 +672,8 @@
       <div class="settings-history" id="settingsHistory">
         <p class="settings-note">全域變更紀錄</p>
         <div class="settings-history-actions">
-          <button class="btn-secondary btn-with-icon" id="btnUndo" disabled><span data-icon="undo"></span><span><b>上一步</b><small>復原上一個變更</small></span></button>
-          <button class="btn-secondary btn-with-icon" id="btnRedo" disabled><span data-icon="redo"></span><span><b>下一步</b><small>重做已復原變更</small></span></button>
+          <button class="btn-secondary btn-with-icon" id="btnUndo" disabled><span data-icon="undo"></span><span><b>上一步</b><small id="undoActionDesc">無可還原操作</small></span></button>
+          <button class="btn-secondary btn-with-icon" id="btnRedo" disabled><span data-icon="redo"></span><span><b>下一步</b><small id="redoActionDesc">無可重做操作</small></span></button>
         </div>
       </div>
     </div>
@@ -793,7 +833,7 @@
   <!-- Haircut Add/Edit Modal -->
   <div class="modal-sheet modal-sheet-tall" id="modal-haircut" data-modal>
     <div class="modal-handle"></div>
-    <div class="modal-head"><h2 id="haircutModalTitle">新增髮型記錄</h2><button class="modal-close" data-close>✕</button></div>
+    <div class="modal-head"><h2 id="haircutModalTitle" style="display:inline-flex;align-items:center;gap:6px;"><span class="icon-inline" data-icon="scissors" style="width:18px;height:18px;"></span>新增髮型記錄</h2><button class="modal-close" data-close>✕</button></div>
     <form class="form" id="haircutForm">
       <label class="photo-upload" id="haircutPhotoArea">
         <input type="file" accept="image/*" id="haircutPhotoInput" hidden>
@@ -955,10 +995,25 @@
   </div>
 
   <!-- Sandbox Item Picker Modal -->
-  <div class="modal-sheet" id="modal-sandbox-picker" data-modal>
+  <div class="modal-sheet modal-sheet-tall" id="modal-sandbox-picker" data-modal>
     <div class="modal-handle"></div>
     <div class="modal-head"><h2 id="sandboxPickerTitle">選擇單品</h2><button class="modal-close" data-close>✕</button></div>
+    <div class="chip-row chip-row-form" id="sandboxPickerCategoryChips"></div>
+    <div class="search-row" id="sandboxPickerSearchRow" style="margin-bottom:12px;">
+      <input type="text" id="sandboxPickerSearchInput" placeholder="搜尋名稱、標籤…">
+    </div>
     <div class="picker-grid item-grid" id="sandboxPickerGrid"></div>
+    <p class="empty-hint" id="sandboxPickerEmpty" hidden>尚無單品可加入</p>
+  </div>
+
+  <!-- Sandbox Manager Modal -->
+  <div class="modal-sheet" id="modal-sandbox-manager" data-modal>
+    <div class="modal-handle"></div>
+    <div class="modal-head"><h2>我的穿搭沙盒</h2><button class="modal-close" data-close>✕</button></div>
+    <div class="sandbox-manager-list" id="sandboxManagerList" style="display:flex;flex-direction:column;gap:8px;padding:8px 0 16px;"></div>
+    <div class="settings-actions">
+      <button type="button" class="btn-primary" id="btnCreateNewSandbox" style="width:100%;">+ 新增沙盒畫布</button>
+    </div>
   </div>
 
 </div>
@@ -969,7 +1024,12 @@
     <button type="button" class="sandbox-back-btn" id="btnSandboxBack" aria-label="返回">
       <span data-icon="back"></span><span>返回</span>
     </button>
-    <h1 class="sandbox-title">穿搭沙盒</h1>
+    <div class="sandbox-title-wrap">
+      <button type="button" class="sandbox-switcher-btn" id="btnSandboxSwitcher" title="切換或新增沙盒">
+        <span id="sandboxCurrentName">沙盒 1</span>
+        <span class="sandbox-caret">▾</span>
+      </button>
+    </div>
     <div class="sandbox-topbar-actions">
       <button type="button" class="sandbox-text-btn" id="btnSandboxClear">清空</button>
       <button type="button" class="btn-primary sandbox-save-btn" id="btnSandboxSave">儲存</button>
@@ -1006,7 +1066,7 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="seed-items.js?v=20260921e"></script>
-<script src="app.js?v=20260921e"></script>
+<script src="seed-items.js?v=20260921f"></script>
+<script src="app.js?v=20260921f"></script>
 </body>
 </html>

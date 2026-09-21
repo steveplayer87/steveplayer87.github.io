@@ -21,7 +21,7 @@ const ICONS = {
   top: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/></svg>`,
   bottom: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5h12l1 6.5-1.8 11a1 1 0 0 1-1 .8h-2a1 1 0 0 1-1-.8L12 12l-1.2 9a1 1 0 0 1-1 .8H7.8a1 1 0 0 1-1-.8L5 10l1-6.5Z"/><path d="M6 7.5h12"/></svg>`,
   outer: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.4 4.5 16 3a4 4 0 0 0-8 0L3.6 4.5A2 2 0 0 0 2 6.5V10c0 .6.4 1 1 1h2v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-9h2c.6 0 1-.4 1-1V6.5a2 2 0 0 0-1.6-2z"/><path d="M12 7v15"/><path d="M8 3v4.5l4 2.5 4-2.5V3"/></svg>`,
-  shoes: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 8c0-3 1.5-4.5 3-4.5s3 1.5 3 4.5c0 3-1 5.5-1 7.5 0 2.5.5 3.5-2 3.5s-2-1-2-3.5c0-2-1-4.5-1-7.5Z"/><path d="M12.5 8c0-3 1.5-4.5 3-4.5s3 1.5 3 4.5c0 3-1 5.5-1 7.5 0 2.5.5 3.5-2 3.5s-2-1-2-3.5c0-2-1-4.5-1-7.5Z"/><path d="M7 7.5h3M7 10h3M14 7.5h3M14 10h3"/></svg>`,
+  shoes: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8c0-3.5 1.5-4.5 3-4.5s3 1 3 4.5c0 3-.8 6-.8 8.5 0 2.5-.7 3.5-2.2 3.5S5.8 19 5.8 16.5C5.8 14 5 11.5 5 8Z"/><path d="M5.2 8.5h5.6M5.1 11.5h5.8"/><path d="M13 8c0-3.5 1.5-4.5 3-4.5s3 1 3 4.5c0 3-.8 6-.8 8.5 0 2.5-.7 3.5-2.2 3.5s-2.2-1-2.2-3.5c0-2.5-.8-5-.8-8.5Z"/><path d="M13.2 8.5h5.6M13.1 11.5h5.8"/></svg>`,
   hat: `<svg viewBox="0 0 24 24" fill="none"><path d="M4.5 15.5c0-4.5 3.3-8 7.5-8s7.5 3.5 7.5 8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M2.5 15.5h19" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>`,
   accessory: `<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.6"/><path d="M12 12v8.5M9.5 20.5h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`,
   custom: `<svg viewBox="0 0 24 24" fill="none"><path d="M11 3.5H6a2.5 2.5 0 0 0-2.5 2.5v5c0 .6.2 1.1.6 1.5l8 8a2 2 0 0 0 2.8 0l5-5a2 2 0 0 0 0-2.8l-8-8c-.4-.4-.9-.6-1.5-.6Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/></svg>`,
@@ -638,8 +638,34 @@ function normalizeLoadedState() {
     if (c.id === 'towelB' && (!c.image || c.image === 'assets/c-towel.jpg')) c.image = 'assets/c-towel-b.jpg';
   });
   state.drafts = Object.assign({ addItem: null, wishlist: null }, state.drafts || {});
+  if (!Array.isArray(state.sandboxes) || state.sandboxes.length === 0) {
+    state.sandboxes = [
+      {
+        id: 'sb_default',
+        name: '沙盒 1',
+        items: Array.isArray(state.sandboxItems) ? state.sandboxItems : []
+      }
+    ];
+  }
+  if (!state.currentSandboxId || !state.sandboxes.some(s => s.id === state.currentSandboxId)) {
+    state.currentSandboxId = state.sandboxes[0]?.id || 'sb_default';
+  }
 }
 normalizeLoadedState();
+
+function getCurrentSandbox() {
+  if (!Array.isArray(state.sandboxes) || state.sandboxes.length === 0) {
+    state.sandboxes = [{ id: 'sb_default', name: '沙盒 1', items: [] }];
+    state.currentSandboxId = 'sb_default';
+  }
+  let sb = state.sandboxes.find(s => s.id === state.currentSandboxId);
+  if (!sb) {
+    sb = state.sandboxes[0];
+    state.currentSandboxId = sb.id;
+  }
+  if (!Array.isArray(sb.items)) sb.items = [];
+  return sb;
+}
 
 const HISTORY_LIMIT = 40;
 let historyReady = false;
@@ -648,28 +674,96 @@ let undoStack = [];
 let redoStack = [];
 let undoViews = [];
 let redoViews = [];
+let undoLabels = [];
+let redoLabels = [];
 let lastHistoryAt = 0;
 let lastChangedView = 'home';
 let activeView = 'home';
 let applyingHistory = false;
 function cloneState(value) { return JSON.parse(JSON.stringify(value)); }
 function stateSignature(value) { return JSON.stringify(value); }
+
+function inferActionLabel(before, after) {
+  if (!before || !after) return '資料變更';
+  const bItems = before.items || [];
+  const aItems = after.items || [];
+  if (aItems.length > bItems.length) {
+    const added = aItems[aItems.length - 1];
+    return added ? `新增單品「${added.name}」` : '新增單品';
+  }
+  if (aItems.length < bItems.length) {
+    const diff = bItems.find(it => !aItems.some(a => a.id === it.id));
+    return diff ? `刪除單品「${diff.name}」` : '刪除單品';
+  }
+  // Detect tag additions or removals
+  const bTags = new Set(bItems.flatMap(i => i.tags || []));
+  const aTags = new Set(aItems.flatMap(i => i.tags || []));
+  for (const t of aTags) {
+    if (!bTags.has(t)) return `新增標籤「${t}」`;
+  }
+  for (const t of bTags) {
+    if (!aTags.has(t)) return `刪除標籤「${t}」`;
+  }
+  // Detect brand changes
+  const bBrands = new Set(bItems.map(i => i.brand).filter(Boolean));
+  const aBrands = new Set(aItems.map(i => i.brand).filter(Boolean));
+  for (const b of aBrands) {
+    if (!bBrands.has(b)) return `新增品牌「${b}」`;
+  }
+  for (const b of bBrands) {
+    if (!aBrands.has(b)) return `刪除品牌「${b}」`;
+  }
+  const bDirty = bItems.filter(it => it.status === 'dirty').length;
+  const aDirty = aItems.filter(it => it.status === 'dirty').length;
+  if (aDirty > bDirty) return '單品送洗';
+  const bRest = bItems.filter(it => it.status === 'resting').length;
+  const aRest = aItems.filter(it => it.status === 'resting').length;
+  if (aRest > bRest) return '移至暫存衣架';
+  const bRet = bItems.filter(it => it.status === 'retired').length;
+  const aRet = aItems.filter(it => it.status === 'retired').length;
+  if (aRet > bRet) return '移入典藏';
+  if (bRet > aRet) return '恢復自典藏';
+  if (JSON.stringify(before.today) !== JSON.stringify(after.today)) return '今日穿搭變更';
+  return '資料修改';
+}
+
 function updateHistoryControls() {
   const undo = document.getElementById('btnUndo');
   const redo = document.getElementById('btnRedo');
   if (undo) undo.disabled = undoStack.length === 0;
   if (redo) redo.disabled = redoStack.length === 0;
+
+  const undoDesc = document.getElementById('undoActionDesc');
+  const redoDesc = document.getElementById('redoActionDesc');
+  if (undoDesc) {
+    const lastLabel = undoLabels[undoLabels.length - 1];
+    undoDesc.textContent = undoStack.length ? `還原${lastLabel || '上一個變更'}` : '無可還原操作';
+  }
+  if (redoDesc) {
+    const lastLabel = redoLabels[redoLabels.length - 1];
+    redoDesc.textContent = redoStack.length ? `重做${lastLabel || '已復原變更'}` : '無可重做操作';
+  }
 }
-function pushHistory(before) {
+
+function pushHistory(before, actionLabel) {
   const now = Date.now();
+  const label = actionLabel || inferActionLabel(before, state) || '變更';
   if (now - lastHistoryAt > 650 || !undoStack.length) {
     undoStack.push(cloneState(before));
     undoViews.push(lastChangedView);
-    if (undoStack.length > HISTORY_LIMIT) { undoStack.shift(); undoViews.shift(); }
+    undoLabels.push(label);
+    if (undoStack.length > HISTORY_LIMIT) {
+      undoStack.shift();
+      undoViews.shift();
+      undoLabels.shift();
+    }
+  } else if (undoLabels.length) {
+    undoLabels[undoLabels.length - 1] = label;
   }
   lastHistoryAt = now;
   redoStack = [];
   redoViews = [];
+  redoLabels = [];
 }
 
 let dbSaveTimer = null;
@@ -695,7 +789,9 @@ async function persistStateToDB() {
 function saveState(options = {}) {
   const next = cloneState(state);
   if (historyReady && !applyingHistory && !options.skipHistory) {
-    if (!historySnapshot || stateSignature(historySnapshot) !== stateSignature(next)) pushHistory(historySnapshot);
+    if (!historySnapshot || stateSignature(historySnapshot) !== stateSignature(next)) {
+      pushHistory(historySnapshot, options.action);
+    }
   }
   historySnapshot = next;
   updateHistoryControls();
@@ -703,10 +799,27 @@ function saveState(options = {}) {
   clearTimeout(dbSaveTimer);
   dbSaveTimer = setTimeout(persistStateToDB, 150);
 }
+
 function replaceStateFromSnapshot(snapshot) {
   Object.keys(state).forEach(key => delete state[key]);
   Object.assign(state, cloneState(snapshot));
 }
+
+function syncHomeThemeColor(isHome, isNight) {
+  const themeMeta = document.querySelector('meta[name="theme-color"]');
+  if (!themeMeta) return;
+  if (!isHome) {
+    themeMeta.setAttribute('content', '#ffffff');
+    return;
+  }
+  if (activeView === 'wardrobe' && uiWardrobeCat === 'retired') {
+    themeMeta.setAttribute('content', '#D8B45B');
+    return;
+  }
+  // Seamless match with the atmosphere gradient top
+  themeMeta.setAttribute('content', isNight ? '#151833' : '#7BAEF8');
+}
+
 function activateView(view) {
   activeView = view;
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('is-active', b.dataset.view === view));
@@ -714,21 +827,17 @@ function activateView(view) {
   const app = document.getElementById('app');
   const isHome = view === 'home';
   app.classList.toggle('is-home-view', isHome);
+  const current = state.profile.weather?.current;
+  const isNight = current && current.is_day != null ? Number(current.is_day) === 0 : (new Date().getHours() >= 18 || new Date().getHours() < 6);
+  document.documentElement.classList.toggle('home-page', isHome);
+  document.documentElement.classList.toggle('night-page', isHome && isNight);
   document.body.classList.toggle('home-page', isHome);
+  document.body.classList.toggle('night-page', isHome && isNight);
   const isRetired = view === 'wardrobe' && uiWardrobeCat === 'retired';
   document.getElementById('mainScroll').classList.toggle('is-retired-scroll', isRetired);
   app.classList.toggle('is-retired-view', isRetired);
-  const themeMeta = document.querySelector('meta[name="theme-color"]');
-  if (themeMeta) {
-    if (isRetired) themeMeta.content = '#D8B45B';
-    else if (isHome) {
-      const current = state.profile.weather?.current;
-      const isNight = current && current.is_day != null ? Number(current.is_day) === 0 : (new Date().getHours() >= 18 || new Date().getHours() < 6);
-      themeMeta.content = isNight ? '#232C48' : '#CFE0F5';
-    } else {
-      themeMeta.content = '#ffffff';
-    }
-  }
+  syncHomeThemeColor(isHome, isNight);
+
   document.getElementById('mainScroll').scrollTop = 0;
   syncHomeRackExpansion();
   if (view === 'history') {
@@ -745,18 +854,22 @@ function activateView(view) {
     setupInspirationCarousel();
   }
 }
+
 function restoreHistoryView(view) {
   if (view && document.getElementById('view-' + view)) {
     forceCloseModal({ skipPersist: true });
     activateView(view);
   }
 }
+
 function undoState() {
   if (!undoStack.length) return;
   const target = undoStack.pop();
   const targetView = undoViews.pop() || activeView;
+  const label = undoLabels.pop() || '變更';
   redoStack.push(cloneState(state));
   redoViews.push(activeView);
+  redoLabels.push(label);
   applyingHistory = true;
   replaceStateFromSnapshot(target);
   saveState({ skipHistory: true });
@@ -766,14 +879,17 @@ function undoState() {
   renderCardImageScale();
   updateHistoryControls();
   restoreHistoryView(targetView);
-  toast('已復原上一步變更');
+  toast(`已還原${label}`);
 }
+
 function redoState() {
   if (!redoStack.length) return;
   const target = redoStack.pop();
   const targetView = redoViews.pop() || activeView;
+  const label = redoLabels.pop() || '變更';
   undoStack.push(cloneState(state));
   undoViews.push(activeView);
+  undoLabels.push(label);
   applyingHistory = true;
   replaceStateFromSnapshot(target);
   saveState({ skipHistory: true });
@@ -783,7 +899,7 @@ function redoState() {
   renderCardImageScale();
   updateHistoryControls();
   restoreHistoryView(targetView);
-  toast('已重做下一步變更');
+  toast(`已重做${label}`);
 }
 
 function ensureNewDay() {
@@ -918,6 +1034,16 @@ function sendToBasketNow(itemId) {
   saveState();
   renderAll();
   toast(`${item.name} 已丟進洗衣籃`);
+}
+function sendToTempRackNow(itemId) {
+  const item = findItem(itemId);
+  if (!item) return;
+  item.status = 'resting';
+  item.restingSince = todayStr();
+  item.basketAt = null;
+  saveState({ action: `將「${item.name}」移至暫存衣架` });
+  renderAll();
+  toast(`已將「${item.name}」移至暫存衣架`);
 }
 function toggleExtraWash(itemId) {
   const item = findItem(itemId);
@@ -1142,15 +1268,9 @@ function renderHeader() {
   const isNight = current && current.is_day != null ? Number(current.is_day) === 0 : (new Date().getHours() >= 18 || new Date().getHours() < 6);
   const app = document.getElementById('app');
   app.classList.toggle('is-night-view', isNight);
+  document.documentElement.classList.toggle('night-page', isNight && document.documentElement.classList.contains('home-page'));
   document.body.classList.toggle('night-page', isNight && document.body.classList.contains('home-page'));
-  const themeMeta = document.querySelector('meta[name="theme-color"]');
-  if (themeMeta) {
-    if (activeView === 'wardrobe' && uiWardrobeCat === 'retired') {
-      themeMeta.setAttribute('content', '#D8B45B');
-    } else {
-      themeMeta.setAttribute('content', isNight ? '#232C48' : '#CFE0F5');
-    }
-  }
+  syncHomeThemeColor(activeView === 'home', isNight);
   const sceneSky = document.getElementById('sceneSky');
   const weatherCode = Number(current?.weather_code);
   const rainCodes = [51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82, 95, 96, 99];
@@ -1176,7 +1296,7 @@ function itemPhotoMarkup(item) {
     : thumbInner(item);
 }
 function calendarPhotoStyle(item) {
-  return item.image ? `background-color:#fff;background-image:url('${item.image}');background-repeat:no-repeat;background-position:center bottom;background-size:contain` : 'background-color:#fff';
+  return item.image ? `background-image:url('${item.image}');background-repeat:no-repeat;background-position:center bottom;background-size:contain;background-color:transparent;` : 'background-color:transparent;';
 }
 function thumbInner(item) {
   return item.image ? '' : (categoryIcon(item.category) || '');
@@ -1366,6 +1486,13 @@ async function selectWeatherLocation(location) {
   await refreshWeather(true);
 }
 async function refreshWeather(force = false) {
+  if (state.weatherSimulation && !force) {
+    renderWeather();
+    return;
+  }
+  if (force && state.weatherSimulation) {
+    state.weatherSimulation = null;
+  }
   const w = state.profile.weather || {};
   if (w.latitude == null || w.longitude == null) { syncWeatherSettings(); renderWeather(); return; }
   if (!force && w.current && Date.now() - Number(w.updatedAt || 0) < 30 * 60 * 1000) { renderWeather(); return; }
@@ -1440,7 +1567,9 @@ function renderHome() {
   const pendingConsumables = getPendingLaundryConsumables();
   renderChipList('tempRackList', 'tempRackEmpty', rack, { pinActiveTowel: true });
   renderChipList('basketList', 'basketEmpty', basket, { pendingConsumables });
-  document.getElementById('basketTitle').textContent = `洗衣籃・${Math.max(0, daysBetween(state.laundry.lastWashDate, todayStr()))}天`;
+  const daysSinceWash = Math.max(0, daysBetween(state.laundry.lastWashDate, todayStr()));
+  const totalBasketCount = basket.length + pendingConsumables.length;
+  document.getElementById('basketTitle').textContent = `洗衣籃・${totalBasketCount ? `${totalBasketCount}件` : `${daysSinceWash}天`}`;
   const activeTowelCount = (state.activeTowel && state.consumables.some(c => c.id === state.activeTowel)) ? 1 : 0;
   const rackCount = rack.length + activeTowelCount;
   const tempRackTitle = document.querySelector('#card-rack .rack-title');
@@ -1477,8 +1606,13 @@ function renderChipList(listId, emptyId, items, opts) {
     });
   }
 
-  if (!items.length && !list.children.length) { empty.hidden = false; return; }
+  if (!items.length && !list.children.length) {
+    empty.hidden = false;
+    empty.style.display = 'block';
+    return;
+  }
   empty.hidden = true;
+  empty.style.display = 'none';
   items.slice(0, 8).forEach(item => {
     const chip = document.createElement('button');
     chip.className = 'rack-chip';
@@ -1761,12 +1895,22 @@ function renderHistory() {
       dotsHtml += `<span class="cal-event-dot cal-dot-towel" style="${towelRight ? `right:${towelRight}` : ''}"></span>`;
     }
     cell.innerHTML = `<span class="cal-num">${d}</span>${dotsHtml}${thumbsHtml}`;
-    if (dayEntries) cell.addEventListener('click', () => openDayDetail(dateStr, dayEntries[0]));
-    else if (dateStr < today) cell.addEventListener('click', () => openBackfillModal(dateStr));
+    if (dayEntries && dayEntries.length) cell.addEventListener('click', () => openDayDetail(dateStr, dayEntries[0]));
+    else cell.addEventListener('click', () => openBackfillModal(dateStr));
     grid.appendChild(cell);
   }
   renderCalStats();
   renderRank();
+}
+
+const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'];
+function formatDayWithWeekday(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  const m = d.getMonth() + 1;
+  const day = d.getDate();
+  const w = WEEKDAYS[d.getDay()];
+  const isToday = dateStr === todayStr();
+  return `${m}月${day}日 (${w}${isToday ? ' · 今天' : ''})`;
 }
 
 function renderCalStats() {
@@ -1843,43 +1987,46 @@ function renderRank() {
 }
 
 function openDayDetail(dateStr, entry) {
-  const d = new Date(dateStr + 'T00:00:00');
-  document.getElementById('dayDetailTitle').textContent = `${d.getMonth()+1}月${d.getDate()}日的穿搭`;
+  document.getElementById('dayDetailTitle').textContent = `${formatDayWithWeekday(dateStr)} 的穿搭`;
   const body = document.getElementById('dayDetailBody');
   const isToday = dateStr === todayStr();
   const rows = ALL_SLOTS.filter(s => entry[s]).map(s => {
     const item = findItem(entry[s]);
     if (!item) return `<div class="day-detail-row"><p class="ddr-name">（已刪除的衣物）</p></div>`;
-      const thumb = item.image ? `<img class="ddr-thumb" style="background-color:#fff" src="${item.image}" alt="">` : `<span class="ddr-thumb">${categoryIcon(item.category)}</span>`;
+    const thumb = item.image ? `<img class="ddr-thumb" src="${item.image}" alt="">` : `<span class="ddr-thumb">${categoryIcon(item.category)}</span>`;
     return `<button type="button" class="day-detail-row" data-item-id="${item.id}">${thumb}
       <div><p class="ddr-cat">${categoryLabel(item.category)}</p><p class="ddr-name">${escapeHtml(item.name)}</p></div></button>`;
   });
-  body.innerHTML = (rows.join('') || `<p class="empty-hint">這天沒有穿搭紀錄</p>`) + (isToday ? '' : `
+  body.innerHTML = (rows.join('') || `<p class="empty-hint">這天沒有穿搭紀錄</p>`) + `
     <div class="settings-actions" style="margin-top:14px">
       <button class="btn-secondary" id="btnDayEdit">編輯這天</button>
-      <button class="btn-secondary btn-danger" id="btnDayDelete">刪除這天</button>
-    </div>`);
+      ${isToday ? '' : '<button class="btn-secondary btn-danger" id="btnDayDelete">刪除這天</button>'}
+    </div>`;
   body.querySelectorAll('.day-detail-row[data-item-id]').forEach(row => {
     row.addEventListener('click', () => openItemDetail(row.dataset.itemId));
   });
-  if (!isToday) {
-    const editBtn = document.getElementById('btnDayEdit');
-    if (editBtn) editBtn.addEventListener('click', () => openBackfillModal(dateStr));
-    const delBtn = document.getElementById('btnDayDelete');
-    if (delBtn) delBtn.addEventListener('click', () => {
-      openConfirm('刪除這天的穿搭紀錄？', `${fmtDate(dateStr)} 的紀錄將被移除，此動作無法復原`, [
-        { label: '取消', kind: 'secondary' },
-        { label: '刪除', kind: 'danger', onClick: () => {
-          state.ootdHistory = state.ootdHistory.filter(e => e.date !== dateStr);
-          saveState();
-          renderHistory();
-          toast('已刪除這天的穿搭紀錄');
-        } },
-      ]);
-    });
-  }
-  openModal('modal-day');
+  const editBtn = document.getElementById('btnDayEdit');
+  if (editBtn) editBtn.addEventListener('click', () => openBackfillModal(dateStr));
+  const delBtn = document.getElementById('btnDayDelete');
+  if (delBtn) delBtn.addEventListener('click', () => {
+    openConfirm('刪除這天的穿搭紀錄？', `${fmtDate(dateStr)} 的紀錄將被移除，此動作無法復原`, [
+      { label: '取消', kind: 'secondary' },
+      { label: '刪除', kind: 'danger', onClick: () => {
+        if (isToday) {
+          ALL_SLOTS.forEach(s => { if (state.today[s]) setTodaySlot(s, null); });
+        }
+        state.ootdHistory = state.ootdHistory.filter(e => e.date !== dateStr);
+        saveState({ action: `刪除 ${formatDayWithWeekday(dateStr)} 穿搭` });
+        renderHistory();
+        renderHome();
+        closeModal();
+        toast('已刪除這天的穿搭紀錄');
+      } },
+    ]);
+  });
+  openModal('modal-day-detail');
 }
+
 
 /* ---- Hairstyle ('更多' tab) ---- */
 function renderHairstyleSection() {
@@ -2868,6 +3015,8 @@ function openItemDetail(itemId) {
     if (['dirty', 'resting'].includes(item.status)) html += `<button class="btn-secondary" id="aBoost">${item.extraWash ? '取消加強清洗' : '標記加強清洗'}</button>`;
     if (item.status === 'dirty') html += `<button class="btn-secondary" id="aClean">已記錄清洗</button>`;
     if (item.status !== 'dirty') html += `<button class="btn-secondary" id="aBasket">丟進洗衣籃</button>`;
+    if (item.status !== 'resting') html += `<button class="btn-secondary" id="aTempRack">移至暫存衣架</button>`;
+    else html += `<button class="btn-secondary" id="aClean">放回衣櫥（乾淨）</button>`;
     actions.innerHTML = html;
     const aWearToday = actions.querySelector('#aWearToday');
     if (aWearToday) aWearToday.addEventListener('click', () => { setTodaySlot(item.category, item.id); closeModal(); toast(`已設為今日${categoryLabel(item.category)}`); });
@@ -2877,6 +3026,8 @@ function openItemDetail(itemId) {
     if (aClean) aClean.addEventListener('click', () => { markItemClean(item.id); closeModal(); });
     const aBasket = actions.querySelector('#aBasket');
     if (aBasket) aBasket.addEventListener('click', () => { sendToBasketNow(item.id); closeModal(); });
+    const aTempRack = actions.querySelector('#aTempRack');
+    if (aTempRack) aTempRack.addEventListener('click', () => { sendToTempRackNow(item.id); closeModal(); });
   }
   openModal('modal-item');
 }
@@ -3660,7 +3811,11 @@ function openExtrasPicker() {
    ============================================================ */
 function openBackfillModal(presetDate) {
   const date = presetDate || todayStr();
-  const existing = state.ootdHistory.find(e => e.date === date);
+  const isToday = date === todayStr();
+  let existing = state.ootdHistory.find(e => e.date === date);
+  if (!existing && isToday && ALL_SLOTS.some(s => state.today[s])) {
+    existing = state.today;
+  }
   backfillDraft = { date };
   ALL_SLOTS.forEach(s => { backfillDraft[s] = existing ? (existing[s] || null) : null; });
   renderBackfillModal();
@@ -3668,6 +3823,8 @@ function openBackfillModal(presetDate) {
 }
 function renderBackfillModal() {
   document.getElementById('backfillDate').value = backfillDraft.date;
+  const title = document.getElementById('backfillModalTitle');
+  if (title) title.textContent = `${formatDayWithWeekday(backfillDraft.date)} 穿搭`;
   const wrap = document.getElementById('backfillRows');
   wrap.innerHTML = '';
   ALL_SLOTS.forEach(slot => {
@@ -3712,6 +3869,34 @@ function openFilterModal(context = 'wardrobe') {
     if (invertLabel) {
       invertLabel.textContent = uiWardrobeFilters.invert ? '反向排除模式：已開啟（反轉結果）' : '反向排除模式：關閉';
     }
+    if (!btnInvert._hasInvertBound) {
+      btnInvert._hasInvertBound = true;
+      btnInvert.addEventListener('click', () => {
+        uiWardrobeFilters.invert = !uiWardrobeFilters.invert;
+        btnInvert.classList.toggle('is-active', !!uiWardrobeFilters.invert);
+        if (invertLabel) {
+          invertLabel.textContent = uiWardrobeFilters.invert ? '反向排除模式：已開啟（反轉結果）' : '反向排除模式：關閉';
+        }
+        refreshFilteredViews();
+      });
+    }
+  }
+
+  // Manage buttons
+  const btnManageColors = document.getElementById('btnManageColors');
+  if (btnManageColors && !btnManageColors._hasManageBound) {
+    btnManageColors._hasManageBound = true;
+    btnManageColors.addEventListener('click', () => openManagePropsModal('color'));
+  }
+  const btnManageBrands = document.getElementById('btnManageBrands');
+  if (btnManageBrands && !btnManageBrands._hasManageBound) {
+    btnManageBrands._hasManageBound = true;
+    btnManageBrands.addEventListener('click', () => openManagePropsModal('brand'));
+  }
+  const btnManageTags = document.getElementById('btnManageTags');
+  if (btnManageTags && !btnManageTags._hasManageBound) {
+    btnManageTags._hasManageBound = true;
+    btnManageTags.addEventListener('click', () => openManagePropsModal('tag'));
   }
 
   document.querySelectorAll('#filterStatusChips .chip').forEach(c => c.classList.toggle('is-active', c.getAttribute('data-status') === uiWardrobeFilters.status));
@@ -3733,16 +3918,16 @@ function openFilterModal(context = 'wardrobe') {
   if (colorRow) {
     colorRow.innerHTML = '';
     COLOR_FAMILIES.forEach(fam => {
+      const famName = typeof fam === 'string' ? fam : fam.name;
+      const famHex = typeof fam === 'object' && fam.hex ? fam.hex : '#888';
       const chip = document.createElement('button');
       chip.type = 'button';
-      chip.className = 'chip chip-color' + (uiWardrobeFilters.colors.includes(fam) ? ' is-active' : '');
-      const preset = COMMON_COLOR_PRESETS.find(p => p.name === fam);
-      const dotHex = preset ? preset.hex : '#888';
-      chip.innerHTML = `<span class="color-dot" style="background-color:${dotHex};"></span><span>${fam}</span>`;
+      chip.className = 'chip chip-color' + (uiWardrobeFilters.colors.includes(famName) ? ' is-active' : '');
+      chip.innerHTML = `<span class="color-dot" style="background-color:${famHex};"></span><span>${famName}</span>`;
       chip.addEventListener('click', () => {
-        uiWardrobeFilters.colors = uiWardrobeFilters.colors.includes(fam)
-          ? uiWardrobeFilters.colors.filter(c => c !== fam)
-          : uiWardrobeFilters.colors.concat(fam);
+        uiWardrobeFilters.colors = uiWardrobeFilters.colors.includes(famName)
+          ? uiWardrobeFilters.colors.filter(c => c !== famName)
+          : uiWardrobeFilters.colors.concat(famName);
         chip.classList.toggle('is-active');
         refreshFilteredViews();
       });
@@ -3794,6 +3979,139 @@ function openFilterModal(context = 'wardrobe') {
   openModal('modal-filter');
 }
 
+function openManagePropsModal(propType) {
+  const modal = document.getElementById('modal-manage-props');
+  const title = document.getElementById('managePropsTitle');
+  const body = document.getElementById('managePropsBody');
+  if (!modal || !title || !body) return;
+
+  const propNames = { color: '顏色', brand: '品牌', tag: '標籤' };
+  title.textContent = `管理${propNames[propType] || '屬性'}`;
+  body.innerHTML = '';
+
+  let list = [];
+  if (propType === 'color') {
+    const colorMap = new Map();
+    state.items.forEach(it => {
+      if (it.color) {
+        if (!colorMap.has(it.color)) {
+          colorMap.set(it.color, { name: it.color, hex: it.colorHex || '#888', count: 1 });
+        } else {
+          colorMap.get(it.color).count++;
+        }
+      }
+    });
+    COLOR_FAMILIES.forEach(f => {
+      if (!colorMap.has(f.name)) {
+        colorMap.set(f.name, { name: f.name, hex: f.hex, count: 0 });
+      }
+    });
+    list = Array.from(colorMap.values());
+  } else if (propType === 'brand') {
+    const brandMap = new Map();
+    state.items.forEach(it => {
+      const b = (it.brand || '').trim();
+      if (b) {
+        brandMap.set(b, (brandMap.get(b) || 0) + 1);
+      }
+    });
+    list = Array.from(brandMap.entries()).map(([name, count]) => ({ name, count })).sort((a, b) => a.name.localeCompare(b.name, 'zh-Hant'));
+  } else if (propType === 'tag') {
+    const tagMap = new Map();
+    state.items.forEach(it => {
+      (it.tags || []).forEach(t => tagMap.set(t, (tagMap.get(t) || 0) + 1));
+    });
+    state.wishlist.forEach(it => {
+      (it.tags || []).forEach(t => tagMap.set(t, (tagMap.get(t) || 0) + 1));
+    });
+    list = Array.from(tagMap.entries()).map(([name, count]) => ({ name, count })).sort((a, b) => a.name.localeCompare(b.name, 'zh-Hant'));
+  }
+
+  if (list.length === 0) {
+    body.innerHTML = `<p class="empty-hint" style="padding:16px 0;">尚無可管理的${propNames[propType]}</p>`;
+  } else {
+    const container = document.createElement('div');
+    container.style.cssText = 'display:flex;flex-direction:column;gap:8px;max-height:60vh;overflow-y:auto;padding:2px;';
+
+    list.forEach(item => {
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;background:var(--color-surface);border:1px solid var(--color-line);border-radius:10px;';
+
+      let leftMarkup = '';
+      if (propType === 'color') {
+        leftMarkup = `<div style="display:flex;align-items:center;gap:8px;"><span class="color-dot" style="background-color:${item.hex};"></span><b>${escapeHtml(item.name)}</b><small style="color:var(--color-ink-faint);">(${item.count}件)</small></div>`;
+      } else {
+        leftMarkup = `<div style="display:flex;align-items:center;gap:8px;"><b>${escapeHtml(item.name)}</b><small style="color:var(--color-ink-faint);">(${item.count}件)</small></div>`;
+      }
+
+      row.innerHTML = `
+        ${leftMarkup}
+        <div style="display:flex;align-items:center;gap:6px;">
+          <button type="button" class="btn-secondary btn-edit-prop" style="padding:4px 10px;font-size:12px;">改名</button>
+          <button type="button" class="btn-secondary btn-danger btn-del-prop" style="padding:4px 10px;font-size:12px;">刪除</button>
+        </div>
+      `;
+
+      row.querySelector('.btn-edit-prop').addEventListener('click', () => {
+        const next = prompt(`修改${propNames[propType]}名稱：`, item.name);
+        if (!next || !next.trim() || next.trim() === item.name) return;
+        const newName = next.trim();
+        if (propType === 'color') {
+          state.items.forEach(it => {
+            if (it.color === item.name) it.color = newName;
+            if (it.colorFamily === item.name) it.colorFamily = newName;
+          });
+        } else if (propType === 'brand') {
+          state.items.forEach(it => {
+            if (it.brand === item.name) it.brand = newName;
+          });
+        } else if (propType === 'tag') {
+          state.items.forEach(it => {
+            if (it.tags) it.tags = it.tags.map(t => t === item.name ? newName : t);
+          });
+          state.wishlist.forEach(it => {
+            if (it.tags) it.tags = it.tags.map(t => t === item.name ? newName : t);
+          });
+        }
+        saveState({ action: `修改${propNames[propType]}「${item.name}」為「${newName}」` });
+        renderAll();
+        openManagePropsModal(propType);
+        toast(`已更新為「${newName}」`);
+      });
+
+      row.querySelector('.btn-del-prop').addEventListener('click', () => {
+        if (!confirm(`確定要刪除${propNames[propType]}「${item.name}」嗎？相關單品將移除此${propNames[propType]}。`)) return;
+        if (propType === 'color') {
+          state.items.forEach(it => {
+            if (it.color === item.name) { it.color = ''; it.colorHex = ''; it.colorFamily = ''; }
+          });
+        } else if (propType === 'brand') {
+          state.items.forEach(it => {
+            if (it.brand === item.name) { it.brand = ''; it.brandIcon = null; }
+          });
+        } else if (propType === 'tag') {
+          state.items.forEach(it => {
+            if (it.tags) it.tags = it.tags.filter(t => t !== item.name);
+          });
+          state.wishlist.forEach(it => {
+            if (it.tags) it.tags = it.tags.filter(t => t !== item.name);
+          });
+        }
+        saveState({ action: `刪除${propNames[propType]}「${item.name}」` });
+        renderAll();
+        openManagePropsModal(propType);
+        toast(`已刪除「${item.name}」`);
+      });
+
+      container.appendChild(row);
+    });
+
+    body.appendChild(container);
+  }
+
+  openModal('modal-manage-props');
+}
+
 /* ============================================================
    EVENT WIRING
    ============================================================ */
@@ -3828,23 +4146,38 @@ function wireEvents() {
   });
   document.getElementById('btnSaveBackfill').addEventListener('click', () => {
     if (!backfillDraft) return;
-    if (backfillDraft.date === todayStr()) {
-      toast('今天的穿搭請到主頁選擇喔');
-      return;
-    }
     if (!ALL_SLOTS.some(s => backfillDraft[s])) {
       toast('至少選一件單品');
       return;
     }
+    const isToday = backfillDraft.date === todayStr();
     const entry = { date: backfillDraft.date };
-    ALL_SLOTS.forEach(s => { entry[s] = backfillDraft[s]; if (entry[s]) { const it = findItem(entry[s]); if (it) it.totalWearCount = (it.totalWearCount || 0) + 1; } });
-    const existingIdx = state.ootdHistory.findIndex(e => e.date === entry.date);
-    if (existingIdx >= 0) state.ootdHistory[existingIdx] = entry; else state.ootdHistory.push(entry);
-    saveState();
+    ALL_SLOTS.forEach(s => {
+      entry[s] = backfillDraft[s] || null;
+    });
+
+    if (isToday) {
+      ALL_SLOTS.forEach(s => {
+        setTodaySlot(s, entry[s]);
+      });
+    } else {
+      ALL_SLOTS.forEach(s => {
+        if (entry[s]) {
+          const it = findItem(entry[s]);
+          if (it) it.totalWearCount = (it.totalWearCount || 0) + 1;
+        }
+      });
+      const existingIdx = state.ootdHistory.findIndex(e => e.date === entry.date);
+      if (existingIdx >= 0) state.ootdHistory[existingIdx] = entry;
+      else state.ootdHistory.push(entry);
+    }
+
+    saveState({ action: `更新 ${formatDayWithWeekday(backfillDraft.date)} 穿搭` });
     backfillDraft = null;
-    document.getElementById('modalOverlay').classList.remove('is-open');
+    forceCloseModal({ skipPersist: true });
     renderHistory();
-    toast('已儲存這天的穿搭紀錄');
+    renderHome();
+    toast('已儲存穿搭紀錄');
   });
 
   document.getElementById('btnNotifications').addEventListener('click', () => { renderNotifications(); openModal('modal-notif'); });
@@ -4018,14 +4351,18 @@ function wireEvents() {
   function setSelectMode(on) {
     uiSelectMode = on;
     uiSelectedIds.clear();
-    document.getElementById('btnSelectMode').classList.toggle('is-active', on);
+    const btn = document.getElementById('btnSelectMode');
+    if (btn) {
+      btn.classList.toggle('is-active', on);
+      btn.textContent = on ? '取消' : '選取';
+    }
     document.getElementById('selectBar').classList.toggle('is-hidden', !on);
     document.getElementById('btnAddItem').classList.toggle('is-hidden', on);
     document.getElementById('selectCount').textContent = '已選 0 件';
     renderWardrobe();
   }
   document.getElementById('btnSelectMode').addEventListener('click', () => setSelectMode(!uiSelectMode));
-  document.getElementById('btnSelectCancel').addEventListener('click', () => setSelectMode(false));
+  document.getElementById('btnSelectCancel')?.addEventListener('click', () => setSelectMode(false));
   document.getElementById('btnSelectAll').addEventListener('click', () => {
     const visible = getVisibleWardrobeItems();
     const allSelected = visible.length > 0 && visible.every(i => uiSelectedIds.has(i.id));
@@ -4034,29 +4371,63 @@ function wireEvents() {
     document.getElementById('selectCount').textContent = `已選 ${uiSelectedIds.size} 件`;
     renderWardrobe();
   });
+  document.getElementById('btnSelectWash')?.addEventListener('click', () => {
+    if (!uiSelectedIds.size) { toast('請先勾選單品'); return; }
+    const count = uiSelectedIds.size;
+    uiSelectedIds.forEach(id => {
+      const it = findItem(id);
+      if (it && it.status !== 'retired') {
+        it.status = 'dirty';
+        it.basketAt = todayStr();
+        it.restingSince = null;
+      }
+    });
+    saveState({ action: `將 ${count} 件單品送洗` });
+    setSelectMode(false);
+    renderAll();
+    toast(`已將 ${count} 件單品丟進洗衣籃`);
+  });
+  document.getElementById('btnSelectTemp')?.addEventListener('click', () => {
+    if (!uiSelectedIds.size) { toast('請先勾選單品'); return; }
+    const count = uiSelectedIds.size;
+    uiSelectedIds.forEach(id => {
+      const it = findItem(id);
+      if (it && it.status !== 'retired') {
+        it.status = 'resting';
+        it.restingSince = todayStr();
+        it.basketAt = null;
+      }
+    });
+    saveState({ action: `將 ${count} 件單品移至暫存衣架` });
+    setSelectMode(false);
+    renderAll();
+    toast(`已將 ${count} 件單品移至暫存衣架`);
+  });
   document.getElementById('btnSelectRetire').addEventListener('click', () => {
-    if (!uiSelectedIds.size) return;
+    if (!uiSelectedIds.size) { toast('請先勾選單品'); return; }
     const n = uiSelectedIds.size;
     openConfirm('移入典藏？', `已選 ${n} 件單品`, [
       { label: '取消', kind: 'secondary' },
       { label: '確定', kind: 'primary', onClick: () => {
         uiSelectedIds.forEach(id => { const it = findItem(id); if (it) it.status = 'retired'; });
-        saveState();
+        saveState({ action: `將 ${n} 件單品移入典藏` });
         setSelectMode(false);
         renderAll();
+        toast(`已將 ${n} 件單品移入典藏`);
       } },
     ]);
   });
   document.getElementById('btnSelectDelete').addEventListener('click', () => {
-    if (!uiSelectedIds.size) return;
+    if (!uiSelectedIds.size) { toast('請先勾選單品'); return; }
     const n = uiSelectedIds.size;
     openConfirm('永久刪除？', `已選 ${n} 件單品，此動作無法復原`, [
       { label: '取消', kind: 'secondary' },
       { label: '刪除', kind: 'danger', onClick: () => {
         state.items = state.items.filter(i => !uiSelectedIds.has(i.id));
-        saveState();
+        saveState({ action: `刪除 ${n} 件單品` });
         setSelectMode(false);
         renderAll();
+        toast(`已刪除 ${n} 件單品`);
       } },
     ]);
   });
@@ -4622,7 +4993,57 @@ function wireEvents() {
   document.getElementById('btnWeatherSearch').addEventListener('click', searchWeatherCities);
   document.getElementById('weatherCityInput').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); searchWeatherCities(); } });
   document.getElementById('weatherSearchResults').addEventListener('click', e => { const btn = e.target.closest('.weather-result'); if (!btn) return; const loc = e.currentTarget._locations?.[Number(btn.dataset.weatherIndex)]; selectWeatherLocation(loc); });
-  document.getElementById('btnWeatherRefresh').addEventListener('click', () => refreshWeather(true));
+  document.getElementById('btnWeatherRefresh').addEventListener('click', () => {
+    state.weatherSimulation = null;
+    document.querySelectorAll('.weather-sim-btn').forEach(b => b.classList.remove('is-active'));
+    refreshWeather(true);
+  });
+
+  function applyWeatherSimulation(simKey) {
+    if (simKey === 'real') {
+      state.weatherSimulation = null;
+      document.querySelectorAll('.weather-sim-btn').forEach(b => b.classList.remove('is-active'));
+      refreshWeather(true);
+      toast('已恢復真實天氣');
+      renderHeader();
+      renderWeather();
+      return;
+    }
+    const SIM_CONFIGS = {
+      clear_day: { weather_code: 0, is_day: 1, temperature_2m: 26, label: '晴朗・白天', symbol: '☀', city: '情境模擬' },
+      clear_night: { weather_code: 0, is_day: 0, temperature_2m: 20, label: '晴朗・夜晚', symbol: '🌙', city: '情境模擬' },
+      cloudy_day: { weather_code: 3, is_day: 1, temperature_2m: 22, label: '陰天・白天', symbol: '☁', city: '情境模擬' },
+      cloudy_night: { weather_code: 3, is_day: 0, temperature_2m: 19, label: '陰天・夜晚', symbol: '☁', city: '情境模擬' },
+      rain_day: { weather_code: 61, is_day: 1, temperature_2m: 21, label: '小雨・白天', symbol: '🌧', city: '情境模擬' },
+      rain_night: { weather_code: 61, is_day: 0, temperature_2m: 18, label: '小雨・夜晚', symbol: '🌧', city: '情境模擬' },
+      heavy_day: { weather_code: 65, is_day: 1, temperature_2m: 19, label: '大雨・白天', symbol: '⛈', city: '情境模擬' },
+      heavy_night: { weather_code: 65, is_day: 0, temperature_2m: 17, label: '大雨・夜晚', symbol: '⛈', city: '情境模擬' },
+      sun_shower: { weather_code: 80, is_day: 1, temperature_2m: 24, label: '晴時多雲偶陣雨', symbol: '🌦', city: '情境模擬' },
+    };
+    const cfg = SIM_CONFIGS[simKey];
+    if (!cfg) return;
+    state.weatherSimulation = simKey;
+    if (!state.profile.weather) state.profile.weather = {};
+    state.profile.weather.city = cfg.city;
+    state.profile.weather.area = cfg.city;
+    state.profile.weather.current = { weather_code: cfg.weather_code, is_day: cfg.is_day, temperature_2m: cfg.temperature_2m };
+    state.profile.weather.updatedAt = Date.now();
+    saveState({ action: `切換天氣情境至「${cfg.label}」` });
+    renderHeader();
+    renderWeather();
+    syncWeatherSettings();
+    toast(`已套用天氣情境：${cfg.symbol} ${cfg.label}`);
+  }
+  document.querySelectorAll('.weather-sim-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      applyWeatherSimulation(btn.dataset.sim);
+      document.querySelectorAll('.weather-sim-btn').forEach(b => b.classList.remove('is-active'));
+      if (btn.dataset.sim !== 'real') {
+        btn.classList.add('is-active');
+      }
+    });
+  });
+
   document.getElementById('btnUndo').addEventListener('click', undoState);
   document.getElementById('btnRedo').addEventListener('click', redoState);
 
@@ -4839,8 +5260,8 @@ function setupSandboxInteractions() {
 
   // 1. TOUCH EVENTS (Mobile Safari / iOS / Android)
   viewport.addEventListener('touchstart', e => {
-    // 2-finger touch -> Pinch Zoom Mode strictly
-    if (e.touches.length === 2) {
+    // 2-finger touch -> Pinch Zoom Mode strictly (only if not already dragging)
+    if (e.touches.length === 2 && touchMode !== 'drag') {
       touchMode = 'pinch';
       hideSandboxToolbar();
       activeDragItem = null; // Cancel drag immediately
@@ -4917,8 +5338,12 @@ function setupSandboxInteractions() {
       return;
     }
 
-    // Single finger -> strictly drag, NO zoom
-    if (touchMode === 'drag' && e.touches.length === 1 && activeDragItem) {
+    // Single finger -> strictly drag, strictly keep scale constant
+    if (touchMode === 'drag' && activeDragItem) {
+      if (e.touches.length > 1) {
+        e.preventDefault();
+        return;
+      }
       const dx = e.touches[0].clientX - touchStartX;
       const dy = e.touches[0].clientY - touchStartY;
 
@@ -4928,6 +5353,7 @@ function setupSandboxInteractions() {
       if (el) {
         el.style.left = `${activeDragItem.x}px`;
         el.style.top = `${activeDragItem.y}px`;
+        el.style.transform = `scale(${activeDragItem.scale || 1})`;
       }
       e.preventDefault();
     }
@@ -5097,9 +5523,25 @@ function setupSandboxInteractions() {
   const btnSave = document.getElementById('btnSandboxSave');
   if (btnSave) {
     btnSave.onclick = () => {
-      saveState();
-      toast('沙盒穿搭已儲存');
+      const sb = getCurrentSandbox();
+      sb.items = cloneState(state.sandboxItems);
+      saveState({ action: `儲存「${sb.name}」` });
+      toast(`「${sb.name}」穿搭已儲存`);
     };
+  }
+
+  // Switcher & Multi-sandbox manager
+  const btnSwitcher = document.getElementById('btnSandboxSwitcher');
+  if (btnSwitcher) {
+    btnSwitcher.onclick = () => {
+      renderSandboxManagerModal();
+      openModal('modal-sandbox-manager');
+    };
+  }
+
+  const btnCreateSb = document.getElementById('btnCreateNewSandbox');
+  if (btnCreateSb) {
+    btnCreateSb.onclick = () => createNewSandbox();
   }
 
   // Add buttons
@@ -5128,38 +5570,206 @@ function setupSandboxInteractions() {
   }
 }
 
+function updateSandboxHeaderName() {
+  const nameEl = document.getElementById('sandboxCurrentName');
+  if (nameEl) {
+    const sb = getCurrentSandbox();
+    nameEl.textContent = sb.name || '穿搭沙盒';
+  }
+}
+
+function switchSandbox(id) {
+  const target = state.sandboxes.find(s => s.id === id);
+  if (!target) return;
+  state.currentSandboxId = target.id;
+  if (!Array.isArray(target.items)) target.items = [];
+  state.sandboxItems = target.items;
+  selectedSandboxItemId = null;
+  hideSandboxToolbar();
+  renderSandboxCanvas();
+  updateSandboxHeaderName();
+  closeModal();
+  toast(`已切換至「${target.name}」`);
+}
+
+function renderSandboxManagerModal() {
+  const listEl = document.getElementById('sandboxManagerList');
+  if (!listEl) return;
+  listEl.innerHTML = '';
+  const current = getCurrentSandbox();
+
+  state.sandboxes.forEach(sb => {
+    const isCurrent = sb.id === current.id;
+    const row = document.createElement('div');
+    row.style.cssText = `display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;border-radius:12px;border:1.5px solid ${isCurrent ? 'var(--color-denim)' : 'var(--color-line)'};background:${isCurrent ? 'rgba(78,110,242,0.06)' : 'var(--color-surface)'};`;
+
+    row.innerHTML = `
+      <div style="display:flex;flex-direction:column;gap:2px;cursor:pointer;flex:1;">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <b style="font-size:14px;color:var(--color-ink);">${escapeHtml(sb.name)}</b>
+          ${isCurrent ? '<span style="font-size:11px;background:var(--color-denim);color:#fff;padding:1px 6px;border-radius:10px;">目前使用</span>' : ''}
+        </div>
+        <small style="color:var(--color-ink-soft);">${(sb.items || []).length} 件單品</small>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        ${!isCurrent ? `<button type="button" class="btn-secondary btn-switch-sb" style="padding:5px 10px;font-size:12px;">切換</button>` : ''}
+        <button type="button" class="btn-secondary btn-rename-sb" style="padding:5px 8px;font-size:12px;">改名</button>
+        ${state.sandboxes.length > 1 ? `<button type="button" class="btn-secondary btn-danger btn-del-sb" style="padding:5px 8px;font-size:12px;">刪除</button>` : ''}
+      </div>
+    `;
+
+    row.querySelector('.btn-switch-sb')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      switchSandbox(sb.id);
+    });
+    row.querySelector('div[style*="cursor:pointer"]')?.addEventListener('click', () => {
+      if (!isCurrent) switchSandbox(sb.id);
+    });
+
+    row.querySelector('.btn-rename-sb')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const next = prompt('重新命名沙盒：', sb.name);
+      if (!next || !next.trim() || next.trim() === sb.name) return;
+      sb.name = next.trim();
+      saveState({ action: `重新命名沙盒為「${sb.name}」` });
+      updateSandboxHeaderName();
+      renderSandboxManagerModal();
+      toast(`已更名為「${sb.name}」`);
+    });
+
+    row.querySelector('.btn-del-sb')?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!confirm(`確定要刪除「${sb.name}」及其畫布單品嗎？`)) return;
+      state.sandboxes = state.sandboxes.filter(s => s.id !== sb.id);
+      if (state.currentSandboxId === sb.id) {
+        state.currentSandboxId = state.sandboxes[0]?.id || 'sb_default';
+        state.sandboxItems = getCurrentSandbox().items;
+      }
+      saveState({ action: `刪除沙盒「${sb.name}」` });
+      renderSandboxCanvas();
+      updateSandboxHeaderName();
+      renderSandboxManagerModal();
+      toast(`已刪除「${sb.name}」`);
+    });
+
+    listEl.appendChild(row);
+  });
+}
+
+function createNewSandbox() {
+  const num = state.sandboxes.length + 1;
+  const newName = `沙盒 ${num}`;
+  const newSb = {
+    id: uid(),
+    name: newName,
+    items: [],
+    createdAt: Date.now()
+  };
+  state.sandboxes.push(newSb);
+  state.currentSandboxId = newSb.id;
+  state.sandboxItems = newSb.items;
+  selectedSandboxItemId = null;
+  saveState({ action: `新增「${newName}」` });
+  renderSandboxCanvas();
+  updateSandboxHeaderName();
+  closeModal();
+  toast(`已建立並切換至「${newName}」`);
+}
+
+let sandboxPickerFilter = 'all';
+let sandboxPickerQuery = '';
+
 function openSandboxPicker(type) {
+  const isWishlist = type === 'wishlist';
   const title = document.getElementById('sandboxPickerTitle');
+  const chips = document.getElementById('sandboxPickerCategoryChips');
+  const searchInput = document.getElementById('sandboxPickerSearchInput');
   const grid = document.getElementById('sandboxPickerGrid');
   if (!grid) return;
 
-  grid.innerHTML = '';
-  const isWishlist = type === 'wishlist';
   if (title) title.textContent = isWishlist ? '加入想買單品至沙盒' : '加入衣櫥單品至沙盒';
+  sandboxPickerFilter = 'all';
+  sandboxPickerQuery = '';
+  if (searchInput) searchInput.value = '';
 
-  const items = isWishlist
-    ? state.wishlistItems.filter(it => it.image)
-    : state.items.filter(it => it.status !== 'retired');
+  if (chips) {
+    chips.innerHTML = '';
+    const cats = [{ id: 'all', label: '全部' }].concat(
+      allCategoryIds().map(id => ({ id, label: categoryLabel(id) }))
+    );
+    cats.forEach(c => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'chip' + (c.id === sandboxPickerFilter ? ' is-active' : '');
+      chip.textContent = c.label;
+      chip.addEventListener('click', () => {
+        chips.querySelectorAll('.chip').forEach(ch => ch.classList.remove('is-active'));
+        chip.classList.add('is-active');
+        sandboxPickerFilter = c.id;
+        renderSandboxPickerItems(type);
+      });
+      chips.appendChild(chip);
+    });
+  }
 
-  if (items.length === 0) {
-    grid.innerHTML = `<p class="empty-hint" style="grid-column: 1 / -1; padding: 24px;">${isWishlist ? '尚無想買單品' : '衣櫥中尚無單品'}</p>`;
-  } else {
-    items.forEach(it => {
-      const card = document.createElement('div');
+  if (searchInput && !searchInput._hasSandboxSearchBound) {
+    searchInput._hasSandboxSearchBound = true;
+    searchInput.addEventListener('input', e => {
+      sandboxPickerQuery = e.target.value.trim().toLowerCase();
+      renderSandboxPickerItems(type);
+    });
+  }
+
+  renderSandboxPickerItems(type);
+  openModal('modal-sandbox-picker');
+}
+
+function renderSandboxPickerItems(type) {
+  const isWishlist = type === 'wishlist';
+  const grid = document.getElementById('sandboxPickerGrid');
+  const empty = document.getElementById('sandboxPickerEmpty');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  let items = isWishlist
+    ? (Array.isArray(state.wishlist) ? state.wishlist.slice() : [])
+    : state.items.filter(i => i.status !== 'retired');
+
+  if (sandboxPickerFilter !== 'all') {
+    items = items.filter(it => it.category === sandboxPickerFilter);
+  }
+
+  if (sandboxPickerQuery) {
+    items = items.filter(it => {
+      const name = (it.name || '').toLowerCase();
+      const brand = (it.brand || '').toLowerCase();
+      const tags = (it.tags || []).join(' ').toLowerCase();
+      return name.includes(sandboxPickerQuery) || brand.includes(sandboxPickerQuery) || tags.includes(sandboxPickerQuery);
+    });
+  }
+
+  if (empty) empty.hidden = items.length !== 0;
+
+  items.forEach(it => {
+    let card;
+    if (isWishlist) {
+      card = document.createElement('button');
+      card.type = 'button';
       card.className = 'item-card';
       const thumb = it.image
-        ? `<div class="item-card-photo" style="background-image:url('${it.image}')"></div>`
-        : `<div class="item-card-photo" style="display:flex;align-items:center;justify-content:center;background:#fff;"><span class="rack-chip-thumb">${categoryIcon(it.category || 'top')}</span></div>`;
-
+        ? `<div class="item-card-photo" style="background-image:url('${it.image}');background-size:contain;background-position:center;background-repeat:no-repeat;width:100%;height:100%;"></div>`
+        : `<div class="item-card-photo" style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;"><span class="rack-chip-thumb">${categoryIcon(it.category || 'top')}</span></div>`;
       card.innerHTML = `
-        ${thumb}
-        <div class="item-card-info">
-          <div class="item-card-name">${escapeHtml(it.name)}</div>
+        <div class="item-photo">${thumb}</div>
+        <div class="item-info">
+          ${it.brand ? `<p class="item-brand"><span>${escapeHtml(it.brand)}</span></p>` : ''}
+          <p class="item-name">${escapeHtml(it.name)}</p>
+          <p class="item-wear" style="color:var(--color-denim);">${categoryLabel(it.category || 'top')}</p>
         </div>
       `;
-      card.onclick = () => {
+      card.addEventListener('click', () => {
         addItemToSandbox({
-          type,
+          type: 'wishlist',
           refId: it.id,
           name: it.name,
           image: it.image || null,
@@ -5167,12 +5777,24 @@ function openSandboxPicker(type) {
         });
         closeModal();
         toast(`已將「${it.name}」加入沙盒`);
-      };
-      grid.appendChild(card);
-    });
-  }
-
-  openModal('modal-sandbox-picker');
+      });
+    } else {
+      card = buildItemCard(it, {
+        onClick: () => {
+          addItemToSandbox({
+            type: 'wardrobe',
+            refId: it.id,
+            name: it.name,
+            image: it.image || null,
+            category: it.category || 'top'
+          });
+          closeModal();
+          toast(`已將「${it.name}」加入沙盒`);
+        }
+      });
+    }
+    grid.appendChild(card);
+  });
 }
 
 function addItemToSandbox({ type, refId, name, image, category }) {
