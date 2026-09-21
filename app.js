@@ -357,6 +357,93 @@ function defaultState() {
     drafts: { addItem: null, wishlist: null },
   };
 }
+const IDB_NAME = 'wardrobe_db';
+const IDB_STORE = 'app_state';
+const IDB_KEY = 'wardrobeAppState_v2';
+let idbInstancePromise = null;
+
+function getIDB() {
+  if (idbInstancePromise) return idbInstancePromise;
+  idbInstancePromise = new Promise(resolve => {
+    if (!('indexedDB' in window)) { resolve(null); return; }
+    try {
+      const req = indexedDB.open(IDB_NAME, 1);
+      req.onupgradeneeded = e => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains(IDB_STORE)) {
+          db.createObjectStore(IDB_STORE);
+        }
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => { console.warn('IndexedDB open failed', req.error); resolve(null); };
+    } catch (e) {
+      console.warn('IndexedDB error', e);
+      resolve(null);
+    }
+  });
+  return idbInstancePromise;
+}
+
+async function idbGet(key) {
+  try {
+    const db = await getIDB();
+    if (!db) return null;
+    return new Promise(resolve => {
+      const tx = db.transaction(IDB_STORE, 'readonly');
+      const store = tx.objectStore(IDB_STORE);
+      const req = store.get(key);
+      req.onsuccess = () => resolve(req.result ?? null);
+      req.onerror = () => resolve(null);
+    });
+  } catch (e) {
+    return null;
+  }
+}
+
+async function idbSet(key, val) {
+  try {
+    const db = await getIDB();
+    if (!db) return false;
+    return new Promise(resolve => {
+      const tx = db.transaction(IDB_STORE, 'readwrite');
+      const store = tx.objectStore(IDB_STORE);
+      const req = store.put(val, key);
+      req.onsuccess = () => resolve(true);
+      req.onerror = e => { console.warn('idbSet failed', e); resolve(false); };
+    });
+  } catch (e) {
+    return false;
+  }
+}
+
+function hydrateState(rawObj) {
+  const base = defaultState();
+  if (!rawObj) return base;
+  const parsed = typeof rawObj === 'string' ? JSON.parse(rawObj) : rawObj;
+  const profile = Object.assign({}, base.profile, parsed.profile || {});
+  profile.washThresholds = Object.assign({}, base.profile.washThresholds, (parsed.profile && parsed.profile.washThresholds) || {});
+  profile.categoryAspect = Object.assign({}, base.profile.categoryAspect, (parsed.profile && parsed.profile.categoryAspect) || {});
+  profile.weather = Object.assign({}, base.profile.weather, (parsed.profile && parsed.profile.weather) || {});
+  profile.outfitLayout = normalizeOutfitLayout((parsed.profile && parsed.profile.outfitLayout) || base.profile.outfitLayout);
+  profile.cardImageScale = Math.min(100, Math.max(45, Number(profile.cardImageScale) || 72));
+  profile.avatar = typeof profile.avatar === 'string' ? profile.avatar : '';
+  return {
+    profile,
+    items: Array.isArray(parsed.items) ? parsed.items : [],
+    customCategories: Array.isArray(parsed.customCategories) ? parsed.customCategories : [],
+    today: Object.assign({}, base.today, parsed.today || {}),
+    ootdHistory: Array.isArray(parsed.ootdHistory) ? parsed.ootdHistory : [],
+    consumables: Array.isArray(parsed.consumables) && parsed.consumables.length ? parsed.consumables : base.consumables,
+    activeTowel: parsed.activeTowel === 'towelB' ? 'towelB' : 'towelA',
+    laundry: Object.assign({}, base.laundry, parsed.laundry || {}),
+    wishlist: Array.isArray(parsed.wishlist) ? parsed.wishlist : [],
+    styleGallery: Array.isArray(parsed.styleGallery) ? parsed.styleGallery : [],
+    haircuts: Array.isArray(parsed.haircuts) ? parsed.haircuts : [],
+    geminiApiKey: typeof parsed.geminiApiKey === 'string' ? parsed.geminiApiKey : (localStorage.getItem('gemini_api_key') || ''),
+    drafts: Object.assign({}, base.drafts, parsed.drafts || {}),
+  };
+}
+
 let state = loadState();
 window.state = state; // exposed for easy debugging via Safari/Chrome devtools console
 
@@ -364,35 +451,38 @@ function loadState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return defaultState();
-    const parsed = JSON.parse(raw);
-    const base = defaultState();
-    const profile = Object.assign({}, base.profile, parsed.profile || {});
-    profile.washThresholds = Object.assign({}, base.profile.washThresholds, (parsed.profile && parsed.profile.washThresholds) || {});
-    profile.categoryAspect = Object.assign({}, base.profile.categoryAspect, (parsed.profile && parsed.profile.categoryAspect) || {});
-    profile.weather = Object.assign({}, base.profile.weather, (parsed.profile && parsed.profile.weather) || {});
-    profile.outfitLayout = normalizeOutfitLayout((parsed.profile && parsed.profile.outfitLayout) || base.profile.outfitLayout);
-    profile.cardImageScale = Math.min(100, Math.max(45, Number(profile.cardImageScale) || 72));
-    profile.avatar = typeof profile.avatar === 'string' ? profile.avatar : '';
-    return {
-      profile,
-      items: Array.isArray(parsed.items) ? parsed.items : [],
-      customCategories: Array.isArray(parsed.customCategories) ? parsed.customCategories : [],
-      today: Object.assign({}, base.today, parsed.today || {}),
-      ootdHistory: Array.isArray(parsed.ootdHistory) ? parsed.ootdHistory : [],
-      consumables: Array.isArray(parsed.consumables) && parsed.consumables.length ? parsed.consumables : base.consumables,
-      activeTowel: parsed.activeTowel === 'towelB' ? 'towelB' : 'towelA',
-      laundry: Object.assign({}, base.laundry, parsed.laundry || {}),
-      wishlist: Array.isArray(parsed.wishlist) ? parsed.wishlist : [],
-      styleGallery: Array.isArray(parsed.styleGallery) ? parsed.styleGallery : [],
-      haircuts: Array.isArray(parsed.haircuts) ? parsed.haircuts : [],
-      geminiApiKey: typeof parsed.geminiApiKey === 'string' ? parsed.geminiApiKey : (localStorage.getItem('gemini_api_key') || ''),
-      drafts: Object.assign({}, base.drafts, parsed.drafts || {}),
-    };
+    return hydrateState(raw);
   } catch (e) {
     console.error('讀取資料失敗，改用預設狀態', e);
     return defaultState();
   }
 }
+
+async function loadStateAsync() {
+  try {
+    const idbData = await idbGet(IDB_KEY);
+    if (idbData) {
+      const hydrated = hydrateState(idbData);
+      Object.keys(state).forEach(k => delete state[k]);
+      Object.assign(state, hydrated);
+      normalizeLoadedState();
+      return;
+    }
+    // Migration from localStorage if IndexedDB is fresh
+    const rawLocal = localStorage.getItem(STORAGE_KEY);
+    if (rawLocal) {
+      const hydrated = hydrateState(rawLocal);
+      Object.keys(state).forEach(k => delete state[k]);
+      Object.assign(state, hydrated);
+      normalizeLoadedState();
+      await idbSet(IDB_KEY, state);
+      console.log('Successfully migrated wardrobe state from localStorage to IndexedDB');
+    }
+  } catch (err) {
+    console.error('loadStateAsync failed', err);
+  }
+}
+
 function normalizeLoadedState() {
   state.items.forEach(item => {
     item.washHistory = Array.isArray(item.washHistory) ? item.washHistory : [];
@@ -456,19 +546,37 @@ function pushHistory(before) {
   redoStack = [];
   redoViews = [];
 }
+
+let dbSaveTimer = null;
+let dbSavePending = false;
+async function persistStateToDB() {
+  if (dbSavePending) return;
+  dbSavePending = true;
+  try {
+    const snapshot = cloneState(state);
+    await idbSet(IDB_KEY, snapshot);
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+    } catch (quotaErr) {
+      // Ignored: IndexedDB is our primary persistent store with gigabytes of quota
+    }
+  } catch (e) {
+    console.error('IndexedDB save failed', e);
+  } finally {
+    dbSavePending = false;
+  }
+}
+
 function saveState(options = {}) {
   const next = cloneState(state);
   if (historyReady && !applyingHistory && !options.skipHistory) {
     if (!historySnapshot || stateSignature(historySnapshot) !== stateSignature(next)) pushHistory(historySnapshot);
   }
   historySnapshot = next;
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    updateHistoryControls();
-  } catch (e) {
-    console.error(e);
-    toast('儲存失敗，裝置空間可能不足');
-  }
+  updateHistoryControls();
+
+  clearTimeout(dbSaveTimer);
+  dbSaveTimer = setTimeout(persistStateToDB, 150);
 }
 function replaceStateFromSnapshot(snapshot) {
   Object.keys(state).forEach(key => delete state[key]);
@@ -2313,8 +2421,8 @@ function openItemDetail(itemId) {
   body.innerHTML = `
     <div class="detail-photo-wrap" id="detailPhotoContainer">
       <div class="card-25d ${isGarment ? 'garment-25d' : ''}" id="card25d">
-        <div class="card-face card-face-front" id="cardFaceFront" style="${itemPhotoStyle(item)}${item.image ? '' : 'display:flex;align-items:center;justify-content:center;color:var(--color-ink-faint)'}">
-          ${item.image ? '' : `<div style="width:64px;height:64px">${categoryIcon(item.category)}</div>`}
+        <div class="card-face card-face-front" id="cardFaceFront" style="${itemPhotoStyle(item)};${item.image ? '' : 'display:flex;align-items:center;justify-content:center;color:var(--color-ink-faint);'}">
+          ${item.image ? '' : `<div class="detail-photo-empty-icon">${categoryIcon(item.category)}</div>`}
         </div>
         ${hasBack ? `
           <div class="card-face card-face-back" id="cardFaceBack" style="background-image:url('${item.imageBack}')"></div>
@@ -2785,7 +2893,8 @@ function openAddModal(editId = null) {
   document.getElementById('photoPreviewWrap').removeAttribute('style');
   document.getElementById('photoPreviewWrap').classList.remove('has-photo');
   document.getElementById('photoPreviewWrap').innerHTML = `<span data-icon="camera"></span><span>上傳照片（可一次選2張，第2張當背面）</span>`;
-  document.getElementById('photoBackHint').hidden = true;
+  const hintWrap = document.getElementById('photoBackHintWrap');
+  if (hintWrap) hintWrap.hidden = true;
   document.getElementById('btnReadjustPhoto').classList.add('is-hidden');
   syncBrandForm('', null);
   applyStaticIcons();
@@ -2808,7 +2917,7 @@ function openAddModal(editId = null) {
     pendingPhotoBack = savedDraft.imageBack || null;
     syncBrandForm(savedDraft.brand || '', savedDraft.brandIcon || null);
     setPhotoPreview(document.getElementById('photoPreviewWrap'), pendingPhoto, '上傳照片（可一次選2張，第2張當背面）');
-    document.getElementById('photoBackHint').hidden = !pendingPhotoBack;
+    if (hintWrap) hintWrap.hidden = !pendingPhotoBack;
     document.getElementById('btnReadjustPhoto').classList.toggle('is-hidden', !pendingPhoto || !editId);
   }
 
@@ -2834,7 +2943,7 @@ function openAddModal(editId = null) {
       document.getElementById('btnReadjustPhoto').classList.remove('is-hidden');
     }
     pendingPhotoBack = item.imageBack || null;
-    document.getElementById('photoBackHint').hidden = !pendingPhotoBack;
+    if (hintWrap) hintWrap.hidden = !pendingPhotoBack;
     editExtra.classList.remove('is-hidden');
     archiveRow.classList.add('is-hidden');
   } else {
@@ -2848,7 +2957,12 @@ function openAddModal(editId = null) {
   renderTagPickerChips();
   renderMaterialPickerChips();
   formDirty = false; // the population above doesn't count as a user edit
+  const addSheet = document.getElementById('modal-add');
+  if (addSheet) addSheet.scrollTop = 0;
   openModal('modal-add');
+  requestAnimationFrame(() => {
+    if (addSheet) addSheet.scrollTop = 0;
+  });
 }
 
 /* ============================================================
@@ -2859,13 +2973,17 @@ function openModal(id) {
   if (current && current.id !== id) persistTransientForms();
   document.querySelectorAll('.modal-sheet').forEach(s => { if (s.id !== id) { s.classList.remove('is-active', 'is-shown'); s.style.transform = ''; } });
   const sheet = document.getElementById(id);
+  if (sheet) sheet.scrollTop = 0;
   sheet.classList.add('is-active');
   document.getElementById('modalOverlay').classList.add('is-open');
   // force layout so the browser registers the "closed" position first, THEN add
   // is-shown on the next frame — otherwise display:none->block gives the sheet no
   // animatable starting state and the slide-up transition just gets skipped.
   void sheet.offsetHeight;
-  requestAnimationFrame(() => { sheet.classList.add('is-shown'); });
+  requestAnimationFrame(() => {
+    sheet.classList.add('is-shown');
+    sheet.scrollTop = 0;
+  });
 }
 function forceCloseModal(options = {}) {
   if (!options.skipPersist) persistTransientForms();
@@ -3709,19 +3827,25 @@ function wireEvents() {
 
   // photo upload (label already opens the native picker — no extra .click() here, that double-trigger was the bug)
   document.getElementById('photoInput').addEventListener('change', async e => {
-    const files = Array.from(e.target.files || []);
+    let files = Array.from(e.target.files || []);
     if (!files.length) return;
+    // When selecting 2 photos, file pickers (especially iOS) provide them in reverse order.
+    // Reverse so 1st selected is Front and 2nd selected is Back.
+    if (files.length === 2) {
+      files = [files[1], files[0]];
+    }
     toast('處理照片中…');
     try {
       const frontCompressed = await compressImageFile(files[0]);
       pendingPhoto = frontCompressed;
       autoSaveAddItemDraft();
+      const hintWrap = document.getElementById('photoBackHintWrap');
       if (files[1]) {
         pendingPhotoBack = await compressImageFile(files[1]);
-        document.getElementById('photoBackHint').hidden = false;
+        if (hintWrap) hintWrap.hidden = false;
       } else {
         pendingPhotoBack = null;
-        document.getElementById('photoBackHint').hidden = true;
+        if (hintWrap) hintWrap.hidden = true;
       }
       formDirty = true;
       const wrap = document.getElementById('photoPreviewWrap');
@@ -3733,6 +3857,29 @@ function wireEvents() {
     } catch (err) {
       toast('照片處理失敗，請換一張試試');
     }
+  });
+
+  document.getElementById('btnSwapPhotos')?.addEventListener('click', () => {
+    if (!pendingPhoto && !pendingPhotoBack) return;
+    const tmp = pendingPhoto;
+    pendingPhoto = pendingPhotoBack;
+    pendingPhotoBack = tmp;
+    const wrap = document.getElementById('photoPreviewWrap');
+    if (pendingPhoto) {
+      wrap.setAttribute('style', `background-color:#fff;background-image:url('${pendingPhoto}')`);
+      wrap.classList.add('has-photo');
+      wrap.innerHTML = '';
+    } else {
+      wrap.removeAttribute('style');
+      wrap.classList.remove('has-photo');
+      wrap.innerHTML = `<span data-icon="camera"></span><span>上傳照片（可一次選2張，第2張當背面）</span>`;
+      applyStaticIcons();
+    }
+    const hintWrap = document.getElementById('photoBackHintWrap');
+    if (hintWrap) hintWrap.hidden = !pendingPhotoBack;
+    formDirty = true;
+    autoSaveAddItemDraft();
+    toast('已交換正反面照片');
   });
   document.getElementById('btnReadjustPhoto').addEventListener('click', () => {
     if (!pendingPhoto) return;
@@ -4018,6 +4165,9 @@ function wireEvents() {
     toast('設定已儲存');
     modalReturnTo = null;
     forceCloseModal();
+  });
+  document.getElementById('btnSettingsHeaderSave')?.addEventListener('click', () => {
+    document.getElementById('settingsForm')?.requestSubmit();
   });
 }
 
@@ -4382,7 +4532,8 @@ function wireGeminiAiStudio() {
 /* ============================================================
    INIT
    ============================================================ */
-function init() {
+async function init() {
+  await loadStateAsync();
   applyStaticIcons();
   wireEvents();
   wirePhotoAdjust();
@@ -4396,6 +4547,11 @@ function init() {
   updateHistoryControls();
   refreshWeather(false);
   setInterval(() => { ensureNewDay(); renderAll(); }, 5 * 60 * 1000);
+
+  window.addEventListener('pagehide', () => persistStateToDB());
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') persistStateToDB();
+  });
 
   // small minimum splash time so it reads as an intentional launch moment
   // rather than an imperceptible flash, then fade it out and drop it from the DOM

@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="衣櫥助手">
-<link rel="stylesheet" href="styles.css?v=20260910d">
+<link rel="stylesheet" href="styles.css?v=20260921a">
 </head>
 <body>
 
@@ -325,7 +325,15 @@
   <!-- Add item -->
   <div class="modal-sheet modal-sheet-tall" id="modal-add" data-modal>
     <div class="modal-handle"></div>
-    <div class="modal-head"><h2 id="addModalTitle">新增單品</h2><button class="modal-close" data-close>✕</button></div>
+    <div class="modal-head">
+      <h2 id="addModalTitle">新增單品</h2>
+      <div class="modal-head-actions">
+        <button type="submit" form="addItemForm" class="modal-head-btn modal-save-btn" id="addModalHeaderSaveBtn" aria-label="儲存">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button type="button" class="modal-head-btn modal-close-btn" data-close aria-label="關閉">✕</button>
+      </div>
+    </div>
     <form class="form" id="addItemForm">
       <label class="photo-upload" id="photoUploadArea">
         <input type="file" accept="image/*" id="photoInput" multiple hidden>
@@ -334,7 +342,10 @@
           <span>上傳照片（可一次選2張，第2張當背面）</span>
         </span>
       </label>
-      <p class="photo-back-hint" id="photoBackHint" hidden>已加入背面照片 ✓</p>
+      <div class="photo-back-hint-wrap" id="photoBackHintWrap" hidden>
+        <p class="photo-back-hint" id="photoBackHint">已加入背面照片 ✓</p>
+        <button type="button" class="photo-swap-btn" id="btnSwapPhotos">交換正反</button>
+      </div>
       <div class="photo-tools-row" id="photoAiToolsRow">
         <button type="button" class="btn-ai-magic" id="btnOpenAiRetouch">
           <span class="icon-inline" data-icon="sparkles"></span>
@@ -466,7 +477,15 @@
   <!-- Settings -->
   <div class="modal-sheet" id="modal-settings" data-modal>
     <div class="modal-handle"></div>
-    <div class="modal-head"><h2>設定</h2><button class="modal-close" data-close>✕</button></div>
+    <div class="modal-head">
+      <h2>設定</h2>
+      <div class="modal-head-actions">
+        <button type="button" class="modal-head-btn modal-save-btn" id="btnSettingsHeaderSave" aria-label="儲存">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button type="button" class="modal-head-btn modal-close-btn" data-close aria-label="關閉">✕</button>
+      </div>
+    </div>
     <form class="form" id="settingsForm">
       <label class="field">暱稱
         <input type="text" id="settingName" placeholder="你的名字">
@@ -662,7 +681,15 @@
   <!-- Wishlist item -->
   <div class="modal-sheet modal-sheet-tall" id="modal-wishlist" data-modal>
     <div class="modal-handle"></div>
-    <div class="modal-head"><h2 id="wishlistModalTitle">新增想買單品</h2><button class="modal-close" data-close>✕</button></div>
+    <div class="modal-head">
+      <h2 id="wishlistModalTitle">新增想買單品</h2>
+      <div class="modal-head-actions">
+        <button type="submit" form="wishlistForm" class="modal-head-btn modal-save-btn" id="btnWishlistHeaderSave" aria-label="儲存">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button type="button" class="modal-head-btn modal-close-btn" data-close aria-label="關閉">✕</button>
+      </div>
+    </div>
     <form class="form" id="wishlistForm">
       <label class="photo-upload">
         <input type="file" accept="image/*" id="wishlistPhotoInput" hidden>
@@ -854,7 +881,7 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="seed-items.js?v=20260910d"></script>
-<script src="app.js?v=20260910d"></script>
+<script src="seed-items.js?v=20260921a"></script>
+<script src="app.js?v=20260921a"></script>
 </body>
 </html>
