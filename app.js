@@ -1302,7 +1302,13 @@ const WEATHER_LABELS = {
   77: ['雪粒', '雪'], 80: ['陣雨', '雨'], 81: ['陣雨', '雨'], 82: ['大陣雨', '雨'],
   85: ['陣雪', '雪'], 86: ['大陣雪', '雪'], 95: ['雷雨', '雷'], 96: ['雷雨', '雷'], 99: ['雷雨', '雷'],
 };
-function weatherText(code) { return WEATHER_LABELS[Number(code)] || ['天氣', '•']; }
+function weatherText(code, isNight) {
+  const item = WEATHER_LABELS[Number(code)] || ['天氣', '•'];
+  if (isNight && (code === 0 || code === 1)) {
+    return [item[0], '🌙'];
+  }
+  return item;
+}
 function weatherAreaLabel(weather) {
   const raw = weather?.area || String(weather?.city || '').split(' · ')[0] || '';
   return raw || '尚未設定地區';
@@ -1313,7 +1319,8 @@ function renderWeather() {
   const w = state.profile.weather || {};
   const area = weatherAreaLabel(w);
   if (!w.city || !w.current) { el.textContent = w.city ? `${area}・天氣更新中` : '設定地區後顯示天氣'; return; }
-  const [label, symbol] = weatherText(w.current.weather_code);
+  const isNight = w.current.is_day != null ? Number(w.current.is_day) === 0 : (new Date().getHours() >= 18 || new Date().getHours() < 6);
+  const [label, symbol] = weatherText(w.current.weather_code, isNight);
   const temp = Number.isFinite(Number(w.current.temperature_2m)) ? `${Math.round(Number(w.current.temperature_2m))}°` : '';
   el.textContent = `${area}・${symbol} ${label}${temp ? ` ${temp}` : ''}`;
 }
