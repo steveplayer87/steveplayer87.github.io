@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="衣櫥助手">
-<link rel="stylesheet" href="styles.css?v=20260921c">
+<link rel="stylesheet" href="styles.css?v=20260921d">
 </head>
 <body>
 
@@ -954,45 +954,6 @@
     </div>
   </div>
 
-  <!-- Sandbox Mode Modal -->
-  <div class="modal-sheet modal-sheet-tall modal-sandbox-sheet" id="modal-sandbox" data-modal>
-    <div class="modal-handle"></div>
-    <div class="modal-head">
-      <h2>穿搭沙盒</h2>
-      <div class="modal-head-actions">
-        <button type="button" class="btn-secondary" id="btnSandboxClear" style="padding:4px 10px;font-size:12px;font-weight:700">清空</button>
-        <button type="button" class="btn-primary" id="btnSandboxSave" style="padding:4px 12px;font-size:12px;font-weight:700">儲存</button>
-        <button type="button" class="modal-close" data-close>✕</button>
-      </div>
-    </div>
-    <p class="section-intro" style="margin-bottom:10px">自由擺放與組合單品，長按可拖曳，支援雙指縮放。</p>
-    <div class="sandbox-canvas-viewport" id="sandboxCanvasViewport">
-      <div class="sandbox-canvas" id="sandboxCanvas">
-        <div class="sandbox-empty-hint" id="sandboxEmptyHint">
-          <span class="sandbox-hint-icon" data-icon="sandbox"></span>
-          <p class="sandbox-hint-title">穿搭沙盒畫布</p>
-          <p class="sandbox-hint-sub">點擊下方按鈕加入衣櫥單品、想買單品或自訂照片<br>長按 500ms 即可拖曳，支援雙指縮放</p>
-        </div>
-      </div>
-      <div class="sandbox-item-toolbar is-hidden" id="sandboxItemToolbar">
-        <button type="button" class="sandbox-tool-btn" id="btnSandboxDuplicate" title="複製"><span data-icon="copy"></span><span>複製</span></button>
-        <button type="button" class="sandbox-tool-btn btn-danger" id="btnSandboxDelete" title="刪除"><span data-icon="trash"></span><span>刪除</span></button>
-      </div>
-    </div>
-    <div class="sandbox-bottom-bar">
-      <button type="button" class="btn-secondary btn-sandbox-add" id="btnSandboxAddWardrobe">
-        <span data-icon="wardrobe"></span><span>+ 衣櫥單品</span>
-      </button>
-      <button type="button" class="btn-secondary btn-sandbox-add" id="btnSandboxAddWishlist">
-        <span data-icon="shopping"></span><span>+ 想買清單</span>
-      </button>
-      <label class="btn-secondary btn-sandbox-add btn-sandbox-add-custom">
-        <input type="file" accept="image/*" id="sandboxCustomPhotoInput" hidden>
-        <span data-icon="camera"></span><span>+ 自訂照片</span>
-      </label>
-    </div>
-  </div>
-
   <!-- Sandbox Item Picker Modal -->
   <div class="modal-sheet" id="modal-sandbox-picker" data-modal>
     <div class="modal-handle"></div>
@@ -1002,9 +963,50 @@
 
 </div>
 
+<!-- Standalone Sandbox Studio Page -->
+<div class="sandbox-page" id="page-sandbox">
+  <header class="sandbox-topbar">
+    <button type="button" class="sandbox-back-btn" id="btnSandboxBack" aria-label="返回">
+      <span data-icon="back"></span><span>返回</span>
+    </button>
+    <h1 class="sandbox-title">穿搭沙盒</h1>
+    <div class="sandbox-topbar-actions">
+      <button type="button" class="sandbox-text-btn" id="btnSandboxClear">清空</button>
+      <button type="button" class="btn-primary sandbox-save-btn" id="btnSandboxSave">儲存</button>
+    </div>
+  </header>
+
+  <div class="sandbox-canvas-viewport" id="sandboxCanvasViewport">
+    <div class="sandbox-canvas" id="sandboxCanvas">
+      <div class="sandbox-empty-hint" id="sandboxEmptyHint">
+        <span class="sandbox-hint-icon" data-icon="sandbox"></span>
+        <p class="sandbox-hint-title">穿搭沙盒工作室</p>
+        <p class="sandbox-hint-sub">單指拖曳擺放・雙指捏合縮放大小<br>點擊單品可在旁複製或刪除</p>
+      </div>
+    </div>
+    <div class="sandbox-item-toolbar is-hidden" id="sandboxItemToolbar">
+      <button type="button" class="sandbox-tool-btn" id="btnSandboxDuplicate" title="複製"><span data-icon="copy"></span><span>複製</span></button>
+      <button type="button" class="sandbox-tool-btn btn-danger" id="btnSandboxDelete" title="刪除"><span data-icon="trash"></span><span>刪除</span></button>
+    </div>
+  </div>
+
+  <footer class="sandbox-bottom-bar">
+    <button type="button" class="btn-secondary btn-sandbox-add" id="btnSandboxAddWardrobe">
+      <span data-icon="wardrobe"></span><span>+ 衣櫥單品</span>
+    </button>
+    <button type="button" class="btn-secondary btn-sandbox-add" id="btnSandboxAddWishlist">
+      <span data-icon="shopping"></span><span>+ 想買清單</span>
+    </button>
+    <label class="btn-secondary btn-sandbox-add btn-sandbox-add-custom">
+      <input type="file" accept="image/*" id="sandboxCustomPhotoInput" hidden>
+      <span data-icon="camera"></span><span>+ 自訂照片</span>
+    </label>
+  </footer>
+</div>
+
 <div class="toast" id="toast"></div>
 
-<script src="seed-items.js?v=20260921c"></script>
-<script src="app.js?v=20260921c"></script>
+<script src="seed-items.js?v=20260921d"></script>
+<script src="app.js?v=20260921d"></script>
 </body>
 </html>

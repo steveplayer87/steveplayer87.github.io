@@ -50,6 +50,8 @@ const ICONS = {
   sandbox: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m15 4-2 4 4-2Z"/><path d="m20 9-4 2 2 4Z"/><path d="M17.8 11.8 3 21"/><circle cx="7" cy="7" r="2.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg>`,
   invert: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m7 10 5-6 5 6"/><path d="M12 4v16"/><path d="m17 14-5 6-5-6"/></svg>`,
   copy: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`,
+  trash: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>`,
+  back: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>`,
 };
 function applyStaticIcons() {
   document.querySelectorAll('[data-icon]').forEach(el => {
@@ -4686,8 +4688,42 @@ let sandboxMaxZIndex = 10;
 
 function openSandboxMode() {
   selectedSandboxItemId = null;
+  const page = document.getElementById('page-sandbox');
+  if (page) {
+    page.classList.add('is-active');
+  }
   renderSandboxCanvas();
-  openModal('modal-sandbox');
+  applyStaticIcons();
+}
+
+function closeSandboxMode() {
+  const page = document.getElementById('page-sandbox');
+  if (page) {
+    page.classList.remove('is-active');
+  }
+  selectedSandboxItemId = null;
+  hideSandboxToolbar();
+  saveState();
+}
+
+function selectSandboxItem(id) {
+  selectedSandboxItemId = id;
+  const canvas = document.getElementById('sandboxCanvas');
+  if (canvas) {
+    canvas.querySelectorAll('.sandbox-item').forEach(el => {
+      el.classList.toggle('is-selected', el.dataset.id === id);
+    });
+  }
+  if (id) {
+    updateSandboxToolbar();
+  } else {
+    hideSandboxToolbar();
+  }
+}
+
+function hideSandboxToolbar() {
+  const toolbar = document.getElementById('sandboxItemToolbar');
+  if (toolbar) toolbar.classList.add('is-hidden');
 }
 
 function renderSandboxCanvas() {
@@ -4717,7 +4753,7 @@ function renderSandboxCanvas() {
     el.style.left = `${item.x}px`;
     el.style.top = `${item.y}px`;
     el.style.zIndex = item.zIndex || 1;
-    el.style.transform = `scale(${item.scale || 1}) rotate(${item.rotation || 0}deg)`;
+    el.style.transform = `scale(${item.scale || 1})`;
 
     if (item.image) {
       const img = document.createElement('img');
@@ -4735,7 +4771,11 @@ function renderSandboxCanvas() {
     canvas.appendChild(el);
   });
 
-  updateSandboxToolbar();
+  if (selectedSandboxItemId) {
+    updateSandboxToolbar();
+  } else {
+    hideSandboxToolbar();
+  }
 }
 
 function updateSandboxToolbar() {
@@ -4746,19 +4786,32 @@ function updateSandboxToolbar() {
     return;
   }
   const itemEl = document.getElementById(`sandbox-item-${selectedSandboxItemId}`);
-  if (!itemEl) {
+  const viewport = document.getElementById('sandboxCanvasViewport');
+  if (!itemEl || !viewport) {
     toolbar.classList.add('is-hidden');
     return;
   }
-  toolbar.classList.remove('is-hidden');
-  const rect = itemEl.getBoundingClientRect();
-  const viewport = document.getElementById('sandboxCanvasViewport');
-  const viewportRect = viewport ? viewport.getBoundingClientRect() : { top: 0, left: 0, width: 360 };
 
-  const topPos = Math.max(12, rect.top - viewportRect.top - 46);
-  const leftPos = Math.max(12, Math.min(viewportRect.width - 150, rect.left - viewportRect.left + (rect.width / 2) - 60));
-  toolbar.style.top = `${topPos}px`;
-  toolbar.style.left = `${leftPos}px`;
+  const itemRect = itemEl.getBoundingClientRect();
+  const vpRect = viewport.getBoundingClientRect();
+
+  // Position beside the item: default to right side of top edge
+  let top = itemRect.top - vpRect.top - 4;
+  let left = itemRect.right - vpRect.left + 8;
+
+  // If too close to right edge of viewport, position above or left
+  if (left + 116 > vpRect.width) {
+    left = Math.max(8, itemRect.left - vpRect.left);
+    top = Math.max(8, itemRect.top - vpRect.top - 34);
+  }
+
+  // Clamping within viewport
+  top = Math.max(8, Math.min(vpRect.height - 36, top));
+  left = Math.max(8, Math.min(vpRect.width - 116, left));
+
+  toolbar.style.top = `${Math.round(top)}px`;
+  toolbar.style.left = `${Math.round(left)}px`;
+  toolbar.classList.remove('is-hidden');
 }
 
 function setupSandboxInteractions() {
@@ -4767,139 +4820,216 @@ function setupSandboxInteractions() {
   if (!canvas || !viewport || canvas._hasSandboxInteractions) return;
   canvas._hasSandboxInteractions = true;
 
-  let activePointerItem = null;
-  let holdTimer = null;
-  let isHeld = false;
-  let startPointerX = 0, startPointerY = 0;
+  // Touch gesture state
+  let touchMode = 'none'; // 'drag' | 'pinch' | 'none'
+  let activeDragItem = null;
+  let touchStartX = 0, touchStartY = 0;
   let itemStartX = 0, itemStartY = 0;
-  const activePointers = new Map();
-  let initialPinchDist = 0;
-  let initialScale = 1;
 
-  // Background deselects
-  viewport.addEventListener('pointerdown', e => {
-    if (e.target === viewport || e.target === canvas) {
-      selectedSandboxItemId = null;
-      canvas.querySelectorAll('.sandbox-item').forEach(el => el.classList.remove('is-selected'));
-      updateSandboxToolbar();
-    }
-  });
+  let pinchInitialDist = 0;
+  let pinchInitialScale = 1;
+  let pinchTargetItem = null;
 
-  // Pointer down on canvas item
-  canvas.addEventListener('pointerdown', e => {
-    const itemEl = e.target.closest('.sandbox-item');
-    if (!itemEl) return;
+  // 1. TOUCH EVENTS (Mobile Safari / iOS / Android)
+  viewport.addEventListener('touchstart', e => {
+    // 2-finger touch -> Pinch Zoom Mode strictly
+    if (e.touches.length === 2) {
+      touchMode = 'pinch';
+      hideSandboxToolbar();
+      activeDragItem = null; // Cancel drag immediately
 
-    const id = itemEl.dataset.id;
-    const itemData = state.sandboxItems.find(it => it.id === id);
-    if (!itemData) return;
+      const item0 = e.touches[0].target.closest('.sandbox-item');
+      const item1 = e.touches[1].target.closest('.sandbox-item');
+      const targetEl = item0 || item1 || (selectedSandboxItemId ? document.getElementById(`sandbox-item-${selectedSandboxItemId}`) : null);
 
-    activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-
-    // 2-finger pinch starts
-    if (activePointers.size === 2) {
-      if (holdTimer) clearTimeout(holdTimer);
-      const pts = Array.from(activePointers.values());
-      initialPinchDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
-      initialScale = itemData.scale || 1;
+      if (targetEl) {
+        const id = targetEl.dataset.id;
+        selectSandboxItem(id);
+        pinchTargetItem = state.sandboxItems.find(it => it.id === id);
+        if (pinchTargetItem) {
+          pinchInitialScale = pinchTargetItem.scale || 1;
+          pinchInitialDist = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+          );
+        }
+      } else {
+        pinchTargetItem = null;
+      }
+      e.preventDefault();
       return;
     }
 
-    if (activePointers.size > 2) return;
+    // 1-finger touch -> Drag / Selection Mode strictly
+    if (e.touches.length === 1) {
+      const itemEl = e.target.closest('.sandbox-item');
+      if (itemEl) {
+        touchMode = 'drag';
+        const id = itemEl.dataset.id;
+        activeDragItem = state.sandboxItems.find(it => it.id === id);
+        if (activeDragItem) {
+          sandboxMaxZIndex++;
+          activeDragItem.zIndex = sandboxMaxZIndex;
+          itemEl.style.zIndex = sandboxMaxZIndex;
+          itemEl.classList.add('is-dragging');
+          selectSandboxItem(id);
+          hideSandboxToolbar(); // "不要跟著物件" - Hide during drag!
 
-    activePointerItem = itemData;
-    startPointerX = e.clientX;
-    startPointerY = e.clientY;
-    itemStartX = itemData.x;
-    itemStartY = itemData.y;
-    isHeld = false;
+          touchStartX = e.touches[0].clientX;
+          touchStartY = e.touches[0].clientY;
+          itemStartX = activeDragItem.x;
+          itemStartY = activeDragItem.y;
+        }
+        e.preventDefault();
+      } else if (!e.target.closest('#sandboxItemToolbar')) {
+        // Tapped empty canvas
+        touchMode = 'none';
+        activeDragItem = null;
+        selectSandboxItem(null);
+      }
+    }
+  }, { passive: false });
 
-    // Bring to front
-    sandboxMaxZIndex++;
-    itemData.zIndex = sandboxMaxZIndex;
-    itemEl.style.zIndex = sandboxMaxZIndex;
-
-    // Select item
-    selectedSandboxItemId = id;
-    canvas.querySelectorAll('.sandbox-item').forEach(el => el.classList.toggle('is-selected', el.dataset.id === id));
-    updateSandboxToolbar();
-
-    // 500ms long press timer to activate drag
-    holdTimer = setTimeout(() => {
-      isHeld = true;
-      itemEl.classList.add('is-holding');
-      if (navigator.vibrate) navigator.vibrate(40);
-    }, 500);
-
-    try { itemEl.setPointerCapture?.(e.pointerId); } catch (_) {}
-  });
-
-  // Pointer move
-  window.addEventListener('pointermove', e => {
-    if (activePointers.has(e.pointerId)) {
-      activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  viewport.addEventListener('touchmove', e => {
+    // Two fingers -> strictly pinch zoom, NO drag
+    if (touchMode === 'pinch' && e.touches.length === 2) {
+      if (pinchTargetItem && pinchInitialDist > 10) {
+        const dist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        const factor = dist / pinchInitialDist;
+        const newScale = Math.min(3.5, Math.max(0.3, pinchInitialScale * factor));
+        pinchTargetItem.scale = Number(newScale.toFixed(2));
+        const el = document.getElementById(`sandbox-item-${pinchTargetItem.id}`);
+        if (el) {
+          el.style.transform = `scale(${pinchTargetItem.scale})`;
+        }
+      }
+      e.preventDefault();
+      return;
     }
 
-    // 2-finger pinch
-    if (activePointers.size === 2 && activePointerItem) {
-      const pts = Array.from(activePointers.values());
-      const currentDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
-      if (initialPinchDist > 10) {
-        const newScale = Math.min(3.5, Math.max(0.3, initialScale * (currentDist / initialPinchDist)));
-        activePointerItem.scale = Number(newScale.toFixed(2));
-        const el = document.getElementById(`sandbox-item-${activePointerItem.id}`);
-        if (el) el.style.transform = `scale(${activePointerItem.scale}) rotate(${activePointerItem.rotation || 0}deg)`;
+    // Single finger -> strictly drag, NO zoom
+    if (touchMode === 'drag' && e.touches.length === 1 && activeDragItem) {
+      const dx = e.touches[0].clientX - touchStartX;
+      const dy = e.touches[0].clientY - touchStartY;
+
+      activeDragItem.x = Math.round(itemStartX + dx);
+      activeDragItem.y = Math.round(itemStartY + dy);
+      const el = document.getElementById(`sandbox-item-${activeDragItem.id}`);
+      if (el) {
+        el.style.left = `${activeDragItem.x}px`;
+        el.style.top = `${activeDragItem.y}px`;
+      }
+      e.preventDefault();
+    }
+  }, { passive: false });
+
+  const handleTouchEnd = e => {
+    if (e.touches.length === 0) {
+      if (activeDragItem) {
+        const el = document.getElementById(`sandbox-item-${activeDragItem.id}`);
+        if (el) el.classList.remove('is-dragging');
+      }
+      if (touchMode === 'drag' || touchMode === 'pinch') {
+        saveState();
+      }
+      touchMode = 'none';
+      activeDragItem = null;
+      pinchTargetItem = null;
+
+      // When drag/pinch ends, show mini toolbar beside the selected item
+      if (selectedSandboxItemId) {
         updateSandboxToolbar();
       }
-      return;
-    }
-
-    if (!activePointerItem) return;
-
-    const dx = e.clientX - startPointerX;
-    const dy = e.clientY - startPointerY;
-
-    if (!isHeld) {
-      if (Math.hypot(dx, dy) > 8) {
-        clearTimeout(holdTimer);
-      }
-      return;
-    }
-
-    activePointerItem.x = Math.round(itemStartX + dx);
-    activePointerItem.y = Math.round(itemStartY + dy);
-    const el = document.getElementById(`sandbox-item-${activePointerItem.id}`);
-    if (el) {
-      el.style.left = `${activePointerItem.x}px`;
-      el.style.top = `${activePointerItem.y}px`;
-    }
-    updateSandboxToolbar();
-  });
-
-  // Pointer end
-  const handlePointerEnd = e => {
-    activePointers.delete(e.pointerId);
-    if (holdTimer) clearTimeout(holdTimer);
-
-    if (activePointerItem) {
-      const el = document.getElementById(`sandbox-item-${activePointerItem.id}`);
-      if (el) el.classList.remove('is-holding');
-      if (isHeld) saveState();
-    }
-
-    if (activePointers.size === 0) {
-      activePointerItem = null;
-      isHeld = false;
+    } else if (e.touches.length === 1) {
+      // Transitioned from 2 fingers to 1 finger -> do NOT resume drag
+      touchMode = 'none';
+      activeDragItem = null;
+      pinchTargetItem = null;
     }
   };
 
-  window.addEventListener('pointerup', handlePointerEnd);
-  window.addEventListener('pointercancel', handlePointerEnd);
+  viewport.addEventListener('touchend', handleTouchEnd);
+  viewport.addEventListener('touchcancel', handleTouchEnd);
 
-  // Duplicate item
+  // 2. DESKTOP / MOUSE EVENTS
+  let isMouseDown = false;
+  viewport.addEventListener('mousedown', e => {
+    const itemEl = e.target.closest('.sandbox-item');
+    if (itemEl) {
+      const id = itemEl.dataset.id;
+      activeDragItem = state.sandboxItems.find(it => it.id === id);
+      if (activeDragItem) {
+        isMouseDown = true;
+        sandboxMaxZIndex++;
+        activeDragItem.zIndex = sandboxMaxZIndex;
+        itemEl.style.zIndex = sandboxMaxZIndex;
+        itemEl.classList.add('is-dragging');
+        selectSandboxItem(id);
+        hideSandboxToolbar();
+
+        touchStartX = e.clientX;
+        touchStartY = e.clientY;
+        itemStartX = activeDragItem.x;
+        itemStartY = activeDragItem.y;
+      }
+    } else if (!e.target.closest('#sandboxItemToolbar')) {
+      selectSandboxItem(null);
+    }
+  });
+
+  window.addEventListener('mousemove', e => {
+    if (!isMouseDown || !activeDragItem) return;
+    const dx = e.clientX - touchStartX;
+    const dy = e.clientY - touchStartY;
+    activeDragItem.x = Math.round(itemStartX + dx);
+    activeDragItem.y = Math.round(itemStartY + dy);
+    const el = document.getElementById(`sandbox-item-${activeDragItem.id}`);
+    if (el) {
+      el.style.left = `${activeDragItem.x}px`;
+      el.style.top = `${activeDragItem.y}px`;
+    }
+  });
+
+  window.addEventListener('mouseup', () => {
+    if (isMouseDown) {
+      if (activeDragItem) {
+        const el = document.getElementById(`sandbox-item-${activeDragItem.id}`);
+        if (el) el.classList.remove('is-dragging');
+      }
+      isMouseDown = false;
+      activeDragItem = null;
+      saveState();
+      if (selectedSandboxItemId) {
+        updateSandboxToolbar();
+      }
+    }
+  });
+
+  // Desktop mouse wheel to zoom selected item
+  viewport.addEventListener('wheel', e => {
+    if (!selectedSandboxItemId) return;
+    const item = state.sandboxItems.find(it => it.id === selectedSandboxItemId);
+    if (!item) return;
+    e.preventDefault();
+    const delta = e.deltaY < 0 ? 0.05 : -0.05;
+    const currentScale = item.scale || 1;
+    item.scale = Number(Math.min(3.5, Math.max(0.3, currentScale + delta)).toFixed(2));
+    const el = document.getElementById(`sandbox-item-${item.id}`);
+    if (el) {
+      el.style.transform = `scale(${item.scale})`;
+    }
+    updateSandboxToolbar();
+    saveState();
+  }, { passive: false });
+
+  // Duplicate button
   const btnDup = document.getElementById('btnSandboxDuplicate');
   if (btnDup) {
-    btnDup.onclick = () => {
+    btnDup.onclick = e => {
+      e.stopPropagation();
       if (!selectedSandboxItemId) return;
       const src = state.sandboxItems.find(it => it.id === selectedSandboxItemId);
       if (!src) return;
@@ -4907,8 +5037,8 @@ function setupSandboxInteractions() {
       const clone = {
         ...src,
         id: uid(),
-        x: src.x + 24,
-        y: src.y + 24,
+        x: src.x + 20,
+        y: src.y + 20,
         zIndex: sandboxMaxZIndex
       };
       state.sandboxItems.push(clone);
@@ -4919,27 +5049,36 @@ function setupSandboxInteractions() {
     };
   }
 
-  // Delete item
+  // Delete button
   const btnDel = document.getElementById('btnSandboxDelete');
   if (btnDel) {
-    btnDel.onclick = () => {
+    btnDel.onclick = e => {
+      e.stopPropagation();
       if (!selectedSandboxItemId) return;
       state.sandboxItems = state.sandboxItems.filter(it => it.id !== selectedSandboxItemId);
       selectedSandboxItemId = null;
+      hideSandboxToolbar();
       saveState();
       renderSandboxCanvas();
       toast('已刪除單品');
     };
   }
 
+  // Back button
+  const btnBack = document.getElementById('btnSandboxBack');
+  if (btnBack) {
+    btnBack.onclick = () => closeSandboxMode();
+  }
+
   // Clear canvas
   const btnClear = document.getElementById('btnSandboxClear');
   if (btnClear) {
     btnClear.onclick = () => {
-      if (state.sandboxItems.length === 0) return;
+      if (!state.sandboxItems || state.sandboxItems.length === 0) return;
       if (confirm('確定清空沙盒畫布上的所有單品嗎？')) {
         state.sandboxItems = [];
         selectedSandboxItemId = null;
+        hideSandboxToolbar();
         saveState();
         renderSandboxCanvas();
         toast('畫布已清空');
