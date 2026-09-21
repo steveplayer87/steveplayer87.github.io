@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="衣櫥助手">
-<link rel="stylesheet" href="styles.css?v=20260921a">
+<link rel="stylesheet" href="styles.css?v=20260921b">
 </head>
 <body>
 
@@ -138,27 +138,29 @@
 
     <!-- ---- Wardrobe ---- -->
     <section class="view" id="view-wardrobe">
-      <div class="chip-row" id="categoryChips"></div>
-      <div class="sort-row">
-        <select class="sort-select" id="sortSelect">
-          <option value="recent">最近新增</option>
-          <option value="wearCount">穿著次數</option>
-          <option value="lastWorn">最近穿著</option>
-          <option value="name">名稱</option>
-        </select>
-        <div class="sort-row-right">
-          <button class="icon-only-btn" id="btnFilter" aria-label="篩選">
-            <span data-icon="filter"></span><span class="filter-badge" id="filterBadge" hidden></span>
-          </button>
-          <button class="icon-only-btn" id="btnSearch" aria-label="搜尋">
-            <span data-icon="search"></span>
-          </button>
-          <button class="select-mode-btn" id="btnSelectMode">選取</button>
+      <div class="wardrobe-sticky-header" id="wardrobeStickyHeader">
+        <div class="chip-row" id="categoryChips"></div>
+        <div class="sort-row">
+          <select class="sort-select" id="sortSelect">
+            <option value="recent">最近新增</option>
+            <option value="wearCount">穿著次數</option>
+            <option value="lastWorn">最近穿著</option>
+            <option value="name">名稱</option>
+          </select>
+          <div class="sort-row-right">
+            <button class="icon-only-btn" id="btnFilter" aria-label="篩選">
+              <span data-icon="filter"></span><span class="filter-badge" id="filterBadge" hidden></span>
+            </button>
+            <button class="icon-only-btn" id="btnSearch" aria-label="搜尋">
+              <span data-icon="search"></span>
+            </button>
+            <button class="select-mode-btn" id="btnSelectMode">選取</button>
+          </div>
         </div>
-      </div>
-      <div class="search-row is-hidden" id="searchRow">
-        <input type="text" id="searchInput" placeholder="搜尋名稱、價格、日期…">
-        <button class="search-clear-btn" id="btnSearchClear">取消</button>
+        <div class="search-row is-hidden" id="searchRow">
+          <input type="text" id="searchInput" placeholder="搜尋名稱、價格、日期…">
+          <button class="search-clear-btn" id="btnSearchClear">取消</button>
+        </div>
       </div>
       <p class="item-count" id="itemCount"></p>
       <div class="item-grid" id="wardrobeGrid"></div>
@@ -186,12 +188,28 @@
 
     <!-- ---- Inspiration / wishlist ---- -->
     <section class="view" id="view-inspiration">
-      <div class="inspire-hero">
-        <div>
-          <p class="section-title">穿搭靈感</p>
-          <p class="section-intro">把想入手的單品先收進清單，慢慢整理你的下一套穿搭。</p>
+      <div class="inspire-carousel-container">
+        <div class="inspire-carousel-track" id="inspireCarouselTrack">
+          <div class="inspire-hero inspire-slide" data-slide="0">
+            <div>
+              <p class="section-title">穿搭靈感</p>
+              <p class="section-intro">把想入手的單品先收進清單，慢慢整理你的下一套穿搭。</p>
+            </div>
+            <span class="inspire-hero-icon" data-icon="shopping"></span>
+          </div>
+          <div class="inspire-hero inspire-hero-sandbox inspire-slide" data-slide="1" id="btnOpenSandboxHero">
+            <div>
+              <div class="sandbox-hero-badge"><span data-icon="sandbox"></span><span>沙盒模式</span></div>
+              <p class="section-title">穿搭沙盒畫布</p>
+              <p class="section-intro">自由擺放衣櫥單品、想買清單或自訂照片，長按拖曳與雙指縮放拼貼。</p>
+            </div>
+            <span class="inspire-hero-icon inspire-hero-icon-sandbox" data-icon="sandbox"></span>
+          </div>
         </div>
-        <span class="inspire-hero-icon" data-icon="shopping"></span>
+        <div class="inspire-carousel-dots" id="inspireCarouselDots">
+          <span class="dot is-active"></span>
+          <span class="dot"></span>
+        </div>
       </div>
       <div class="wishlist-head">
         <div><p class="section-title">想買的單品</p><p class="section-intro">可加入圖片、標籤與參考網址。</p></div>
@@ -373,6 +391,27 @@
         <div class="brand-selected-preview is-hidden" id="brandSelectedPreview"></div>
       </div>
 
+      <div class="field color-field">
+        <div class="color-field-head">
+          <span>顏色（選填）</span>
+          <span class="color-selected-badge" id="colorSelectedBadge" hidden>
+            <span class="color-dot" id="colorSelectedDot"></span>
+            <span id="colorSelectedText"></span>
+          </span>
+        </div>
+        <div class="color-picker-quick-row" id="colorPresetChips"></div>
+        <div class="color-custom-row">
+          <label class="color-palette-btn" title="開啟調色盤">
+            <input type="color" id="fieldColorPicker" value="#2563EB" hidden>
+            <span class="icon-inline" data-icon="palette"></span>
+            <span>調色盤</span>
+          </label>
+          <input type="text" id="fieldColorName" placeholder="自訂顏色名稱（例如：深紅、軍綠、藏青）">
+          <button type="button" class="btn-clear-color" id="btnClearColor" title="清除顏色" hidden>✕</button>
+        </div>
+        <p class="settings-helper" id="colorFamilyHint">點選常用顏色或調色盤，系統會自動歸納色系。</p>
+      </div>
+
       <div class="field">分類
         <div class="chip-row chip-row-form" id="categoryPickerChips"></div>
       </div>
@@ -442,9 +481,18 @@
   <!-- Filter -->
   <div class="modal-sheet" id="modal-filter" data-modal>
     <div class="modal-handle"></div>
-    <div class="modal-head"><h2 id="filterModalTitle">篩選</h2><button class="modal-close" data-close>✕</button></div>
-      <div class="filter-section" id="filterStatusSection">
-        <p class="filter-label">狀態</p>
+    <div class="modal-head">
+      <h2 id="filterModalTitle">篩選</h2>
+      <button class="modal-close" data-close>✕</button>
+    </div>
+    <div class="filter-invert-bar">
+      <button type="button" class="filter-invert-btn" id="btnFilterInvert">
+        <span class="icon-inline" data-icon="invert"></span>
+        <span id="filterInvertLabel">反向排除模式：關閉</span>
+      </button>
+    </div>
+    <div class="filter-section" id="filterStatusSection">
+      <p class="filter-label">狀態</p>
       <div class="chip-row chip-row-form" id="filterStatusChips">
         <button type="button" class="chip is-active" data-status="all">全部</button>
         <button type="button" class="chip" data-status="clean">乾淨</button>
@@ -452,12 +500,20 @@
         <button type="button" class="chip" data-status="dirty">待洗</button>
       </div>
     </div>
-      <div class="filter-section is-hidden" id="filterCategorySection">
-        <p class="filter-label">分類</p>
-        <div class="chip-row chip-row-form" id="filterCategoryChips"></div>
-      </div>
-      <div class="filter-section">
-        <p class="filter-label">標籤（含長／短）</p>
+    <div class="filter-section is-hidden" id="filterCategorySection">
+      <p class="filter-label">分類</p>
+      <div class="chip-row chip-row-form" id="filterCategoryChips"></div>
+    </div>
+    <div class="filter-section" id="filterColorSection">
+      <p class="filter-label">顏色</p>
+      <div class="chip-row chip-row-form filter-color-chips" id="filterColorChips"></div>
+    </div>
+    <div class="filter-section" id="filterBrandSection">
+      <p class="filter-label">品牌</p>
+      <div class="chip-row chip-row-form" id="filterBrandChips"></div>
+    </div>
+    <div class="filter-section">
+      <p class="filter-label">標籤（含長／短）</p>
       <div class="chip-row chip-row-form" id="filterTagChips"></div>
     </div>
     <div class="settings-actions">
@@ -487,17 +543,21 @@
       </div>
     </div>
     <form class="form" id="settingsForm">
-      <label class="field">暱稱
-        <input type="text" id="settingName" placeholder="你的名字">
-      </label>
-
-      <div class="settings-section">
-        <p class="field-label-standalone">自訂頭像</p>
-        <label class="avatar-upload">
-          <input type="file" accept="image/*" id="avatarInput" hidden>
-          <span class="avatar-preview" id="avatarPreview"><span data-icon="camera"></span><span>上傳頭像圖片</span></span>
+      <div class="settings-profile-card">
+        <label class="field settings-nickname-field">暱稱
+          <input type="text" id="settingName" placeholder="你的名字">
         </label>
-        <button type="button" class="link-more-btn is-hidden" id="btnClearAvatar">移除自訂頭像</button>
+        <div class="settings-avatar-area">
+          <label class="settings-avatar-squircle" id="settingsAvatarSquircle" title="更換頭像">
+            <input type="file" accept="image/*" id="avatarInput" hidden>
+            <div class="settings-avatar-circle" id="settingsAvatarCircle">
+              <svg id="settingsAvatarFallback" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8.5" r="3.2" stroke="currentColor" stroke-width="1.8"/><path d="M4.5 19.5c1.5-3.5 4.3-5 7.5-5s6 1.5 7.5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              <img id="settingsAvatarImg" alt="目前頭像" hidden>
+            </div>
+            <span class="settings-avatar-badge" data-icon="camera"></span>
+          </label>
+          <button type="button" class="link-more-btn is-hidden" id="btnClearAvatar" style="font-size:11px;margin-top:4px">移除頭像</button>
+        </div>
       </div>
 
       <div class="settings-section">
@@ -877,11 +937,75 @@
     <div class="settings-actions" id="confirmActions" style="flex-wrap:wrap"></div>
   </div>
 
+  <!-- Archive Confirm Modal -->
+  <div class="modal-sheet" id="modal-archive-confirm" data-modal>
+    <div class="modal-handle"></div>
+    <div class="modal-head"><h2>移至典藏確認</h2><button class="modal-close" data-close>✕</button></div>
+    <div class="archive-confirm-content">
+      <div class="archive-confirm-photo-wrap">
+        <img id="archiveConfirmPhoto" class="archive-confirm-photo" src="" alt="" hidden>
+        <div id="archiveConfirmPhotoPlaceholder" class="archive-confirm-photo-placeholder"></div>
+      </div>
+      <p class="archive-confirm-title" id="archiveConfirmText">確定將此單品移至典藏？</p>
+      <p class="archive-confirm-sub">將不再顯示於其他分類，可隨時在「典藏」中恢復。</p>
+    </div>
+    <div class="settings-actions">
+      <button type="button" class="btn-secondary" data-close>取消</button>
+      <button type="button" class="btn-primary btn-archive-confirm-submit" id="btnArchiveConfirmSubmit">確定移至典藏</button>
+    </div>
+  </div>
+
+  <!-- Sandbox Mode Fullscreen Modal -->
+  <div class="modal-sheet modal-sheet-full" id="modal-sandbox" data-modal>
+    <div class="sandbox-header">
+      <div class="sandbox-header-left">
+        <button type="button" class="icon-only-btn" data-close aria-label="關閉沙盒">✕</button>
+        <span class="sandbox-title">穿搭沙盒模式</span>
+      </div>
+      <div class="sandbox-header-actions">
+        <button type="button" class="btn-sandbox-action" id="btnSandboxClear" title="清空畫布">清空</button>
+        <button type="button" class="btn-sandbox-action btn-sandbox-save" id="btnSandboxSave">儲存畫布</button>
+      </div>
+    </div>
+    <div class="sandbox-canvas-viewport" id="sandboxCanvasViewport">
+      <div class="sandbox-canvas" id="sandboxCanvas">
+        <div class="sandbox-empty-hint" id="sandboxEmptyHint">
+          <span class="sandbox-hint-icon" data-icon="sandbox"></span>
+          <p class="sandbox-hint-title">穿搭沙盒畫布</p>
+          <p class="sandbox-hint-sub">點擊下方按鈕加入衣櫥單品、想買單品或自訂照片<br>長按半秒（500ms）即可拖曳，支援雙指縮放、複製與刪除</p>
+        </div>
+      </div>
+      <div class="sandbox-item-toolbar is-hidden" id="sandboxItemToolbar">
+        <button type="button" class="sandbox-tool-btn" id="btnSandboxDuplicate" title="複製"><span data-icon="copy"></span><span>複製</span></button>
+        <button type="button" class="sandbox-tool-btn btn-danger" id="btnSandboxDelete" title="刪除"><span data-icon="trash"></span><span>刪除</span></button>
+      </div>
+    </div>
+    <div class="sandbox-bottom-bar">
+      <button type="button" class="btn-sandbox-add" id="btnSandboxAddWardrobe">
+        <span data-icon="wardrobe"></span><span>+ 衣櫥單品</span>
+      </button>
+      <button type="button" class="btn-sandbox-add" id="btnSandboxAddWishlist">
+        <span data-icon="shopping"></span><span>+ 想買清單</span>
+      </button>
+      <label class="btn-sandbox-add btn-sandbox-add-custom">
+        <input type="file" accept="image/*" id="sandboxCustomPhotoInput" hidden>
+        <span data-icon="camera"></span><span>+ 自訂照片</span>
+      </label>
+    </div>
+  </div>
+
+  <!-- Sandbox Item Picker Modal -->
+  <div class="modal-sheet" id="modal-sandbox-picker" data-modal>
+    <div class="modal-handle"></div>
+    <div class="modal-head"><h2 id="sandboxPickerTitle">選擇單品</h2><button class="modal-close" data-close>✕</button></div>
+    <div class="picker-grid item-grid" id="sandboxPickerGrid"></div>
+  </div>
+
 </div>
 
 <div class="toast" id="toast"></div>
 
-<script src="seed-items.js?v=20260921a"></script>
-<script src="app.js?v=20260921a"></script>
+<script src="seed-items.js?v=20260921b"></script>
+<script src="app.js?v=20260921b"></script>
 </body>
 </html>

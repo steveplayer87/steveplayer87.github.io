@@ -18,10 +18,10 @@ const ICONS = {
   washBoost: `<svg viewBox="0 0 24 24" fill="none"><path d="M12 3.5c1.5 2.2 3.8 4.6 3.8 7.4A3.8 3.8 0 1 1 8.2 11c0-2.8 2.3-5.2 3.8-7.5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="m18.5 3.5.6 1.5 1.5.6-1.5.6-.6 1.5-.6-1.5-1.5-.6 1.5-.6.6-1.5ZM19.5 11l.4 1 .9.4-.9.4-.4 1-.4-1-.9-.4.9-.4.4-1Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>`,
   filter: `<svg viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="9" cy="6" r="2" fill="var(--color-surface)" stroke="currentColor" stroke-width="1.6"/><circle cx="16" cy="12" r="2" fill="var(--color-surface)" stroke="currentColor" stroke-width="1.6"/><circle cx="10" cy="18" r="2" fill="var(--color-surface)" stroke="currentColor" stroke-width="1.6"/></svg>`,
   search: `<svg viewBox="0 0 24 24" fill="none"><circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" stroke-width="1.7"/><path d="M19 19 15.2 15.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>`,
-  top: `<svg viewBox="0 0 24 24" fill="none"><path d="M9 3.5 12 5l3-1.5 4 3-2.3 2.8L15 8v11.5a1 1 0 0 1-1 1H10a1 1 0 0 1-1-1V8l-1.7 1.3L5 6.5l4-3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`,
-  bottom: `<svg viewBox="0 0 24 24" fill="none"><path d="M6 3.5h12l.8 8-2 8.5a1 1 0 0 1-1 .8h-1.6a1 1 0 0 1-1-.8L12 12l-1.2 8a1 1 0 0 1-1 .8H8.2a1 1 0 0 1-1-.8l-2-8.5.8-8Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M6.6 8.5h10.8" stroke="currentColor" stroke-width="1.6"/></svg>`,
-  outer: `<svg viewBox="0 0 24 24" fill="none"><path d="M9 3.5 12 5l3-1.5 4.5 3.3-2 3-2.5-1.3V20a1 1 0 0 1-1 1H10a1 1 0 0 1-1-1V8.5L6.5 9.8l-2-3L9 3.5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 6v14.6" stroke="currentColor" stroke-width="1.3"/></svg>`,
-  shoes: `<svg viewBox="0 0 24 24" fill="none"><path d="M3.5 17.5V13c1 .4 2 .2 2.7-.5l2-2c.6-.6 1.5-.8 2.3-.4l2.2 1c.7.3 1.5.2 2-.3l1-.9c.6-.5 1.5-.5 2 0l2.8 2.6c.7.6 1 1.6.7 2.4l-.2.6H3.5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`,
+  top: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/></svg>`,
+  bottom: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3.5h12l1 6.5-1.8 11a1 1 0 0 1-1 .8h-2a1 1 0 0 1-1-.8L12 12l-1.2 9a1 1 0 0 1-1 .8H7.8a1 1 0 0 1-1-.8L5 10l1-6.5Z"/><path d="M6 7.5h12"/></svg>`,
+  outer: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.4 4.5 16 3a4 4 0 0 0-8 0L3.6 4.5A2 2 0 0 0 2 6.5V10c0 .6.4 1 1 1h2v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-9h2c.6 0 1-.4 1-1V6.5a2 2 0 0 0-1.6-2z"/><path d="M12 7v15"/><path d="M8 3v4.5l4 2.5 4-2.5V3"/></svg>`,
+  shoes: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 8c0-3 1.5-4.5 3-4.5s3 1.5 3 4.5c0 3-1 5.5-1 7.5 0 2.5.5 3.5-2 3.5s-2-1-2-3.5c0-2-1-4.5-1-7.5Z"/><path d="M12.5 8c0-3 1.5-4.5 3-4.5s3 1.5 3 4.5c0 3-1 5.5-1 7.5 0 2.5.5 3.5-2 3.5s-2-1-2-3.5c0-2-1-4.5-1-7.5Z"/><path d="M7 7.5h3M7 10h3M14 7.5h3M14 10h3"/></svg>`,
   hat: `<svg viewBox="0 0 24 24" fill="none"><path d="M4.5 15.5c0-4.5 3.3-8 7.5-8s7.5 3.5 7.5 8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M2.5 15.5h19" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>`,
   accessory: `<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.6"/><path d="M12 12v8.5M9.5 20.5h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>`,
   custom: `<svg viewBox="0 0 24 24" fill="none"><path d="M11 3.5H6a2.5 2.5 0 0 0-2.5 2.5v5c0 .6.2 1.1.6 1.5l8 8a2 2 0 0 0 2.8 0l5-5a2 2 0 0 0 0-2.8l-8-8c-.4-.4-.9-.6-1.5-.6Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/></svg>`,
@@ -46,6 +46,10 @@ const ICONS = {
   layers: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>`,
   flip: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg>`,
   wand: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m15 4-2 4 4-2Z"/><path d="m20 9-4 2 2 4Z"/><path d="M17.8 11.8 3 21"/><path d="m7 4 1 2 2 1-2 1-1 2-1-2-2-1 2-1Z"/></svg>`,
+  palette: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>`,
+  sandbox: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m15 4-2 4 4-2Z"/><path d="m20 9-4 2 2 4Z"/><path d="M17.8 11.8 3 21"/><circle cx="7" cy="7" r="2.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg>`,
+  invert: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m7 10 5-6 5 6"/><path d="M12 4v16"/><path d="m17 14-5 6-5-6"/></svg>`,
+  copy: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`,
 };
 function applyStaticIcons() {
   document.querySelectorAll('[data-icon]').forEach(el => {
@@ -56,6 +60,108 @@ function applyStaticIcons() {
 
 /* ---------------------------- Constants ---------------------------- */
 const STORAGE_KEY = 'wardrobeAppState_v2';
+const COLOR_FAMILIES = [
+  { id: 'black', name: '黑色', hex: '#222222' },
+  { id: 'white', name: '白色', hex: '#FFFFFF' },
+  { id: 'gray', name: '灰色', hex: '#9E9E9E' },
+  { id: 'blue', name: '藍色', hex: '#2563EB' },
+  { id: 'green', name: '綠色', hex: '#16A34A' },
+  { id: 'yellow', name: '黃色', hex: '#EAB308' },
+  { id: 'red', name: '紅色', hex: '#DC2626' },
+  { id: 'pink', name: '粉色', hex: '#EC4899' },
+  { id: 'purple', name: '紫色', hex: '#9333EA' },
+  { id: 'orange', name: '橘色', hex: '#EA580C' },
+  { id: 'brown', name: '棕色', hex: '#78350F' },
+  { id: 'beige', name: '米/杏色', hex: '#F5EBE0' },
+];
+
+const COMMON_COLOR_PRESETS = [
+  { name: '黑色', hex: '#1C1C1E', family: '黑色' },
+  { name: '白色', hex: '#FFFFFF', family: '白色' },
+  { name: '深灰', hex: '#4B5563', family: '灰色' },
+  { name: '淺灰', hex: '#D1D5DB', family: '灰色' },
+  { name: '深藍', hex: '#1E3A8A', family: '藍色' },
+  { name: '淺藍', hex: '#60A5FA', family: '藍色' },
+  { name: '軍綠', hex: '#3F6212', family: '綠色' },
+  { name: '淺綠', hex: '#86EFAC', family: '綠色' },
+  { name: '深紅', hex: '#991B1B', family: '紅色' },
+  { name: '紅色', hex: '#EF4444', family: '紅色' },
+  { name: '粉紅', hex: '#F472B6', family: '粉色' },
+  { name: '黃色', hex: '#FACC15', family: '黃色' },
+  { name: '橘色', hex: '#FB923C', family: '橘色' },
+  { name: '紫色', hex: '#A855F7', family: '紫色' },
+  { name: '卡其/棕', hex: '#A16207', family: '棕色' },
+  { name: '米杏', hex: '#F5EBE0', family: '米/杏色' },
+];
+
+function hexToHsl(hex) {
+  let c = hex.replace('#', '');
+  if (c.length === 3) c = c.split('').map(x => x + x).join('');
+  const num = parseInt(c, 16);
+  const r = (num >> 16) / 255;
+  const g = ((num >> 8) & 255) / 255;
+  const b = (num & 255) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h, s, l = (max + min) / 2;
+  if (max === min) {
+    h = s = 0;
+  } else {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+      case g: h = (b - r) / d + 2; break;
+      case b: h = (r - g) / d + 4; break;
+    }
+    h *= 60;
+  }
+  return { h, s: s * 100, l: l * 100 };
+}
+
+function rgbToHex(col) {
+  if (!col) return '';
+  if (col.startsWith('#')) return col.toLowerCase();
+  const match = col.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+  if (!match) return col.toLowerCase();
+  const r = Number(match[1]).toString(16).padStart(2, '0');
+  const g = Number(match[2]).toString(16).padStart(2, '0');
+  const b = Number(match[3]).toString(16).padStart(2, '0');
+  return `#${r}${g}${b}`.toLowerCase();
+}
+
+function classifyColorFamily(hex) {
+  if (!hex || typeof hex !== 'string') return '其他';
+  const clean = hex.trim().toLowerCase();
+  const match = COMMON_COLOR_PRESETS.find(p => p.hex.toLowerCase() === clean);
+  if (match) return match.family;
+  try {
+    const { h, s, l } = hexToHsl(clean);
+    if (l >= 88 && s <= 30) return '白色';
+    if (l <= 14) return '黑色';
+    if (s <= 14) return '灰色';
+    if (h >= 25 && h <= 50 && s >= 15 && s <= 55 && l >= 72) return '米/杏色';
+    if ((h >= 345 && h <= 360) || (h >= 0 && h < 14)) {
+      if (l >= 70 && s >= 30) return '粉色';
+      if (l < 45 && s < 50) return '棕色';
+      return '紅色';
+    }
+    if (h >= 14 && h < 42) {
+      if (l < 52 && s < 65) return '棕色';
+      return '橘色';
+    }
+    if (h >= 42 && h < 68) {
+      if (l < 40) return '棕色';
+      return '黃色';
+    }
+    if (h >= 68 && h < 165) return '綠色';
+    if (h >= 165 && h < 260) return '藍色';
+    if (h >= 260 && h < 315) return '紫色';
+    if (h >= 315 && h < 345) return '粉色';
+    return '其他';
+  } catch (_) {
+    return '其他';
+  }
+}
 const FIXED_CATEGORIES = ['top', 'bottom', 'outer', 'shoes', 'hat', 'accessory'];
 const CATEGORY_LABEL = { top: '上衣', bottom: '褲子', outer: '外套', shoes: '鞋子', hat: '帽子', accessory: '配件' };
 const ASPECT_RATIOS = { '1:1': 1, '3:4': 0.75, '2:3': 2/3 };
@@ -355,6 +461,7 @@ function defaultState() {
     haircuts: [],
     geminiApiKey: '',
     drafts: { addItem: null, wishlist: null },
+    sandboxItems: [],
   };
 }
 const IDB_NAME = 'wardrobe_db';
@@ -427,9 +534,24 @@ function hydrateState(rawObj) {
   profile.outfitLayout = normalizeOutfitLayout((parsed.profile && parsed.profile.outfitLayout) || base.profile.outfitLayout);
   profile.cardImageScale = Math.min(100, Math.max(45, Number(profile.cardImageScale) || 72));
   profile.avatar = typeof profile.avatar === 'string' ? profile.avatar : '';
+  const normalizedItems = (Array.isArray(parsed.items) ? parsed.items : []).map(i => {
+    if (!i.colorFamily) {
+      if (i.color) {
+        i.colorFamily = classifyColorFamily(i.colorHex || '') || i.color;
+      } else {
+        const found = COLOR_FAMILIES.find(f => i.name && (i.name.includes(f.name) || i.name.includes(f.name.replace('色', ''))));
+        if (found) {
+          i.color = found.name;
+          i.colorFamily = found.name;
+          i.colorHex = found.hex;
+        }
+      }
+    }
+    return i;
+  });
   return {
     profile,
-    items: Array.isArray(parsed.items) ? parsed.items : [],
+    items: normalizedItems,
     customCategories: Array.isArray(parsed.customCategories) ? parsed.customCategories : [],
     today: Object.assign({}, base.today, parsed.today || {}),
     ootdHistory: Array.isArray(parsed.ootdHistory) ? parsed.ootdHistory : [],
@@ -441,6 +563,7 @@ function hydrateState(rawObj) {
     haircuts: Array.isArray(parsed.haircuts) ? parsed.haircuts : [],
     geminiApiKey: typeof parsed.geminiApiKey === 'string' ? parsed.geminiApiKey : (localStorage.getItem('gemini_api_key') || ''),
     drafts: Object.assign({}, base.drafts, parsed.drafts || {}),
+    sandboxItems: Array.isArray(parsed.sandboxItems) ? parsed.sandboxItems : [],
   };
 }
 
@@ -590,7 +713,20 @@ function activateView(view) {
   const isHome = view === 'home';
   app.classList.toggle('is-home-view', isHome);
   document.body.classList.toggle('home-page', isHome);
-  document.getElementById('mainScroll').classList.toggle('is-retired-scroll', view === 'wardrobe' && document.getElementById('view-wardrobe')?.classList.contains('is-retired-view'));
+  const isRetired = view === 'wardrobe' && uiWardrobeCat === 'retired';
+  document.getElementById('mainScroll').classList.toggle('is-retired-scroll', isRetired);
+  app.classList.toggle('is-retired-view', isRetired);
+  const themeMeta = document.querySelector('meta[name="theme-color"]');
+  if (themeMeta) {
+    if (isRetired) themeMeta.content = '#D8B45B';
+    else if (isHome) {
+      const current = state.profile.weather?.current;
+      const isNight = current && current.is_day != null ? Number(current.is_day) === 0 : (new Date().getHours() >= 18 || new Date().getHours() < 6);
+      themeMeta.content = isNight ? '#232C48' : '#CFE0F5';
+    } else {
+      themeMeta.content = '#ffffff';
+    }
+  }
   document.getElementById('mainScroll').scrollTop = 0;
   syncHomeRackExpansion();
   if (view === 'history') {
@@ -602,6 +738,9 @@ function activateView(view) {
     renderConsumables();
   } else if (view === 'home') {
     renderHome();
+  } else if (view === 'inspiration') {
+    renderWishlist();
+    setupInspirationCarousel();
   }
 }
 function restoreHistoryView(view) {
@@ -1003,7 +1142,13 @@ function renderHeader() {
   app.classList.toggle('is-night-view', isNight);
   document.body.classList.toggle('night-page', isNight && document.body.classList.contains('home-page'));
   const themeMeta = document.querySelector('meta[name="theme-color"]');
-  if (themeMeta) themeMeta.setAttribute('content', isNight ? '#30247A' : '#8E9FEA');
+  if (themeMeta) {
+    if (activeView === 'wardrobe' && uiWardrobeCat === 'retired') {
+      themeMeta.setAttribute('content', '#D8B45B');
+    } else {
+      themeMeta.setAttribute('content', isNight ? '#232C48' : '#CFE0F5');
+    }
+  }
   const sceneSky = document.getElementById('sceneSky');
   const weatherCode = Number(current?.weather_code);
   const rainCodes = [51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82, 95, 96, 99];
@@ -1117,28 +1262,25 @@ function renderAvatar() {
   const fallback = document.getElementById('avatarFallback');
   const btn = document.getElementById('btnSettings');
   const src = state.profile.avatar || '';
-  if (!img || !fallback || !btn) return;
-  img.hidden = !src;
-  fallback.hidden = !!src;
-  fallback.style.display = src ? 'none' : '';
-  img.style.display = src ? 'block' : 'none';
-  btn.classList.toggle('has-avatar', !!src);
-  btn.setAttribute('aria-label', src ? '設定（已使用自訂頭像）' : '設定');
-  if (src) img.src = src;
-  const preview = document.getElementById('avatarPreview');
-  const clear = document.getElementById('btnClearAvatar');
-  if (preview) {
-    if (src) {
-      preview.style.backgroundImage = `url('${src}')`;
-      preview.classList.add('has-photo');
-      preview.innerHTML = '<span>更換頭像圖片</span>';
-    } else {
-      preview.removeAttribute('style');
-      preview.classList.remove('has-photo');
-      preview.innerHTML = '<span data-icon="camera"></span><span>上傳頭像圖片</span>';
-      applyStaticIcons();
-    }
+  if (img && fallback && btn) {
+    img.hidden = !src;
+    fallback.hidden = !!src;
+    fallback.style.display = src ? 'none' : '';
+    img.style.display = src ? 'block' : 'none';
+    btn.classList.toggle('has-avatar', !!src);
+    btn.setAttribute('aria-label', src ? '設定（已使用自訂頭像）' : '設定');
+    if (src) img.src = src;
   }
+  const sImg = document.getElementById('settingsAvatarImg');
+  const sFallback = document.getElementById('settingsAvatarFallback');
+  if (sImg && sFallback) {
+    sImg.hidden = !src;
+    sFallback.hidden = !!src;
+    sFallback.style.display = src ? 'none' : '';
+    sImg.style.display = src ? 'block' : 'none';
+    if (src) sImg.src = src;
+  }
+  const clear = document.getElementById('btnClearAvatar');
   if (clear) clear.classList.toggle('is-hidden', !src);
 }
 function renderCardImageScale() {
@@ -1280,11 +1422,20 @@ function renderHome() {
   }
 
   const rack = state.items.filter(i => i.status === 'resting');
+  rack.sort((a, b) => {
+    if (a.category === 'towel' && b.category !== 'towel') return -1;
+    if (b.category === 'towel' && a.category !== 'towel') return 1;
+    return 0;
+  });
   const basket = state.items.filter(i => i.status === 'dirty');
   const pendingConsumables = getPendingLaundryConsumables();
   renderChipList('tempRackList', 'tempRackEmpty', rack, { pinActiveTowel: true });
   renderChipList('basketList', 'basketEmpty', basket, { pendingConsumables });
   document.getElementById('basketTitle').textContent = `洗衣籃・${Math.max(0, daysBetween(state.laundry.lastWashDate, todayStr()))}天`;
+  const activeTowelCount = (state.activeTowel && state.consumables.some(c => c.id === state.activeTowel)) ? 1 : 0;
+  const rackCount = rack.length + activeTowelCount;
+  const tempRackTitle = document.querySelector('#card-rack .rack-title');
+  if (tempRackTitle) tempRackTitle.textContent = `暫存衣架・${rackCount}件`;
   document.getElementById('basketCardStatus')?.replaceChildren(document.createTextNode(basket.length || pendingConsumables.length ? '等待清洗中' : ''));
 }
 function renderChipList(listId, emptyId, items, opts) {
@@ -1344,7 +1495,7 @@ function openRackOverview() {
 /* ---- Wardrobe tab ---- */
 let uiWardrobeCat = 'all';
 let uiWardrobeSort = 'recent';
-let uiWardrobeFilters = { status: 'all', tags: [] };
+let uiWardrobeFilters = { status: 'all', tags: [], colors: [], brands: [], invert: false };
 let uiSearchQuery = '';
 let uiSelectMode = false;
 let uiSelectedIds = new Set();
@@ -1355,12 +1506,19 @@ function allTagsUsed() {
   return Array.from(set).sort((a, b) => a.localeCompare(b, 'zh-Hant'));
 }
 function isFilterActive() {
-  return uiWardrobeFilters.status !== 'all' || uiWardrobeFilters.tags.length > 0;
+  return uiWardrobeFilters.status !== 'all' ||
+    uiWardrobeFilters.tags.length > 0 ||
+    uiWardrobeFilters.colors.length > 0 ||
+    uiWardrobeFilters.brands.length > 0 ||
+    uiWardrobeFilters.invert;
 }
 function itemMatchesSearch(item, q) {
   if (!q) return true;
   const hay = [
     item.name,
+    item.brand || '',
+    item.color || '',
+    item.colorFamily || '',
     item.price != null ? String(item.price) : '',
     fmtDate(item.purchaseDate || ''),
     fmtDate(item.lastWornDate || ''),
@@ -1393,9 +1551,28 @@ function renderCategoryChips() {
 }
 
 function itemMatchesFilters(item) {
-  if (uiWardrobeFilters.status !== 'all' && item.status !== uiWardrobeFilters.status) return false;
-  if (uiWardrobeFilters.tags.length && !uiWardrobeFilters.tags.every(t => (item.tags || []).includes(t))) return false;
-  return true;
+  const hasStatus = uiWardrobeFilters.status !== 'all';
+  const hasTags = uiWardrobeFilters.tags.length > 0;
+  const hasColors = uiWardrobeFilters.colors.length > 0;
+  const hasBrands = uiWardrobeFilters.brands.length > 0;
+
+  if (!hasStatus && !hasTags && !hasColors && !hasBrands) return true;
+
+  const statusMatch = !hasStatus || item.status === uiWardrobeFilters.status;
+  const tagMatch = !hasTags || uiWardrobeFilters.tags.every(t => (item.tags || []).includes(t));
+  const colorMatch = !hasColors || (
+    (item.colorFamily && uiWardrobeFilters.colors.includes(item.colorFamily)) ||
+    (item.color && uiWardrobeFilters.colors.includes(item.color))
+  );
+  const brandMatch = !hasBrands || (
+    item.brand && uiWardrobeFilters.brands.includes(item.brand)
+  );
+
+  const matched = statusMatch && tagMatch && colorMatch && brandMatch;
+  if (uiWardrobeFilters.invert) {
+    return !matched;
+  }
+  return matched;
 }
 
 function getVisibleWardrobeItems() {
@@ -1421,6 +1598,17 @@ function renderWardrobe() {
   const retiredView = uiWardrobeCat === 'retired';
   document.getElementById('view-wardrobe').classList.toggle('is-retired-view', retiredView);
   document.getElementById('mainScroll')?.classList.toggle('is-retired-scroll', retiredView && activeView === 'wardrobe');
+  document.getElementById('app')?.classList.toggle('is-retired-view', retiredView && activeView === 'wardrobe');
+  const themeMeta = document.querySelector('meta[name="theme-color"]');
+  if (themeMeta) {
+    if (retiredView && activeView === 'wardrobe') {
+      themeMeta.content = '#D8B45B';
+    } else {
+      const current = state.profile.weather?.current;
+      const isNight = current && current.is_day != null ? Number(current.is_day) === 0 : (new Date().getHours() >= 18 || new Date().getHours() < 6);
+      themeMeta.content = isNight ? '#232C48' : '#CFE0F5';
+    }
+  }
   const retiredBanner = document.getElementById('retiredBanner');
   if (retiredBanner) retiredBanner.hidden = !retiredView;
   document.getElementById('itemCount').textContent = retiredView ? `典藏・${items.length} 件` : `${items.length} 件`;
@@ -2421,11 +2609,13 @@ function openItemDetail(itemId) {
   body.innerHTML = `
     <div class="detail-photo-wrap" id="detailPhotoContainer">
       <div class="card-25d ${isGarment ? 'garment-25d' : ''}" id="card25d">
-        <div class="card-face card-face-front" id="cardFaceFront" style="${itemPhotoStyle(item)};${item.image ? '' : 'display:flex;align-items:center;justify-content:center;color:var(--color-ink-faint);'}">
-          ${item.image ? '' : `<div class="detail-photo-empty-icon">${categoryIcon(item.category)}</div>`}
+        <div class="card-face card-face-front" id="cardFaceFront">
+          ${item.image ? `<img class="garment-cutout-img" id="frontCutoutImg" src="${item.image}" alt="">` : `<div class="detail-photo-empty-icon">${categoryIcon(item.category)}</div>`}
         </div>
         ${hasBack ? `
-          <div class="card-face card-face-back" id="cardFaceBack" style="background-image:url('${item.imageBack}')"></div>
+          <div class="card-face card-face-back" id="cardFaceBack">
+            <img class="garment-cutout-img" id="backCutoutImg" src="${item.imageBack}" alt="">
+          </div>
         ` : ''}
       </div>
       ${hasBack ? `
@@ -2441,7 +2631,15 @@ function openItemDetail(itemId) {
       </div>
     ` : ''}
     <p class="detail-name">${escapeHtml(item.name)}</p>
-    ${item.brand ? `<p class="detail-brand">${brandIconMarkup(item, 'medium')}<span>${escapeHtml(item.brand)}</span></p>` : ''}
+    <div class="detail-attributes-row">
+      ${item.color ? `
+        <div class="detail-color-badge">
+          <span class="color-dot" style="background-color:${item.colorHex || '#888'}"></span>
+          <span>${escapeHtml(item.color)}${item.colorFamily && item.colorFamily !== item.color ? `（${escapeHtml(item.colorFamily)}）` : ''}</span>
+        </div>
+      ` : ''}
+      ${item.brand ? `<div class="detail-brand" style="margin:0">${brandIconMarkup(item, 'medium')}<span>${escapeHtml(item.brand)}</span></div>` : ''}
+    </div>
     ${item.material ? `
       <div class="detail-material-row">
         <span class="material-tag"><span class="icon-inline">${ICONS.layers}</span><span>材質：${escapeHtml(item.material)}</span></span>
@@ -2492,6 +2690,13 @@ function openItemDetail(itemId) {
       <p class="wear-history-heading">洗衣歷史（共 ${item.washHistory.length} 次）</p>
       <div class="wear-history-list">${item.washHistory.slice(0, 30).map(entry => { const record = washHistoryEntry(entry); return `<div class="wear-history-row wash-history-row"><span>${fmtDate(record.date)}</span>${record.extraWash ? '<span class="history-boost-badge">加強清洗</span>' : ''}</div>`; }).join('')}</div>
     ` : ''}
+
+    <div class="detail-archive-wrap">
+      <button type="button" class="btn-archive-strip" id="btnDetailArchive">
+        <span class="icon-inline">${ICONS.retired}</span>
+        <span>${item.status === 'retired' ? '自典藏恢復到衣櫥' : '移至典藏'}</span>
+      </button>
+    </div>
   `;
   body.querySelector('#btnEditItem').innerHTML = ICONS.edit;
   body.querySelector('#btnEditItem').addEventListener('click', () => openAddModal(item.id));
@@ -2501,13 +2706,38 @@ function openItemDetail(itemId) {
     const card = body.querySelector('#card25d');
     const badge = body.querySelector('#cardFlipBadge');
     const flipBtn = body.querySelector('#btnFlipPhoto');
+    const frontImg = body.querySelector('#frontCutoutImg');
+    const backImg = body.querySelector('#backCutoutImg');
     let isFlipped = false;
     let startX = 0;
     let dragging = false;
+    let currentDeg = 0;
+    let startDeg = 0;
+
+    // Normalizing scale differences between front and back
+    if (frontImg && backImg) {
+      const adjustScale = () => {
+        if (!frontImg.naturalWidth || !backImg.naturalWidth) return;
+        const fw = frontImg.naturalWidth, fh = frontImg.naturalHeight;
+        const bw = backImg.naturalWidth, bh = backImg.naturalHeight;
+        const fRatio = fw / fh;
+        const bRatio = bw / bh;
+        if (Math.abs(fRatio - bRatio) > 0.04) {
+          const scaleComp = Math.sqrt(fRatio / bRatio);
+          backImg.style.transform = `scale(${Math.min(1.15, Math.max(0.85, scaleComp))})`;
+        }
+      };
+      if (frontImg.complete && backImg.complete) adjustScale();
+      else {
+        frontImg.addEventListener('load', adjustScale);
+        backImg.addEventListener('load', adjustScale);
+      }
+    }
 
     function updateFlipUI() {
       card.classList.toggle('is-flipped', isFlipped);
-      card.style.transform = '';
+      card.style.transform = isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)';
+      currentDeg = isFlipped ? 180 : 0;
       if (badge) badge.innerHTML = isFlipped ? '<span>背面</span> 2/2' : '<span>正面</span> 1/2';
       if (flipBtn) flipBtn.textContent = isFlipped ? '翻轉看正面' : '翻轉看背面';
     }
@@ -2525,6 +2755,7 @@ function openItemDetail(itemId) {
       if (e.target.closest('#btnEditItem') || e.target.closest('#btnFlipPhoto')) return;
       dragging = true;
       startX = e.clientX;
+      startDeg = isFlipped ? 180 : 0;
       card.classList.add('is-dragging');
       if (card.setPointerCapture) {
         try { card.setPointerCapture(e.pointerId); } catch (_) {}
@@ -2534,8 +2765,7 @@ function openItemDetail(itemId) {
     card.addEventListener('pointermove', (e) => {
       if (!dragging) return;
       const dx = e.clientX - startX;
-      const baseDeg = isFlipped ? 180 : 0;
-      const currentDeg = baseDeg + (dx * 0.45);
+      currentDeg = startDeg - (dx * 1.05);
       card.style.transform = `rotateY(${currentDeg}deg)`;
     });
 
@@ -2544,15 +2774,57 @@ function openItemDetail(itemId) {
       dragging = false;
       card.classList.remove('is-dragging');
       const dx = e.clientX - startX;
-      if (Math.abs(dx) > 35) {
-        if (dx < -35) isFlipped = true;
-        else if (dx > 35) isFlipped = false;
+      const norm = ((currentDeg % 360) + 360) % 360;
+      if (Math.abs(dx) > 18) {
+        if (dx < -18) isFlipped = true;
+        else if (dx > 18) isFlipped = false;
+      } else {
+        isFlipped = norm > 90 && norm < 270;
       }
       updateFlipUI();
     };
 
     card.addEventListener('pointerup', finishDrag);
     card.addEventListener('pointercancel', finishDrag);
+  }
+
+  // Bottom Archive Button & Confirmation Modal
+  const btnArchive = body.querySelector('#btnDetailArchive');
+  if (btnArchive) {
+    btnArchive.addEventListener('click', () => {
+      if (item.status === 'retired') {
+        restoreItem(item.id);
+        closeModal();
+        toast('已自典藏恢復到衣櫥');
+        return;
+      }
+      const modal = document.getElementById('modal-archive-confirm');
+      if (!modal) return;
+      const photo = document.getElementById('archiveConfirmPhoto');
+      const placeholder = document.getElementById('archiveConfirmPhotoPlaceholder');
+      const text = document.getElementById('archiveConfirmText');
+      if (text) text.textContent = `確定將「${item.name}」移至典藏？`;
+      if (item.image) {
+        if (photo) { photo.src = item.image; photo.hidden = false; }
+        if (placeholder) placeholder.hidden = true;
+      } else {
+        if (photo) photo.hidden = true;
+        if (placeholder) {
+          placeholder.hidden = false;
+          placeholder.innerHTML = categoryIcon(item.category);
+        }
+      }
+      const submitBtn = document.getElementById('btnArchiveConfirmSubmit');
+      if (submitBtn) {
+        submitBtn.onclick = () => {
+          retireItem(item.id);
+          closeModal();
+          renderWardrobe();
+          toast(`已將「${item.name}」移至典藏`);
+        };
+      }
+      openModal('modal-archive-confirm');
+    });
   }
 
   // Quick care actions
@@ -2610,6 +2882,7 @@ let pendingPhoto = null;
 let pendingPhotoBack = null;
 let pendingCategory = 'top';
 let pendingTags = [];
+let pendingColor = { hex: '', name: '', family: '' };
 let editingItemId = null;
 let backfillDraft = null;
 let formDirty = false;
@@ -2642,6 +2915,9 @@ function autoSaveAddItemDraft() {
     category: pendingCategory,
     tags: pendingTags.slice(),
     material,
+    color: pendingColor.name || '',
+    colorHex: pendingColor.hex || '',
+    colorFamily: pendingColor.family || '',
     purchaseDate: document.getElementById('fieldPurchaseDate')?.value || '',
     price: document.getElementById('fieldPrice')?.value ? Number(document.getElementById('fieldPrice').value) : null,
     archiveDirect: !!document.getElementById('fieldArchiveDirect')?.checked,
@@ -2658,6 +2934,9 @@ function autoSaveAddItemDraft() {
         category: draft.category,
         tags: draft.tags,
         material: draft.material,
+        color: draft.color,
+        colorHex: draft.colorHex,
+        colorFamily: draft.colorFamily,
         purchaseDate: draft.purchaseDate,
         price: draft.price,
         image: draft.image || item.image,
@@ -2779,6 +3058,66 @@ function renderMaterialPickerChips() {
   });
 }
 
+function renderColorForm() {
+  const chipsWrap = document.getElementById('colorPresetChips');
+  if (!chipsWrap) return;
+  chipsWrap.innerHTML = '';
+  COMMON_COLOR_PRESETS.forEach(preset => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'color-preset-chip' + (pendingColor.family === preset.name ? ' is-active' : '');
+    btn.setAttribute('data-color', preset.name);
+    btn.title = preset.name;
+    btn.innerHTML = `<span class="preset-dot" style="background-color:${preset.hex};"></span><span>${preset.name}</span>`;
+    btn.addEventListener('click', () => {
+      if (pendingColor.family === preset.name && pendingColor.hex === preset.hex) {
+        pendingColor = { hex: '', name: '', family: '' };
+      } else {
+        pendingColor = { hex: preset.hex, name: preset.name, family: preset.name };
+      }
+      formDirty = true;
+      syncColorFormUI();
+      autoSaveAddItemDraft();
+    });
+    chipsWrap.appendChild(btn);
+  });
+  syncColorFormUI();
+}
+
+function syncColorFormUI() {
+  const badge = document.getElementById('colorSelectedBadge');
+  const dot = document.getElementById('colorSelectedDot');
+  const text = document.getElementById('colorSelectedText');
+  const inputName = document.getElementById('fieldColorName');
+  const inputPicker = document.getElementById('fieldColorPicker');
+  const btnClear = document.getElementById('btnClearColor');
+  const hint = document.getElementById('colorFamilyHint');
+
+  if (pendingColor.hex || pendingColor.name || pendingColor.family) {
+    if (badge) {
+      badge.hidden = false;
+      if (dot) dot.style.backgroundColor = pendingColor.hex || '#888';
+      if (text) text.textContent = pendingColor.name ? `${pendingColor.name}（${pendingColor.family}）` : pendingColor.family;
+    }
+    if (btnClear) btnClear.hidden = false;
+    if (hint) hint.textContent = `已自動辨識所屬色系：${pendingColor.family || '自訂色'}`;
+    if (inputPicker && pendingColor.hex && pendingColor.hex.startsWith('#')) {
+      inputPicker.value = pendingColor.hex;
+    }
+  } else {
+    if (badge) badge.hidden = true;
+    if (btnClear) btnClear.hidden = true;
+    if (hint) hint.textContent = '點選常用顏色或調色盤，系統會自動歸納色系。';
+  }
+  if (inputName && document.activeElement !== inputName) {
+    inputName.value = pendingColor.name || '';
+  }
+  document.querySelectorAll('#colorPresetChips .color-preset-chip').forEach(btn => {
+    const name = btn.getAttribute('data-color');
+    btn.classList.toggle('is-active', pendingColor.family === name || pendingColor.name === name);
+  });
+}
+
 let outfitEditorSlot = 'top';
 let outfitPointerDrag = null;
 let outfitScaleSaveTimer = null;
@@ -2885,6 +3224,7 @@ function openAddModal(editId = null) {
   document.getElementById('fieldMaterialCustom').value = '';
   pendingBrandName = '';
   pendingBrandIcon = null;
+  pendingColor = { hex: '', name: '', family: '' };
   pendingCategory = 'top';
   pendingTags = [];
   formDirty = false;
@@ -2915,6 +3255,11 @@ function openAddModal(editId = null) {
     document.getElementById('fieldArchiveDirect').checked = !!savedDraft.archiveDirect;
     pendingPhoto = savedDraft.image || null;
     pendingPhotoBack = savedDraft.imageBack || null;
+    pendingColor = {
+      hex: savedDraft.colorHex || '',
+      name: savedDraft.color || '',
+      family: savedDraft.colorFamily || (savedDraft.colorHex ? classifyColorFamily(savedDraft.colorHex) : '')
+    };
     syncBrandForm(savedDraft.brand || '', savedDraft.brandIcon || null);
     setPhotoPreview(document.getElementById('photoPreviewWrap'), pendingPhoto, '上傳照片（可一次選2張，第2張當背面）');
     if (hintWrap) hintWrap.hidden = !pendingPhotoBack;
@@ -2927,6 +3272,11 @@ function openAddModal(editId = null) {
     pendingTags = (item.tags || []).slice();
     pendingMaterial = item.material || '';
     document.getElementById('fieldMaterialCustom').value = pendingMaterial;
+    pendingColor = {
+      hex: item.colorHex || '',
+      name: item.color || '',
+      family: item.colorFamily || (item.colorHex ? classifyColorFamily(item.colorHex) : '')
+    };
     syncBrandForm(item.brand || '', item.brandIcon || null);
     document.getElementById('addModalTitle').textContent = '編輯單品';
     document.getElementById('addFormSubmitBtn').textContent = '儲存修改';
@@ -2956,6 +3306,7 @@ function openAddModal(editId = null) {
   renderLengthToggle();
   renderTagPickerChips();
   renderMaterialPickerChips();
+  renderColorForm();
   formDirty = false; // the population above doesn't count as a user edit
   const addSheet = document.getElementById('modal-add');
   if (addSheet) addSheet.scrollTop = 0;
@@ -3340,6 +3691,20 @@ function openFilterModal(context = 'wardrobe') {
   document.getElementById('filterModalTitle').textContent = isWishlist ? '篩選想買單品' : '篩選';
   document.getElementById('filterStatusSection').classList.toggle('is-hidden', isWishlist);
   document.getElementById('filterCategorySection').classList.toggle('is-hidden', !isWishlist);
+  document.getElementById('filterColorSection')?.classList.toggle('is-hidden', isWishlist);
+  document.getElementById('filterBrandSection')?.classList.toggle('is-hidden', isWishlist);
+
+  const invertBar = document.querySelector('.filter-invert-bar');
+  if (invertBar) invertBar.classList.toggle('is-hidden', isWishlist);
+  const btnInvert = document.getElementById('btnFilterInvert');
+  const invertLabel = document.getElementById('filterInvertLabel');
+  if (btnInvert) {
+    btnInvert.classList.toggle('is-active', !!uiWardrobeFilters.invert);
+    if (invertLabel) {
+      invertLabel.textContent = uiWardrobeFilters.invert ? '反向排除模式：已開啟（反轉結果）' : '反向排除模式：關閉';
+    }
+  }
+
   document.querySelectorAll('#filterStatusChips .chip').forEach(c => c.classList.toggle('is-active', c.getAttribute('data-status') === uiWardrobeFilters.status));
   const categoryRow = document.getElementById('filterCategoryChips');
   categoryRow.innerHTML = '';
@@ -3353,6 +3718,54 @@ function openFilterModal(context = 'wardrobe') {
       categoryRow.appendChild(chip);
     });
   }
+
+  // Wardrobe color families
+  const colorRow = document.getElementById('filterColorChips');
+  if (colorRow) {
+    colorRow.innerHTML = '';
+    COLOR_FAMILIES.forEach(fam => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'chip chip-color' + (uiWardrobeFilters.colors.includes(fam) ? ' is-active' : '');
+      const preset = COMMON_COLOR_PRESETS.find(p => p.name === fam);
+      const dotHex = preset ? preset.hex : '#888';
+      chip.innerHTML = `<span class="color-dot" style="background-color:${dotHex};"></span><span>${fam}</span>`;
+      chip.addEventListener('click', () => {
+        uiWardrobeFilters.colors = uiWardrobeFilters.colors.includes(fam)
+          ? uiWardrobeFilters.colors.filter(c => c !== fam)
+          : uiWardrobeFilters.colors.concat(fam);
+        chip.classList.toggle('is-active');
+        refreshFilteredViews();
+      });
+      colorRow.appendChild(chip);
+    });
+  }
+
+  // Wardrobe brands
+  const brandRow = document.getElementById('filterBrandChips');
+  if (brandRow) {
+    brandRow.innerHTML = '';
+    const allBrands = Array.from(new Set(state.items.map(it => (it.brand || '').trim()).filter(Boolean))).sort((a, b) => a.localeCompare(b, 'zh-Hant'));
+    if (allBrands.length === 0) {
+      brandRow.innerHTML = '<span class="empty-hint-sm" style="color:var(--c-text-muted);font-size:12px;padding:4px 0;">尚無品牌資料</span>';
+    } else {
+      allBrands.forEach(b => {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'chip' + (uiWardrobeFilters.brands.includes(b) ? ' is-active' : '');
+        chip.textContent = b;
+        chip.addEventListener('click', () => {
+          uiWardrobeFilters.brands = uiWardrobeFilters.brands.includes(b)
+            ? uiWardrobeFilters.brands.filter(x => x !== b)
+            : uiWardrobeFilters.brands.concat(b);
+          chip.classList.toggle('is-active');
+          refreshFilteredViews();
+        });
+        brandRow.appendChild(chip);
+      });
+    }
+  }
+
   const tagRow = document.getElementById('filterTagChips');
   tagRow.innerHTML = '';
   const selectedTags = isWishlist ? uiWishlistFilters.tags : uiWardrobeFilters.tags;
@@ -3536,10 +3949,20 @@ function wireEvents() {
   });
   document.getElementById('btnFilterClear').addEventListener('click', () => {
     if (filterContext === 'wishlist') uiWishlistFilters = { category: 'all', tags: [] };
-    else uiWardrobeFilters = { status: 'all', tags: [] };
+    else uiWardrobeFilters = { status: 'all', tags: [], colors: [], brands: [], invert: false };
     openFilterModal(filterContext);
     refreshFilteredViews();
   });
+  const btnFilterInvert = document.getElementById('btnFilterInvert');
+  if (btnFilterInvert) {
+    btnFilterInvert.addEventListener('click', () => {
+      uiWardrobeFilters.invert = !uiWardrobeFilters.invert;
+      btnFilterInvert.classList.toggle('is-active', uiWardrobeFilters.invert);
+      const invertLabel = document.getElementById('filterInvertLabel');
+      if (invertLabel) invertLabel.textContent = uiWardrobeFilters.invert ? '反向排除模式：已開啟（反轉結果）' : '反向排除模式：關閉';
+      refreshFilteredViews();
+    });
+  }
   document.getElementById('btnFilterApply').addEventListener('click', closeModal);
 
   document.getElementById('btnSearch').addEventListener('click', () => {
@@ -3932,6 +4355,48 @@ function wireEvents() {
     autoSaveAddItemDraft();
   });
 
+  // Color picker and custom color name events
+  const pickerInput = document.getElementById('fieldColorPicker');
+  if (pickerInput) {
+    pickerInput.addEventListener('input', e => {
+      const hex = e.target.value.toUpperCase();
+      const fam = classifyColorFamily(hex);
+      pendingColor.hex = hex;
+      pendingColor.family = fam;
+      if (!pendingColor.name || COLOR_FAMILIES.includes(pendingColor.name)) {
+        pendingColor.name = fam;
+      }
+      formDirty = true;
+      syncColorFormUI();
+      autoSaveAddItemDraft();
+    });
+  }
+
+  const colorNameInput = document.getElementById('fieldColorName');
+  if (colorNameInput) {
+    colorNameInput.addEventListener('input', e => {
+      const val = e.target.value.trim();
+      pendingColor.name = val;
+      if (!pendingColor.family && val) {
+        const match = COLOR_FAMILIES.find(f => val.includes(f));
+        if (match) pendingColor.family = match;
+      }
+      formDirty = true;
+      syncColorFormUI();
+      autoSaveAddItemDraft();
+    });
+  }
+
+  const btnClearColor = document.getElementById('btnClearColor');
+  if (btnClearColor) {
+    btnClearColor.addEventListener('click', () => {
+      pendingColor = { hex: '', name: '', family: '' };
+      formDirty = true;
+      syncColorFormUI();
+      autoSaveAddItemDraft();
+    });
+  }
+
   // add / edit item form
   function saveItemForm() {
     const name = document.getElementById('fieldName').value.trim();
@@ -3946,14 +4411,24 @@ function wireEvents() {
     const brand = document.getElementById('fieldBrand').value.trim();
     pendingBrandName = brand;
     const brandIcon = brand ? (pendingBrandIcon || null) : null;
+    const color = pendingColor.name || '';
+    const colorHex = pendingColor.hex || '';
+    const colorFamily = pendingColor.family || (colorHex ? classifyColorFamily(colorHex) : '');
 
     if (editingItemId) {
       const item = findItem(editingItemId);
-      Object.assign(item, { name, category, tags, material, purchaseDate, price, image: pendingPhoto || item.image, imageBack: pendingPhotoBack, brand, brandIcon });
+      Object.assign(item, {
+        name, category, tags, material, purchaseDate, price,
+        color, colorHex, colorFamily,
+        image: pendingPhoto || item.image,
+        imageBack: pendingPhotoBack,
+        brand, brandIcon
+      });
       toast('已儲存修改');
     } else {
       state.items.push({
         id: uid(), name, category, tags, material, purchaseDate, price,
+        color, colorHex, colorFamily,
         image: pendingPhoto, imageBack: pendingPhotoBack, brand, brandIcon,
         wearCount: 0, totalWearCount: 0, status: archiveDirect ? 'retired' : 'clean',
         lastWornDate: null, wornToday: false, wearHistory: [], createdAt: Date.now(),
@@ -4169,6 +4644,428 @@ function wireEvents() {
   document.getElementById('btnSettingsHeaderSave')?.addEventListener('click', () => {
     document.getElementById('settingsForm')?.requestSubmit();
   });
+
+  setupInspirationCarousel();
+  setupSandboxInteractions();
+}
+
+/* ============================================================
+   INSPIRATION CAROUSEL & SANDBOX MODE
+   ============================================================ */
+function setupInspirationCarousel() {
+  const track = document.getElementById('inspireCarouselTrack');
+  const dots = document.querySelectorAll('#inspireCarouselDots .dot');
+  if (!track || !dots.length) return;
+
+  const updateDots = () => {
+    const scrollLeft = track.scrollLeft;
+    const width = track.clientWidth || 1;
+    const activeIdx = Math.round(scrollLeft / width);
+    dots.forEach((dot, idx) => dot.classList.toggle('is-active', idx === activeIdx));
+  };
+
+  if (!track._hasCarouselBound) {
+    track._hasCarouselBound = true;
+    track.addEventListener('scroll', updateDots, { passive: true });
+    dots.forEach((dot, idx) => {
+      dot.addEventListener('click', () => {
+        track.scrollTo({ left: idx * track.clientWidth, behavior: 'smooth' });
+      });
+    });
+  }
+
+  const heroSandbox = document.getElementById('btnOpenSandboxHero');
+  if (heroSandbox && !heroSandbox._hasSandboxHeroBound) {
+    heroSandbox._hasSandboxHeroBound = true;
+    heroSandbox.addEventListener('click', () => openSandboxMode());
+  }
+}
+
+let selectedSandboxItemId = null;
+let sandboxMaxZIndex = 10;
+
+function openSandboxMode() {
+  selectedSandboxItemId = null;
+  renderSandboxCanvas();
+  openModal('modal-sandbox');
+}
+
+function renderSandboxCanvas() {
+  const canvas = document.getElementById('sandboxCanvas');
+  const hint = document.getElementById('sandboxEmptyHint');
+  const toolbar = document.getElementById('sandboxItemToolbar');
+  if (!canvas) return;
+
+  if (!Array.isArray(state.sandboxItems)) state.sandboxItems = [];
+
+  // Clean existing rendered items
+  canvas.querySelectorAll('.sandbox-item').forEach(el => el.remove());
+
+  if (state.sandboxItems.length === 0) {
+    if (hint) hint.hidden = false;
+    if (toolbar) toolbar.classList.add('is-hidden');
+    return;
+  }
+
+  if (hint) hint.hidden = true;
+
+  state.sandboxItems.forEach(item => {
+    const el = document.createElement('div');
+    el.className = 'sandbox-item' + (item.id === selectedSandboxItemId ? ' is-selected' : '');
+    el.id = `sandbox-item-${item.id}`;
+    el.dataset.id = item.id;
+    el.style.left = `${item.x}px`;
+    el.style.top = `${item.y}px`;
+    el.style.zIndex = item.zIndex || 1;
+    el.style.transform = `scale(${item.scale || 1}) rotate(${item.rotation || 0}deg)`;
+
+    if (item.image) {
+      const img = document.createElement('img');
+      img.src = item.image;
+      img.alt = item.name || '單品';
+      img.draggable = false;
+      el.appendChild(img);
+    } else {
+      const ph = document.createElement('div');
+      ph.className = 'sandbox-item-placeholder';
+      ph.innerHTML = `<span class="rack-chip-thumb">${categoryIcon(item.category || 'top')}</span><span>${escapeHtml(item.name || '單品')}</span>`;
+      el.appendChild(ph);
+    }
+
+    canvas.appendChild(el);
+  });
+
+  updateSandboxToolbar();
+}
+
+function updateSandboxToolbar() {
+  const toolbar = document.getElementById('sandboxItemToolbar');
+  if (!toolbar) return;
+  if (!selectedSandboxItemId) {
+    toolbar.classList.add('is-hidden');
+    return;
+  }
+  const itemEl = document.getElementById(`sandbox-item-${selectedSandboxItemId}`);
+  if (!itemEl) {
+    toolbar.classList.add('is-hidden');
+    return;
+  }
+  toolbar.classList.remove('is-hidden');
+  const rect = itemEl.getBoundingClientRect();
+  const viewport = document.getElementById('sandboxCanvasViewport');
+  const viewportRect = viewport ? viewport.getBoundingClientRect() : { top: 0, left: 0, width: 360 };
+
+  const topPos = Math.max(12, rect.top - viewportRect.top - 46);
+  const leftPos = Math.max(12, Math.min(viewportRect.width - 150, rect.left - viewportRect.left + (rect.width / 2) - 60));
+  toolbar.style.top = `${topPos}px`;
+  toolbar.style.left = `${leftPos}px`;
+}
+
+function setupSandboxInteractions() {
+  const canvas = document.getElementById('sandboxCanvas');
+  const viewport = document.getElementById('sandboxCanvasViewport');
+  if (!canvas || !viewport || canvas._hasSandboxInteractions) return;
+  canvas._hasSandboxInteractions = true;
+
+  let activePointerItem = null;
+  let holdTimer = null;
+  let isHeld = false;
+  let startPointerX = 0, startPointerY = 0;
+  let itemStartX = 0, itemStartY = 0;
+  const activePointers = new Map();
+  let initialPinchDist = 0;
+  let initialScale = 1;
+
+  // Background deselects
+  viewport.addEventListener('pointerdown', e => {
+    if (e.target === viewport || e.target === canvas) {
+      selectedSandboxItemId = null;
+      canvas.querySelectorAll('.sandbox-item').forEach(el => el.classList.remove('is-selected'));
+      updateSandboxToolbar();
+    }
+  });
+
+  // Pointer down on canvas item
+  canvas.addEventListener('pointerdown', e => {
+    const itemEl = e.target.closest('.sandbox-item');
+    if (!itemEl) return;
+
+    const id = itemEl.dataset.id;
+    const itemData = state.sandboxItems.find(it => it.id === id);
+    if (!itemData) return;
+
+    activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    // 2-finger pinch starts
+    if (activePointers.size === 2) {
+      if (holdTimer) clearTimeout(holdTimer);
+      const pts = Array.from(activePointers.values());
+      initialPinchDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      initialScale = itemData.scale || 1;
+      return;
+    }
+
+    if (activePointers.size > 2) return;
+
+    activePointerItem = itemData;
+    startPointerX = e.clientX;
+    startPointerY = e.clientY;
+    itemStartX = itemData.x;
+    itemStartY = itemData.y;
+    isHeld = false;
+
+    // Bring to front
+    sandboxMaxZIndex++;
+    itemData.zIndex = sandboxMaxZIndex;
+    itemEl.style.zIndex = sandboxMaxZIndex;
+
+    // Select item
+    selectedSandboxItemId = id;
+    canvas.querySelectorAll('.sandbox-item').forEach(el => el.classList.toggle('is-selected', el.dataset.id === id));
+    updateSandboxToolbar();
+
+    // 500ms long press timer to activate drag
+    holdTimer = setTimeout(() => {
+      isHeld = true;
+      itemEl.classList.add('is-holding');
+      if (navigator.vibrate) navigator.vibrate(40);
+    }, 500);
+
+    try { itemEl.setPointerCapture?.(e.pointerId); } catch (_) {}
+  });
+
+  // Pointer move
+  window.addEventListener('pointermove', e => {
+    if (activePointers.has(e.pointerId)) {
+      activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    }
+
+    // 2-finger pinch
+    if (activePointers.size === 2 && activePointerItem) {
+      const pts = Array.from(activePointers.values());
+      const currentDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      if (initialPinchDist > 10) {
+        const newScale = Math.min(3.5, Math.max(0.3, initialScale * (currentDist / initialPinchDist)));
+        activePointerItem.scale = Number(newScale.toFixed(2));
+        const el = document.getElementById(`sandbox-item-${activePointerItem.id}`);
+        if (el) el.style.transform = `scale(${activePointerItem.scale}) rotate(${activePointerItem.rotation || 0}deg)`;
+        updateSandboxToolbar();
+      }
+      return;
+    }
+
+    if (!activePointerItem) return;
+
+    const dx = e.clientX - startPointerX;
+    const dy = e.clientY - startPointerY;
+
+    if (!isHeld) {
+      if (Math.hypot(dx, dy) > 8) {
+        clearTimeout(holdTimer);
+      }
+      return;
+    }
+
+    activePointerItem.x = Math.round(itemStartX + dx);
+    activePointerItem.y = Math.round(itemStartY + dy);
+    const el = document.getElementById(`sandbox-item-${activePointerItem.id}`);
+    if (el) {
+      el.style.left = `${activePointerItem.x}px`;
+      el.style.top = `${activePointerItem.y}px`;
+    }
+    updateSandboxToolbar();
+  });
+
+  // Pointer end
+  const handlePointerEnd = e => {
+    activePointers.delete(e.pointerId);
+    if (holdTimer) clearTimeout(holdTimer);
+
+    if (activePointerItem) {
+      const el = document.getElementById(`sandbox-item-${activePointerItem.id}`);
+      if (el) el.classList.remove('is-holding');
+      if (isHeld) saveState();
+    }
+
+    if (activePointers.size === 0) {
+      activePointerItem = null;
+      isHeld = false;
+    }
+  };
+
+  window.addEventListener('pointerup', handlePointerEnd);
+  window.addEventListener('pointercancel', handlePointerEnd);
+
+  // Duplicate item
+  const btnDup = document.getElementById('btnSandboxDuplicate');
+  if (btnDup) {
+    btnDup.onclick = () => {
+      if (!selectedSandboxItemId) return;
+      const src = state.sandboxItems.find(it => it.id === selectedSandboxItemId);
+      if (!src) return;
+      sandboxMaxZIndex++;
+      const clone = {
+        ...src,
+        id: uid(),
+        x: src.x + 24,
+        y: src.y + 24,
+        zIndex: sandboxMaxZIndex
+      };
+      state.sandboxItems.push(clone);
+      selectedSandboxItemId = clone.id;
+      saveState();
+      renderSandboxCanvas();
+      toast('已複製單品');
+    };
+  }
+
+  // Delete item
+  const btnDel = document.getElementById('btnSandboxDelete');
+  if (btnDel) {
+    btnDel.onclick = () => {
+      if (!selectedSandboxItemId) return;
+      state.sandboxItems = state.sandboxItems.filter(it => it.id !== selectedSandboxItemId);
+      selectedSandboxItemId = null;
+      saveState();
+      renderSandboxCanvas();
+      toast('已刪除單品');
+    };
+  }
+
+  // Clear canvas
+  const btnClear = document.getElementById('btnSandboxClear');
+  if (btnClear) {
+    btnClear.onclick = () => {
+      if (state.sandboxItems.length === 0) return;
+      if (confirm('確定清空沙盒畫布上的所有單品嗎？')) {
+        state.sandboxItems = [];
+        selectedSandboxItemId = null;
+        saveState();
+        renderSandboxCanvas();
+        toast('畫布已清空');
+      }
+    };
+  }
+
+  // Save canvas
+  const btnSave = document.getElementById('btnSandboxSave');
+  if (btnSave) {
+    btnSave.onclick = () => {
+      saveState();
+      toast('沙盒穿搭已儲存');
+    };
+  }
+
+  // Add buttons
+  const btnAddWardrobe = document.getElementById('btnSandboxAddWardrobe');
+  if (btnAddWardrobe) {
+    btnAddWardrobe.onclick = () => openSandboxPicker('wardrobe');
+  }
+
+  const btnAddWishlist = document.getElementById('btnSandboxAddWishlist');
+  if (btnAddWishlist) {
+    btnAddWishlist.onclick = () => openSandboxPicker('wishlist');
+  }
+
+  const customPhotoInput = document.getElementById('sandboxCustomPhotoInput');
+  if (customPhotoInput) {
+    customPhotoInput.onchange = e => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        addCustomImageToSandbox(ev.target.result);
+      };
+      reader.readAsDataURL(file);
+      customPhotoInput.value = '';
+    };
+  }
+}
+
+function openSandboxPicker(type) {
+  const title = document.getElementById('sandboxPickerTitle');
+  const grid = document.getElementById('sandboxPickerGrid');
+  if (!grid) return;
+
+  grid.innerHTML = '';
+  const isWishlist = type === 'wishlist';
+  if (title) title.textContent = isWishlist ? '加入想買單品至沙盒' : '加入衣櫥單品至沙盒';
+
+  const items = isWishlist
+    ? state.wishlistItems.filter(it => it.image)
+    : state.items.filter(it => it.status !== 'retired');
+
+  if (items.length === 0) {
+    grid.innerHTML = `<p class="empty-hint" style="grid-column: 1 / -1; padding: 24px;">${isWishlist ? '尚無想買單品' : '衣櫥中尚無單品'}</p>`;
+  } else {
+    items.forEach(it => {
+      const card = document.createElement('div');
+      card.className = 'item-card';
+      const thumb = it.image
+        ? `<div class="item-card-photo" style="background-image:url('${it.image}')"></div>`
+        : `<div class="item-card-photo" style="display:flex;align-items:center;justify-content:center;background:#fff;"><span class="rack-chip-thumb">${categoryIcon(it.category || 'top')}</span></div>`;
+
+      card.innerHTML = `
+        ${thumb}
+        <div class="item-card-info">
+          <div class="item-card-name">${escapeHtml(it.name)}</div>
+        </div>
+      `;
+      card.onclick = () => {
+        addItemToSandbox({
+          type,
+          refId: it.id,
+          name: it.name,
+          image: it.image || null,
+          category: it.category || 'top'
+        });
+        closeModal();
+        toast(`已將「${it.name}」加入沙盒`);
+      };
+      grid.appendChild(card);
+    });
+  }
+
+  openModal('modal-sandbox-picker');
+}
+
+function addItemToSandbox({ type, refId, name, image, category }) {
+  if (!Array.isArray(state.sandboxItems)) state.sandboxItems = [];
+  sandboxMaxZIndex++;
+  const viewport = document.getElementById('sandboxCanvasViewport');
+  const cx = viewport ? Math.max(40, (viewport.clientWidth / 2) - 60) : 100;
+  const cy = viewport ? Math.max(40, (viewport.clientHeight / 2) - 70) : 150;
+  const jitter = (state.sandboxItems.length % 6) * 16;
+
+  const newItem = {
+    id: uid(),
+    type,
+    refId: refId || null,
+    name: name || '單品',
+    image: image || null,
+    category: category || 'top',
+    x: Math.round(cx + jitter),
+    y: Math.round(cy + jitter),
+    scale: 1,
+    rotation: 0,
+    zIndex: sandboxMaxZIndex
+  };
+
+  state.sandboxItems.push(newItem);
+  selectedSandboxItemId = newItem.id;
+  saveState();
+  renderSandboxCanvas();
+}
+
+function addCustomImageToSandbox(base64) {
+  addItemToSandbox({
+    type: 'custom',
+    refId: null,
+    name: '自訂照片',
+    image: base64,
+    category: 'custom'
+  });
+  toast('已加入自訂照片至沙盒');
 }
 
 /* ============================================================
