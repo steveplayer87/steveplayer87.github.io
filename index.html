@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="衣櫥助手">
-<link rel="stylesheet" href="styles.css?v=20260921b">
+<link rel="stylesheet" href="styles.css?v=20260921c">
 </head>
 <body>
 
@@ -199,11 +199,10 @@
           </div>
           <div class="inspire-hero inspire-hero-sandbox inspire-slide" data-slide="1" id="btnOpenSandboxHero">
             <div>
-              <div class="sandbox-hero-badge"><span data-icon="sandbox"></span><span>沙盒模式</span></div>
-              <p class="section-title">穿搭沙盒畫布</p>
-              <p class="section-intro">自由擺放衣櫥單品、想買清單或自訂照片，長按拖曳與雙指縮放拼貼。</p>
+              <p class="section-title">穿搭沙盒</p>
+              <p class="section-intro">自由擺放衣櫥單品與照片，支援雙指縮放與拖曳拼貼。</p>
             </div>
-            <span class="inspire-hero-icon inspire-hero-icon-sandbox" data-icon="sandbox"></span>
+            <span class="inspire-hero-icon" data-icon="sandbox"></span>
           </div>
         </div>
         <div class="inspire-carousel-dots" id="inspireCarouselDots">
@@ -955,24 +954,24 @@
     </div>
   </div>
 
-  <!-- Sandbox Mode Fullscreen Modal -->
-  <div class="modal-sheet modal-sheet-full" id="modal-sandbox" data-modal>
-    <div class="sandbox-header">
-      <div class="sandbox-header-left">
-        <button type="button" class="icon-only-btn" data-close aria-label="關閉沙盒">✕</button>
-        <span class="sandbox-title">穿搭沙盒模式</span>
-      </div>
-      <div class="sandbox-header-actions">
-        <button type="button" class="btn-sandbox-action" id="btnSandboxClear" title="清空畫布">清空</button>
-        <button type="button" class="btn-sandbox-action btn-sandbox-save" id="btnSandboxSave">儲存畫布</button>
+  <!-- Sandbox Mode Modal -->
+  <div class="modal-sheet modal-sheet-tall modal-sandbox-sheet" id="modal-sandbox" data-modal>
+    <div class="modal-handle"></div>
+    <div class="modal-head">
+      <h2>穿搭沙盒</h2>
+      <div class="modal-head-actions">
+        <button type="button" class="btn-secondary" id="btnSandboxClear" style="padding:4px 10px;font-size:12px;font-weight:700">清空</button>
+        <button type="button" class="btn-primary" id="btnSandboxSave" style="padding:4px 12px;font-size:12px;font-weight:700">儲存</button>
+        <button type="button" class="modal-close" data-close>✕</button>
       </div>
     </div>
+    <p class="section-intro" style="margin-bottom:10px">自由擺放與組合單品，長按可拖曳，支援雙指縮放。</p>
     <div class="sandbox-canvas-viewport" id="sandboxCanvasViewport">
       <div class="sandbox-canvas" id="sandboxCanvas">
         <div class="sandbox-empty-hint" id="sandboxEmptyHint">
           <span class="sandbox-hint-icon" data-icon="sandbox"></span>
           <p class="sandbox-hint-title">穿搭沙盒畫布</p>
-          <p class="sandbox-hint-sub">點擊下方按鈕加入衣櫥單品、想買單品或自訂照片<br>長按半秒（500ms）即可拖曳，支援雙指縮放、複製與刪除</p>
+          <p class="sandbox-hint-sub">點擊下方按鈕加入衣櫥單品、想買單品或自訂照片<br>長按 500ms 即可拖曳，支援雙指縮放</p>
         </div>
       </div>
       <div class="sandbox-item-toolbar is-hidden" id="sandboxItemToolbar">
@@ -981,13 +980,13 @@
       </div>
     </div>
     <div class="sandbox-bottom-bar">
-      <button type="button" class="btn-sandbox-add" id="btnSandboxAddWardrobe">
+      <button type="button" class="btn-secondary btn-sandbox-add" id="btnSandboxAddWardrobe">
         <span data-icon="wardrobe"></span><span>+ 衣櫥單品</span>
       </button>
-      <button type="button" class="btn-sandbox-add" id="btnSandboxAddWishlist">
+      <button type="button" class="btn-secondary btn-sandbox-add" id="btnSandboxAddWishlist">
         <span data-icon="shopping"></span><span>+ 想買清單</span>
       </button>
-      <label class="btn-sandbox-add btn-sandbox-add-custom">
+      <label class="btn-secondary btn-sandbox-add btn-sandbox-add-custom">
         <input type="file" accept="image/*" id="sandboxCustomPhotoInput" hidden>
         <span data-icon="camera"></span><span>+ 自訂照片</span>
       </label>
@@ -1005,7 +1004,7 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="seed-items.js?v=20260921b"></script>
-<script src="app.js?v=20260921b"></script>
+<script src="seed-items.js?v=20260921c"></script>
+<script src="app.js?v=20260921c"></script>
 </body>
 </html>
