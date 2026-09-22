@@ -327,11 +327,15 @@ async function compressImageFile(file, maxDim = 640, quality = 0.82) {
   const canvas = document.createElement('canvas');
   canvas.width = width; canvas.height = height;
   const ctx = canvas.getContext('2d');
+  const isTransparent = file.type === 'image/png' || file.type === 'image/webp' || file.type === 'image/svg+xml' || (file.name && /\.(png|webp|svg)$/i.test(file.name));
+  if (isTransparent) {
+    ctx.clearRect(0, 0, width, height);
+    ctx.drawImage(img, 0, 0, width, height);
+    return canvas.toDataURL('image/png');
+  }
   ctx.fillStyle = '#fff';
   ctx.fillRect(0, 0, width, height);
   ctx.drawImage(img, 0, 0, width, height);
-  // Keep all new uploads opaque and white-backed. This avoids black alpha
-  // rendering differences between iOS PWA surfaces and background images.
   return canvas.toDataURL('image/jpeg', quality);
 }
 
@@ -346,9 +350,10 @@ function openPhotoAdjust(imgSrc, category, onApply) {
   const frameH = Math.round(frameW / ratio);
   frame.style.width = frameW + 'px';
   frame.style.height = frameH + 'px';
-  frame.style.backgroundColor = '#fff';
+  const isPng = imgSrc.startsWith('data:image/png') || imgSrc.startsWith('data:image/webp') || /\.(png|webp)$/i.test(imgSrc);
+  frame.style.backgroundColor = isPng ? 'transparent' : '#fff';
   const img = document.getElementById('photoAdjustImg');
-  photoAdjust = { scale: 1, x: 0, y: 0, frameW, frameH, minScale: 0.5, maxScale: 2.5, isPng: imgSrc.startsWith('data:image/png'), onApply };
+  photoAdjust = { scale: 1, x: 0, y: 0, frameW, frameH, minScale: 0.5, maxScale: 2.5, isPng, onApply };
   img.onload = () => {
     const iw = img.naturalWidth, ih = img.naturalHeight;
     photoAdjust.iw = iw; photoAdjust.ih = ih;
@@ -459,8 +464,12 @@ function wirePhotoAdjust() {
     const canvas = document.createElement('canvas');
     canvas.width = outW; canvas.height = outH;
     const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(0, 0, outW, outH);
+    if (s.isPng) {
+      ctx.clearRect(0, 0, outW, outH);
+    } else {
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, outW, outH);
+    }
     const img = document.getElementById('photoAdjustImg');
     ctx.drawImage(img, s.x * scaleOut, s.y * scaleOut, s.iw * totalScale * scaleOut, s.ih * totalScale * scaleOut);
     let dataUrl;
@@ -1368,7 +1377,7 @@ function renderHeader() {
 }
 
 function itemPhotoStyle(item) {
-  return item.image ? `background-image:url('${item.image}');background-repeat:no-repeat;background-position:center;background-size:contain;background-color:transparent;mix-blend-mode:multiply;` : 'background-color:transparent;';
+  return item.image ? `background-image:url('${item.image}');background-repeat:no-repeat;background-position:center;background-size:contain;background-color:transparent;` : 'background-color:transparent;';
 }
 
 const trimBoundsCache = new Map();
@@ -1426,7 +1435,8 @@ function itemPhotoMarkup(item) {
     : thumbInner(item);
 }
 function calendarPhotoStyle(item) {
-  return item.image ? `background-image:url('${item.image}');background-repeat:no-repeat;background-position:center bottom;background-size:contain;background-color:transparent;` : 'background-color:transparent;';
+  const pos = item?.category === 'bottom' ? 'center top' : 'center bottom';
+  return item?.image ? `background-image:url('${item.image}');background-repeat:no-repeat;background-position:${pos};background-size:contain;background-color:transparent;` : 'background-color:transparent;';
 }
 function thumbInner(item) {
   return item.image ? '' : (categoryIcon(item.category) || '');
@@ -1850,7 +1860,7 @@ function renderHome() {
       btn.classList.toggle('has-photo', !!item.image);
       const pos = (slot === 'top' || slot === 'hat') ? 'center bottom' : 'center top';
       const bgStyle = item.image
-        ? `background-image:url('${item.image}');background-repeat:no-repeat;background-position:${pos};background-size:contain;background-color:transparent;mix-blend-mode:multiply;aspect-ratio:${ratio};`
+        ? `background-image:url('${item.image}');background-repeat:no-repeat;background-position:${pos};background-size:contain;background-color:transparent;aspect-ratio:${ratio};`
         : `aspect-ratio:${ratio};background-color:transparent;`;
       thumb.setAttribute('style', bgStyle);
       thumb.style.transform = `translate(${layout.x}%, ${layout.y}%) scale(${layout.scale / 100})`;
@@ -1861,20 +1871,12 @@ function renderHome() {
       if (item.image && (slot === 'top' || slot === 'bottom')) {
         getImageTrimBounds(item.image, bounds => {
           let extraY = 0;
-          let scaleMul = 1;
-          if (slot === 'top' && bounds.padBottom > 0.04) {
-            extraY = Math.round(bounds.padBottom * 28);
-          } else if (slot === 'bottom') {
-            if (bounds.padTop > 0.03) extraY = -Math.round(bounds.padTop * 28);
-            const topItem = state.today.top ? findItem(state.today.top) : null;
-            if (topItem?.image && trimBoundsCache.has(topItem.image)) {
-              const topBounds = trimBoundsCache.get(topItem.image);
-              if (bounds.contentWidth >= topBounds.contentWidth) {
-                scaleMul = Math.min(0.9, (topBounds.contentWidth * 0.9) / bounds.contentWidth);
-              }
-            }
+          if (slot === 'top' && bounds.padBottom > 0.02) {
+            extraY = Math.round(bounds.padBottom * 22);
+          } else if (slot === 'bottom' && bounds.padTop > 0.02) {
+            extraY = -Math.round(bounds.padTop * 22);
           }
-          const baseScale = (layout.scale / 100) * scaleMul;
+          const baseScale = layout.scale / 100;
           thumb.style.transform = `translate(${layout.x}%, calc(${layout.y}% + ${extraY}px)) scale(${baseScale})`;
         });
       }
@@ -2391,10 +2393,22 @@ function renderRank() {
 
   // Filter entries by period
   let periodEntries = entries;
+  const customRangeRow = document.getElementById('rankCustomRangeRow');
+  if (customRangeRow) customRangeRow.hidden = uiRankPeriod !== 'custom';
+
   if (uiRankPeriod === 'month') {
     periodEntries = entries.filter(e => e.date?.startsWith(monthPrefix));
   } else if (uiRankPeriod === '30d') {
     periodEntries = entries.filter(e => e.date && daysBetween(e.date, today) <= 30);
+  } else if (uiRankPeriod === 'custom') {
+    const sDate = document.getElementById('rankStartDate')?.value;
+    const eDate = document.getElementById('rankEndDate')?.value;
+    periodEntries = entries.filter(e => {
+      if (!e.date) return false;
+      if (sDate && e.date < sDate) return false;
+      if (eDate && e.date > eDate) return false;
+      return true;
+    });
   }
 
   // Count wear per item in this period
@@ -2470,6 +2484,24 @@ function openDayDetail(dateStr, entry) {
   document.getElementById('dayDetailTitle').textContent = `${formatDayWithWeekday(dateStr)} 的穿搭`;
   const body = document.getElementById('dayDetailBody');
   const isToday = dateStr === todayStr();
+  const topItem = entry.top ? findItem(entry.top) : null;
+  const bottomItem = entry.bottom ? findItem(entry.bottom) : null;
+  const hatItem = entry.hat ? findItem(entry.hat) : null;
+  const shoesItem = entry.shoes ? findItem(entry.shoes) : null;
+
+  let figurePreviewHtml = '';
+  if (topItem || bottomItem || hatItem || shoesItem) {
+    figurePreviewHtml = `
+      <div class="day-detail-figure-preview" style="display:flex;justify-content:center;margin-bottom:14px;">
+        <div class="figure-board" style="width:min(144px, 42%);padding:10px 8px;background:rgba(44,66,112,0.06);border:1px solid rgba(44,66,112,0.12);border-radius:22px;display:flex;flex-direction:column;align-items:center;gap:0;">
+          ${hatItem ? `<div class="figure-slot figure-hat" style="width:82%;aspect-ratio:2.2;background:transparent;"><span class="figure-thumb" style="aspect-ratio:2.2;background-image:url('${hatItem.image || ''}');background-repeat:no-repeat;background-position:center;background-size:contain;display:flex;align-items:center;justify-content:center;">${hatItem.image ? '' : categoryIcon('hat')}</span></div>` : ''}
+          ${topItem ? `<div class="figure-slot figure-top" style="width:100%;aspect-ratio:1.08;margin-bottom:-18px;z-index:2;position:relative;background:transparent;"><span class="figure-thumb" style="aspect-ratio:1.08;background-image:url('${topItem.image || ''}');background-repeat:no-repeat;background-position:center bottom;background-size:contain;display:flex;align-items:center;justify-content:center;">${topItem.image ? '' : categoryIcon('top')}</span></div>` : ''}
+          ${bottomItem ? `<div class="figure-slot figure-bottom" style="width:98%;aspect-ratio:0.72;margin-top:0;z-index:1;position:relative;background:transparent;"><span class="figure-thumb" style="aspect-ratio:0.72;background-image:url('${bottomItem.image || ''}');background-repeat:no-repeat;background-position:center top;background-size:contain;display:flex;align-items:center;justify-content:center;">${bottomItem.image ? '' : categoryIcon('bottom')}</span></div>` : ''}
+          ${shoesItem ? `<div class="figure-slot figure-shoes" style="width:96%;aspect-ratio:2.2;margin-top:2px;background:transparent;"><span class="figure-thumb" style="aspect-ratio:2.2;background-image:url('${shoesItem.image || ''}');background-repeat:no-repeat;background-position:center;background-size:contain;display:flex;align-items:center;justify-content:center;">${shoesItem.image ? '' : categoryIcon('shoes')}</span></div>` : ''}
+        </div>
+      </div>`;
+  }
+
   const rows = ALL_SLOTS.filter(s => entry[s]).map(s => {
     const item = findItem(entry[s]);
     if (!item) return `<div class="day-detail-row"><p class="ddr-name">（已刪除的衣物）</p></div>`;
@@ -2477,7 +2509,7 @@ function openDayDetail(dateStr, entry) {
     return `<button type="button" class="day-detail-row" data-item-id="${item.id}">${thumb}
       <div><p class="ddr-cat">${categoryLabel(item.category)}</p><p class="ddr-name">${escapeHtml(item.name)}</p></div></button>`;
   });
-  body.innerHTML = (rows.join('') || `<p class="empty-hint">這天沒有穿搭紀錄</p>`) + `
+  body.innerHTML = figurePreviewHtml + (rows.join('') || `<p class="empty-hint">這天沒有穿搭紀錄</p>`) + `
     <div class="settings-actions" style="margin-top:14px">
       <button class="btn-secondary" id="btnDayEdit">編輯這天</button>
       ${isToday ? '' : '<button class="btn-secondary btn-danger" id="btnDayDelete">刪除這天</button>'}
@@ -3875,34 +3907,168 @@ function attachOutfitEditorDrag(el, slot) {
   el.addEventListener('pointerup', finish);
   el.addEventListener('pointercancel', finish);
 }
-function renderOutfitEditor() {
-  const stage = document.getElementById('outfitEditorStage');
-  const tabs = document.getElementById('outfitEditorSlotTabs');
-  if (!stage || !tabs) return;
-  tabs.innerHTML = OUTFIT_EDITOR_SLOTS.map(slot => `<button type="button" class="outfit-editor-slot-tab${outfitEditorSlot === slot ? ' is-active' : ''}" data-outfit-editor-slot="${slot}">${categoryLabel(slot)}</button>`).join('');
-  tabs.querySelectorAll('[data-outfit-editor-slot]').forEach(btn => btn.addEventListener('click', () => selectOutfitEditorSlot(btn.dataset.outfitEditorSlot)));
-  stage.innerHTML = OUTFIT_EDITOR_SLOTS.map(slot => {
-    const item = outfitEditorItem(slot);
-    const content = item?.image ? `<img src="${escapeHtml(item.image)}" alt="">` : (ICONS[slot] || '');
-    return `<button type="button" class="outfit-editor-object outfit-editor-object-${slot}${outfitEditorSlot === slot ? ' is-selected' : ''}" data-outfit-editor-object="${slot}" aria-label="調整${categoryLabel(slot)}"><span class="outfit-editor-object-thumb">${content}</span><span class="outfit-editor-object-name">${item ? escapeHtml(item.name) : categoryLabel(slot)}</span></button>`;
-  }).join('');
-  stage.querySelectorAll('[data-outfit-editor-object]').forEach(el => {
-    const slot = el.dataset.outfitEditorObject;
-    applyOutfitEditorObjectStyle(el, slot);
-    el.addEventListener('click', e => {
-      if (el.classList.contains('is-dragging')) return;
-      if (!outfitPointerDrag) { outfitEditorSlot = slot; renderOutfitEditor(); }
+let studioActiveSlot = 'top';
+let studioPointerDrag = null;
+
+function renderOutfitStudio() {
+  const overlay = document.getElementById('pageOutfitStudio');
+  if (!overlay || overlay.hidden) return;
+
+  const current = state.profile.weather?.current;
+  const isNight = current && current.is_day != null ? Number(current.is_day) === 0 : (new Date().getHours() >= 18 || new Date().getHours() < 6);
+  overlay.classList.toggle('night-mode', isNight);
+
+  document.querySelectorAll('#studioSlotTabs .outfit-editor-slot-tab').forEach(btn => {
+    btn.classList.toggle('is-active', btn.dataset.studioTab === studioActiveSlot);
+  });
+
+  ['hat', 'top', 'bottom', 'shoes'].forEach(slot => {
+    const slotBtn = document.querySelector(`.studio-figure-slot[data-studio-slot="${slot}"]`);
+    const thumb = document.getElementById(`studioThumb${slot.charAt(0).toUpperCase() + slot.slice(1)}`);
+    if (!slotBtn || !thumb) return;
+
+    slotBtn.classList.toggle('is-selected', studioActiveSlot === slot);
+    const layout = (state.profile.outfitLayout && state.profile.outfitLayout[slot]) || OUTFIT_LAYOUT_DEFAULTS[slot];
+    const itemId = state.today[slot];
+    const item = itemId ? findItem(itemId) : null;
+    const ratio = HOME_SLOT_RATIOS[slot] || getCategoryAspectRatio(slot);
+    const pos = (slot === 'top' || slot === 'hat') ? 'center bottom' : 'center top';
+
+    if (item && item.image) {
+      thumb.setAttribute('style', `background-image:url('${item.image}');background-repeat:no-repeat;background-position:${pos};background-size:contain;background-color:transparent;aspect-ratio:${ratio};`);
+      thumb.innerHTML = '';
+    } else if (item) {
+      thumb.setAttribute('style', `aspect-ratio:${ratio};background-color:transparent;`);
+      thumb.innerHTML = thumbInner(item);
+    } else {
+      thumb.setAttribute('style', `aspect-ratio:${ratio};background-color:transparent;`);
+      thumb.innerHTML = ICONS[slot] || '';
+    }
+
+    thumb.style.transform = `translate(${layout.x}%, ${layout.y}%) scale(${layout.scale / 100})`;
+  });
+
+  const activeLayout = (state.profile.outfitLayout && state.profile.outfitLayout[studioActiveSlot]) || OUTFIT_LAYOUT_DEFAULTS[studioActiveSlot];
+  const slider = document.getElementById('studioScaleSlider');
+  const valOut = document.getElementById('studioScaleValue');
+  const label = document.getElementById('studioScaleLabel');
+  if (slider) slider.value = String(activeLayout.scale);
+  if (valOut) valOut.textContent = `${activeLayout.scale}%`;
+  if (label) label.textContent = `${categoryLabel(studioActiveSlot)}大小`;
+}
+
+function openOutfitStudio() {
+  studioActiveSlot = state.today.top ? 'top' : 'hat';
+  const overlay = document.getElementById('pageOutfitStudio');
+  if (!overlay) return;
+  overlay.hidden = false;
+  renderOutfitStudio();
+}
+
+function closeOutfitStudio() {
+  const overlay = document.getElementById('pageOutfitStudio');
+  if (overlay) overlay.hidden = true;
+  saveState({ action: '調整穿搭版面' });
+  renderHome();
+  toast('穿搭版面設定已儲存');
+}
+
+function selectStudioSlot(slot) {
+  studioActiveSlot = slot;
+  renderOutfitStudio();
+}
+
+function wireOutfitStudioEvents() {
+  document.getElementById('btnStudioDone')?.addEventListener('click', closeOutfitStudio);
+
+  document.querySelectorAll('#studioSlotTabs .outfit-editor-slot-tab').forEach(btn => {
+    btn.addEventListener('click', () => selectStudioSlot(btn.dataset.studioTab));
+  });
+
+  document.querySelectorAll('.studio-figure-slot').forEach(btn => {
+    const slot = btn.dataset.studioSlot;
+    btn.addEventListener('click', e => {
+      if (btn.classList.contains('is-dragging')) return;
+      selectStudioSlot(slot);
       e.stopPropagation();
     });
-    attachOutfitEditorDrag(el, slot);
+
+    btn.addEventListener('pointerdown', e => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      selectStudioSlot(slot);
+      const layout = state.profile.outfitLayout[slot] = state.profile.outfitLayout[slot] || { ...OUTFIT_LAYOUT_DEFAULTS[slot] };
+      studioPointerDrag = {
+        slot,
+        pointerId: e.pointerId,
+        startX: e.clientX,
+        startY: e.clientY,
+        startXLayout: layout.x,
+        startYLayout: layout.y,
+        el: btn
+      };
+      btn.setPointerCapture?.(e.pointerId);
+      btn.classList.add('is-dragging');
+      e.preventDefault();
+    });
+
+    btn.addEventListener('pointermove', e => {
+      const drag = studioPointerDrag;
+      if (!drag || drag.pointerId !== e.pointerId || drag.slot !== slot) return;
+      const layout = state.profile.outfitLayout[slot];
+      const dx = ((e.clientX - drag.startX) / 140) * 100;
+      const dy = ((e.clientY - drag.startY) / 140) * 100;
+      layout.x = Math.min(35, Math.max(-35, Math.round(drag.startXLayout + dx)));
+      layout.y = Math.min(35, Math.max(-35, Math.round(drag.startYLayout + dy)));
+      const thumb = document.getElementById(`studioThumb${slot.charAt(0).toUpperCase() + slot.slice(1)}`);
+      if (thumb) {
+        thumb.style.transform = `translate(${layout.x}%, ${layout.y}%) scale(${layout.scale / 100})`;
+      }
+      e.preventDefault();
+    });
+
+    const finishDrag = e => {
+      const drag = studioPointerDrag;
+      if (!drag || drag.pointerId !== e.pointerId) return;
+      studioPointerDrag = null;
+      btn.classList.remove('is-dragging');
+      renderOutfitStudio();
+    };
+    btn.addEventListener('pointerup', finishDrag);
+    btn.addEventListener('pointercancel', finishDrag);
   });
-  updateOutfitEditorControls();
+
+  document.getElementById('studioScaleSlider')?.addEventListener('input', e => {
+    const layout = state.profile.outfitLayout[studioActiveSlot] = state.profile.outfitLayout[studioActiveSlot] || { ...OUTFIT_LAYOUT_DEFAULTS[studioActiveSlot] };
+    layout.scale = Math.min(140, Math.max(70, Number(e.target.value) || 100));
+    const valOut = document.getElementById('studioScaleValue');
+    if (valOut) valOut.textContent = `${layout.scale}%`;
+    const thumb = document.getElementById(`studioThumb${studioActiveSlot.charAt(0).toUpperCase() + studioActiveSlot.slice(1)}`);
+    if (thumb) {
+      thumb.style.transform = `translate(${layout.x}%, ${layout.y}%) scale(${layout.scale / 100})`;
+    }
+  });
+
+  document.getElementById('btnStudioResetPos')?.addEventListener('click', () => {
+    const layout = state.profile.outfitLayout[studioActiveSlot] = state.profile.outfitLayout[studioActiveSlot] || { ...OUTFIT_LAYOUT_DEFAULTS[studioActiveSlot] };
+    layout.x = 0;
+    layout.y = 0;
+    renderOutfitStudio();
+    toast(`已重設${categoryLabel(studioActiveSlot)}位置`);
+  });
+
+  document.getElementById('btnStudioResetScale')?.addEventListener('click', () => {
+    const layout = state.profile.outfitLayout[studioActiveSlot] = state.profile.outfitLayout[studioActiveSlot] || { ...OUTFIT_LAYOUT_DEFAULTS[studioActiveSlot] };
+    layout.scale = OUTFIT_LAYOUT_DEFAULTS[studioActiveSlot].scale;
+    renderOutfitStudio();
+    toast(`已重設${categoryLabel(studioActiveSlot)}大小`);
+  });
+}
+
+function renderOutfitEditor() {
+  openOutfitStudio();
 }
 function openOutfitEditor() {
-  outfitEditorSlot = state.today.top ? 'top' : 'hat';
-  modalReturnTo = 'modal-settings';
-  renderOutfitEditor();
-  openModal('modal-outfit-editor');
+  openOutfitStudio();
 }
 
 function openAddModal(editId = null) {
@@ -4011,21 +4177,25 @@ function openAddModal(editId = null) {
    ============================================================ */
 let modalStack = [];
 function openModal(id, opts = {}) {
-  const current = document.querySelector('.modal-sheet.is-active');
+  const current = document.querySelector('.modal-sheet.is-active:not(.is-behind)') || document.querySelector('.modal-sheet.is-active');
   if (current && current.id !== id && !opts.fromStack) {
     persistTransientForms();
     modalStack.push({ id: current.id, returnTo: modalReturnTo, editingItemId });
+    current.classList.add('is-behind');
   }
   document.querySelectorAll('.modal-sheet').forEach(s => {
-    if (s.id !== id) {
-      s.classList.remove('is-active', 'is-shown');
+    if (s.id !== id && !modalStack.some(m => m.id === s.id)) {
+      s.classList.remove('is-active', 'is-shown', 'is-behind');
       s.style.transform = '';
+      s.style.zIndex = '';
     }
   });
   const sheet = document.getElementById(id);
   if (!sheet) return;
   sheet.scrollTop = 0;
+  sheet.classList.remove('is-behind');
   sheet.classList.add('is-active');
+  sheet.style.zIndex = String(610 + modalStack.length * 10);
   document.getElementById('modalOverlay').classList.add('is-open');
   void sheet.offsetHeight;
   requestAnimationFrame(() => {
@@ -4036,13 +4206,21 @@ function openModal(id, opts = {}) {
 function forceCloseModal(options = {}) {
   if (!options.skipPersist) persistTransientForms();
   document.getElementById('modalOverlay').classList.remove('is-open');
-  const sheet = document.querySelector('.modal-sheet.is-active');
+  const sheet = document.querySelector('.modal-sheet.is-active:not(.is-behind)') || document.querySelector('.modal-sheet.is-active');
   if (sheet) {
     sheet.classList.remove('is-shown');
-    const finish = () => { sheet.classList.remove('is-active'); sheet.removeEventListener('transitionend', finish); };
+    const finish = () => {
+      sheet.classList.remove('is-active', 'is-behind');
+      sheet.style.zIndex = '';
+      sheet.removeEventListener('transitionend', finish);
+    };
     sheet.addEventListener('transitionend', finish);
     setTimeout(finish, 360);
   }
+  document.querySelectorAll('.modal-sheet.is-behind').forEach(s => {
+    s.classList.remove('is-active', 'is-shown', 'is-behind');
+    s.style.zIndex = '';
+  });
   modalStack = [];
   backfillDraft = null;
   formDirty = false;
@@ -4061,18 +4239,24 @@ function openUnsavedPrompt(context) {
   openModal('modal-unsaved');
 }
 function closeModal() {
-  const activeBeforePersist = document.querySelector('.modal-sheet.is-active');
+  const activeBeforePersist = document.querySelector('.modal-sheet.is-active:not(.is-behind)') || document.querySelector('.modal-sheet.is-active');
   if (activeBeforePersist?.id === 'modal-add' && formDirty) { openUnsavedPrompt('item'); return; }
   if (activeBeforePersist?.id === 'modal-wishlist' && wishlistDirty) { openUnsavedPrompt('wishlist'); return; }
   persistTransientForms();
 
-  const activeSheet = document.querySelector('.modal-sheet.is-active');
+  const activeSheet = document.querySelector('.modal-sheet.is-active:not(.is-behind)') || document.querySelector('.modal-sheet.is-active');
+  if (!activeSheet) {
+    forceCloseModal();
+    return;
+  }
 
   // If canceling out of editing an item, return straight to that item's detail sheet!
   if (activeSheet?.id === 'modal-add' && editingItemId) {
     const returnId = editingItemId;
     editingItemId = null;
     modalStack = modalStack.filter(m => m.id !== 'modal-add' && m.id !== 'modal-item');
+    activeSheet.classList.remove('is-shown');
+    setTimeout(() => { activeSheet.classList.remove('is-active'); }, 280);
     openItemDetail(returnId);
     return;
   }
@@ -4080,6 +4264,8 @@ function closeModal() {
   // if we're picking an item for a backfill draft, closing the picker returns to backfill
   if (backfillDraft && activeSheet?.id === 'modal-tryon') {
     renderBackfillModal();
+    activeSheet.classList.remove('is-shown');
+    setTimeout(() => { activeSheet.classList.remove('is-active'); }, 280);
     openModal('modal-backfill', { fromStack: true });
     return;
   }
@@ -4087,6 +4273,8 @@ function closeModal() {
   if (modalReturnTo && activeSheet && activeSheet.id !== modalReturnTo) {
     const target = modalReturnTo;
     modalReturnTo = null;
+    activeSheet.classList.remove('is-shown');
+    setTimeout(() => { activeSheet.classList.remove('is-active'); }, 280);
     if (target === 'modal-item' && editingItemId) {
       const returnId = editingItemId;
       editingItemId = null;
@@ -4101,11 +4289,22 @@ function closeModal() {
   if (modalStack.length > 0) {
     const prev = modalStack.pop();
     if (prev && prev.id && prev.id !== activeSheet?.id) {
-      modalReturnTo = prev.returnTo || null;
-      if (prev.id === 'modal-item' && prev.editingItemId) {
-        openItemDetail(prev.editingItemId);
-      } else {
-        openModal(prev.id, { fromStack: true });
+      activeSheet.classList.remove('is-shown');
+      setTimeout(() => {
+        activeSheet.classList.remove('is-active');
+        activeSheet.style.zIndex = '';
+      }, 300);
+
+      const prevSheet = document.getElementById(prev.id);
+      if (prevSheet) {
+        prevSheet.classList.remove('is-behind');
+        prevSheet.style.zIndex = String(610 + modalStack.length * 10);
+        modalReturnTo = prev.returnTo || null;
+        if (prev.id === 'modal-item' && prev.editingItemId) {
+          renderItemDetail(prev.editingItemId);
+        } else if (prev.id === 'modal-tryon' && tryonCurrentSlot) {
+          renderTryonGridFor(tryonCurrentSlot, tryonCurrentCategory);
+        }
       }
       return;
     }
@@ -4168,6 +4367,68 @@ function openLaundryModal() {
   openModal('modal-laundry');
 }
 
+function openLaundryHistory() {
+  const container = document.getElementById('laundryHistoryContent');
+  if (!container) return;
+  const history = state.laundry?.history || [];
+  if (!history.length) {
+    container.innerHTML = `<p class="empty-hint" style="margin-top:24px;text-align:center;">目前尚無歷史洗衣紀錄<br><span style="font-size:12px;opacity:0.7;">點選「洗好了」完成洗衣後，將在此完整累積洗衣履歷。</span></p>`;
+    openModal('modal-laundry-history');
+    return;
+  }
+  
+  const sorted = [...history].sort((a, b) => {
+    const da = typeof a === 'string' ? a : a?.date || '';
+    const db = typeof b === 'string' ? b : b?.date || '';
+    return db.localeCompare(da);
+  });
+
+  const html = sorted.map(entry => {
+    const dateStr = typeof entry === 'string' ? entry : entry.date;
+    const daysAgo = daysBetween(dateStr, todayStr());
+    const agoText = daysAgo === 0 ? '今天' : daysAgo === 1 ? '昨天' : `${daysAgo} 天前`;
+    
+    const washedItems = state.items.filter(item => 
+      Array.isArray(item.washHistory) && item.washHistory.some(w => w.date === dateStr)
+    );
+    const boostedIds = new Set(
+      typeof entry === 'object' && Array.isArray(entry.extraWashItemIds) ? entry.extraWashItemIds : []
+    );
+
+    const washedConsumables = state.consumables.filter(c =>
+      Array.isArray(c.history) && c.history.some(h => (h.washedDate || h.date) === dateStr)
+    );
+
+    let badgesHtml = '';
+    if (washedItems.length) badgesHtml += `<span class="lhe-badge"><span data-icon="wardrobe"></span>衣物 ${washedItems.length} 件</span>`;
+    if (boostedIds.size) badgesHtml += `<span class="lhe-badge lhe-badge-boost"><span data-icon="zap"></span>加強清洗 ${boostedIds.size} 件</span>`;
+    if (washedConsumables.length) badgesHtml += `<span class="lhe-badge"><span data-icon="sparkles"></span>耗材 ${washedConsumables.length} 件</span>`;
+
+    let itemsHtml = '';
+    if (washedItems.length) {
+      itemsHtml = `<div class="lhe-items-preview">${washedItems.slice(0, 10).map(item => {
+        const bg = item.image ? `background-image:url('${item.image}')` : '';
+        const title = item.name + (boostedIds.has(item.id) ? ' (加強清洗)' : '');
+        return `<span class="lhe-thumb" style="${bg}" title="${escapeHtml(title)}">${item.image ? '' : categoryIcon(item.category)}</span>`;
+      }).join('')}${washedItems.length > 10 ? `<span class="lhe-thumb" style="font-size:11px;font-weight:700;color:var(--color-ink-soft);">+${washedItems.length - 10}</span>` : ''}</div>`;
+    }
+
+    return `
+      <div class="laundry-history-entry">
+        <div class="lhe-head">
+          <span class="lhe-date">${formatDayWithWeekday(dateStr)}</span>
+          <span class="lhe-ago">${agoText}</span>
+        </div>
+        <div class="lhe-badges">${badgesHtml}</div>
+        ${itemsHtml}
+      </div>
+    `;
+  }).join('');
+
+  container.innerHTML = html;
+  openModal('modal-laundry-history');
+}
+
 /* ---------------------------- Number-grid picker (settings) ---------------------------- */
 function openNumberGridPicker(btn) {
   modalReturnTo = 'modal-settings';
@@ -4206,34 +4467,89 @@ function openNumberGridPicker(btn) {
 /* ---------------------------- Calendar swipe ---------------------------- */
 function wireCalendarSwipe() {
   const area = document.getElementById('calSwipeArea');
-  let startX = 0, startY = 0, dragging = false, horizontal = false;
+  if (!area) return;
+  let startX = 0, startY = 0, currentX = 0, dragging = false, horizontal = false;
+  let isAnimating = false;
+
   area.addEventListener('touchstart', e => {
+    if (isAnimating) return;
     startX = e.touches[0].clientX;
     startY = e.touches[0].clientY;
+    currentX = startX;
     dragging = true;
     horizontal = false;
-  }, { passive: true });
-  area.addEventListener('touchmove', e => {
-    if (!dragging) return;
-    const dx = e.touches[0].clientX - startX;
-    const dy = e.touches[0].clientY - startY;
-    if (!horizontal && Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 10) horizontal = true;
-    if (horizontal) {
-      const grid = document.getElementById('calGrid');
-      grid.style.transform = `translateX(${dx}px)`;
-      grid.style.opacity = String(1 - Math.min(0.5, Math.abs(dx) / 300));
+    const grid = document.getElementById('calGrid');
+    if (grid) {
+      grid.style.transition = 'none';
+      grid.style.opacity = '1';
     }
   }, { passive: true });
+
+  area.addEventListener('touchmove', e => {
+    if (!dragging || isAnimating) return;
+    currentX = e.touches[0].clientX;
+    const dx = currentX - startX;
+    const dy = e.touches[0].clientY - startY;
+    if (!horizontal && Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 8) {
+      horizontal = true;
+    }
+    if (horizontal) {
+      const grid = document.getElementById('calGrid');
+      if (grid) {
+        grid.style.transform = `translateX(${dx}px)`;
+        grid.style.opacity = '1';
+      }
+    }
+  }, { passive: true });
+
   area.addEventListener('touchend', e => {
-    if (!dragging) return;
+    if (!dragging || isAnimating) return;
     dragging = false;
     const grid = document.getElementById('calGrid');
+    if (!grid) return;
+
     if (horizontal) {
-      const dx = e.changedTouches[0].clientX - startX;
-      grid.style.transform = '';
-      grid.style.opacity = '';
-      if (dx > 60) { uiCalMonth.m--; if (uiCalMonth.m < 0) { uiCalMonth.m = 11; uiCalMonth.y--; } renderHistory(); }
-      else if (dx < -60) { uiCalMonth.m++; if (uiCalMonth.m > 11) { uiCalMonth.m = 0; uiCalMonth.y++; } renderHistory(); }
+      const dx = currentX - startX;
+      const threshold = 50;
+      if (Math.abs(dx) > threshold) {
+        isAnimating = true;
+        const goingNext = dx < 0;
+        const exitX = goingNext ? -100 : 100;
+        const enterX = goingNext ? 100 : -100;
+
+        grid.style.transition = 'transform 0.22s cubic-bezier(0.25, 1, 0.5, 1)';
+        grid.style.transform = `translateX(${exitX}%)`;
+
+        setTimeout(() => {
+          if (goingNext) {
+            uiCalMonth.m++;
+            if (uiCalMonth.m > 11) { uiCalMonth.m = 0; uiCalMonth.y++; }
+          } else {
+            uiCalMonth.m--;
+            if (uiCalMonth.m < 0) { uiCalMonth.m = 11; uiCalMonth.y--; }
+          }
+          grid.style.transition = 'none';
+          grid.style.transform = `translateX(${enterX}%)`;
+          renderHistory();
+          void grid.offsetWidth;
+          requestAnimationFrame(() => {
+            grid.style.transition = 'transform 0.24s cubic-bezier(0.25, 1, 0.5, 1)';
+            grid.style.transform = 'translateX(0)';
+            setTimeout(() => {
+              grid.style.transition = '';
+              grid.style.transform = '';
+              isAnimating = false;
+            }, 250);
+          });
+        }, 220);
+      } else {
+        grid.style.transition = 'transform 0.2s ease-out';
+        grid.style.transform = 'translateX(0)';
+        setTimeout(() => {
+          grid.style.transition = '';
+          grid.style.transform = '';
+        }, 200);
+      }
     }
     horizontal = false;
   });
@@ -4883,7 +5199,8 @@ function wireEvents() {
       outfitScaleSaveTimer = setTimeout(() => saveState(), 320);
     });
   }
-  document.getElementById('btnOpenOutfitEditor').addEventListener('click', openOutfitEditor);
+  document.getElementById('btnOpenOutfitEditor').addEventListener('click', openOutfitStudio);
+  wireOutfitStudioEvents();
   document.getElementById('btnCloseOutfitEditor').addEventListener('click', closeModal);
   document.getElementById('outfitScaleSlider').addEventListener('input', e => {
     const layout = state.profile.outfitLayout[outfitEditorSlot];
@@ -5276,7 +5593,19 @@ function wireEvents() {
     const btn = e.target.closest('.rank-period-btn');
     if (!btn) return;
     uiRankPeriod = btn.dataset.period;
+    if (uiRankPeriod === 'custom') {
+      const sInput = document.getElementById('rankStartDate');
+      const eInput = document.getElementById('rankEndDate');
+      if (sInput && !sInput.value) sInput.value = addDays(todayStr(), -30);
+      if (eInput && !eInput.value) eInput.value = todayStr();
+    }
     renderRank();
+  });
+  document.getElementById('rankStartDate')?.addEventListener('change', () => {
+    if (uiRankPeriod === 'custom') renderRank();
+  });
+  document.getElementById('rankEndDate')?.addEventListener('change', () => {
+    if (uiRankPeriod === 'custom') renderRank();
   });
   document.getElementById('rankCategoryTabs')?.addEventListener('click', e => {
     const btn = e.target.closest('.cat-tab');
@@ -5638,6 +5967,11 @@ function wireEvents() {
   // laundry day (whole-basket cadence)
   document.getElementById('card-basket').addEventListener('click', openLaundryModal);
   document.getElementById('card-basket').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openLaundryModal(); } });
+  document.getElementById('btnBasketInfo')?.addEventListener('click', e => {
+    e.stopPropagation();
+    openLaundryHistory();
+  });
+  document.getElementById('btnLaundryHistoryInfo')?.addEventListener('click', openLaundryHistory);
   document.getElementById('card-rack').addEventListener('click', openRackOverview);
   document.getElementById('card-rack').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openRackOverview(); } });
   document.getElementById('btnLaundryDone').addEventListener('click', () => { if (markLaundryDone()) closeModal(); });

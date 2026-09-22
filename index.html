@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Wardrobe Master">
-<link rel="stylesheet" href="styles.css?v=20260922j">
+<link rel="stylesheet" href="styles.css?v=20260922k">
 </head>
 <body>
 
@@ -87,6 +87,9 @@
           <div class="rack-card-head">
             <span class="rack-icon" data-icon="basket"></span>
             <p class="rack-title" id="basketTitle">洗衣籃</p>
+            <button type="button" class="rack-head-icon-btn" id="btnBasketInfo" aria-label="歷史洗衣紀錄" title="歷史洗衣紀錄">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            </button>
             <span class="rack-badge-bubble" id="basketBadge"></span>
           </div>
           <div class="rack-items" id="basketList"></div>
@@ -135,6 +138,18 @@
             <button type="button" class="rank-period-btn is-active" data-period="all">全部歷史</button>
             <button type="button" class="rank-period-btn" data-period="month">本月</button>
             <button type="button" class="rank-period-btn" data-period="30d">近 30 天</button>
+            <button type="button" class="rank-period-btn" data-period="custom">自訂範圍</button>
+          </div>
+          <div class="rank-custom-range" id="rankCustomRangeRow" hidden>
+            <div class="rank-custom-field">
+              <label for="rankStartDate">起</label>
+              <input type="date" id="rankStartDate" aria-label="開始日期">
+            </div>
+            <span class="range-sep">至</span>
+            <div class="rank-custom-field">
+              <label for="rankEndDate">訖</label>
+              <input type="date" id="rankEndDate" aria-label="結束日期">
+            </div>
           </div>
           <div class="category-tabs rank-cat-tabs" id="rankCategoryTabs">
             <button type="button" class="cat-tab is-active" data-cat="all">全部</button>
@@ -856,7 +871,15 @@
   <!-- Laundry day (whole-basket household laundry cadence) -->
   <div class="modal-sheet" id="modal-laundry" data-modal>
     <div class="modal-handle"></div>
-    <div class="modal-head"><h2>洗衣日資訊</h2><button class="modal-close" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+    <div class="modal-head">
+      <h2>洗衣日資訊</h2>
+      <div class="modal-head-actions">
+        <button type="button" class="icon-btn" id="btnLaundryHistoryInfo" aria-label="歷史洗衣紀錄" title="歷史洗衣紀錄" style="width:34px;height:34px;box-shadow:none;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        </button>
+        <button class="modal-close" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </div>
+    </div>
     <div class="detail-stats" id="laundryStats"></div>
     <div class="item-grid laundry-overview-grid" id="laundryOverviewGrid"></div>
     <div class="laundry-consumable-list" id="laundryConsumableGrid"></div>
@@ -865,6 +888,16 @@
       <button class="btn-secondary" id="btnLaundryPostpone">延後一天洗</button>
       <button class="btn-primary" id="btnLaundryDone" style="margin-top:0">洗好了</button>
     </div>
+  </div>
+
+  <!-- Laundry History Modal -->
+  <div class="modal-sheet modal-sheet-tall" id="modal-laundry-history" data-modal>
+    <div class="modal-handle"></div>
+    <div class="modal-head">
+      <h2>歷史洗衣紀錄</h2>
+      <button class="modal-close" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="laundry-history-content" id="laundryHistoryContent"></div>
   </div>
 
   <!-- Temp rack overview -->
@@ -1170,12 +1203,91 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- Outfit Studio (mirrors Home page exactly with locked background) -->
+<div class="outfit-studio-overlay" id="pageOutfitStudio" hidden>
+  <header class="app-header studio-header">
+    <div class="header-text">
+      <h1 class="header-greeting">穿搭版面設定</h1>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="btn-primary studio-done-btn" id="btnStudioDone">完成</button>
+    </div>
+  </header>
+
+  <div class="studio-body">
+    <!-- Locked sky backdrop -->
+    <div class="scene-sky studio-locked-item" id="studioSky">
+      <span class="scene-weather-art" aria-hidden="true">
+        <span class="scene-art-sun"></span>
+        <span class="scene-art-moon"></span>
+        <span class="scene-art-cloud"></span>
+        <span class="scene-art-rain"></span>
+      </span>
+      <span class="scene-orb" id="studioOrb"></span>
+      <span class="scene-weather" id="studioWeather">景觀鎖定中</span>
+      <span class="studio-lock-pill">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>其他物件已鎖定
+      </span>
+    </div>
+
+    <!-- Active Figure Board (Home identical) -->
+    <div class="scene-board studio-scene-board">
+      <div class="figure-board" id="studioFigureBoard">
+        <button type="button" class="figure-slot figure-hat studio-figure-slot" data-studio-slot="hat" aria-label="調整帽子">
+          <span class="figure-core"><span class="figure-thumb" id="studioThumbHat"></span></span>
+        </button>
+        <button type="button" class="figure-slot figure-top studio-figure-slot is-selected" data-studio-slot="top" aria-label="調整上衣">
+          <span class="figure-core"><span class="figure-thumb" id="studioThumbTop"></span></span>
+        </button>
+        <button type="button" class="figure-slot figure-bottom studio-figure-slot" data-studio-slot="bottom" aria-label="調整褲子">
+          <span class="figure-core"><span class="figure-thumb" id="studioThumbBottom"></span></span>
+        </button>
+        <button type="button" class="figure-slot figure-shoes studio-figure-slot" data-studio-slot="shoes" aria-label="調整鞋子">
+          <span class="figure-core"><span class="figure-thumb" id="studioThumbShoes"></span></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Locked racks below -->
+    <div class="rack-row studio-locked-item studio-locked-racks">
+      <div class="rack-card studio-locked-card">
+        <div class="rack-card-head"><span class="rack-icon" data-icon="basket"></span><p class="rack-title">洗衣籃（鎖定）</p></div>
+      </div>
+      <div class="rack-card studio-locked-card">
+        <div class="rack-card-head"><span class="rack-icon" data-icon="rack"></span><p class="rack-title">暫存衣架（鎖定）</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating bottom control dock -->
+  <div class="studio-dock">
+    <div class="outfit-editor-slot-tabs" id="studioSlotTabs">
+      <button type="button" class="outfit-editor-slot-tab" data-studio-tab="hat">帽子</button>
+      <button type="button" class="outfit-editor-slot-tab is-active" data-studio-tab="top">上衣</button>
+      <button type="button" class="outfit-editor-slot-tab" data-studio-tab="bottom">褲子</button>
+      <button type="button" class="outfit-editor-slot-tab" data-studio-tab="shoes">鞋子</button>
+    </div>
+    <div class="studio-slider-card">
+      <div class="settings-label-row">
+        <label for="studioScaleSlider" id="studioScaleLabel">上衣大小</label>
+        <output id="studioScaleValue">100%</output>
+      </div>
+      <input type="range" id="studioScaleSlider" min="70" max="140" value="100">
+      <div class="studio-actions-row">
+        <span class="studio-drag-tip">可直接在預覽中拖曳調整位置</span>
+        <button type="button" class="btn-secondary studio-reset-btn" id="btnStudioResetPos">重設位置</button>
+        <button type="button" class="btn-secondary studio-reset-btn" id="btnStudioResetScale">重設大小</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="photo-viewer-modal is-hidden" id="photoViewerModal">
   <button type="button" class="photo-viewer-close" id="btnPhotoViewerClose" aria-label="關閉檢視"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
   <img class="photo-viewer-img" id="photoViewerImg" alt="">
 </div>
 
-<script src="seed-items.js?v=20260922j"></script>
-<script src="app.js?v=20260922j"></script>
+<script src="seed-items.js?v=20260922k"></script>
+<script src="app.js?v=20260922k"></script>
 </body>
 </html>
