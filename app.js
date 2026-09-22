@@ -1,5 +1,5 @@
 /* =========================================================
-   衣櫥助手 — app.js
+   Wardrobe Master — app.js
    Vanilla JS, no build step. State persists to localStorage.
    SEED_ITEMS comes from seed-items.js (loaded before this file).
    ========================================================= */
@@ -4267,7 +4267,7 @@ function wireEvents() {
       toast('匯入完成');
       closeModal();
     } catch (err) {
-      toast('匯入失敗，請確認檔案是否為衣櫥助手的備份檔');
+      toast('匯入失敗，請確認檔案是否為 Wardrobe Master 的備份檔');
     }
     e.target.value = '';
   });

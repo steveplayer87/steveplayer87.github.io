@@ -1,7 +1,7 @@
 {
-  "name": "衣櫥助手",
-  "short_name": "衣櫥助手",
-  "description": "個人衣櫥、穿搭與洗衣管理",
+  "name": "Wardrobe Master",
+  "short_name": "Wardrobe Master",
+  "description": "Wardrobe Master — 個人衣櫥、穿搭與洗衣管理",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
