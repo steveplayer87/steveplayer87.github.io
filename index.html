@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Wardrobe Master">
-<link rel="stylesheet" href="styles.css?v=20260922k">
+<link rel="stylesheet" href="styles.css?v=20260922m">
 </head>
 <body>
 
@@ -125,7 +125,11 @@
           <span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span>
         </div>
         <div class="cal-swipe-area" id="calSwipeArea">
-          <div class="cal-grid" id="calGrid"></div>
+          <div class="cal-track" id="calTrack">
+            <div class="cal-grid cal-grid-prev" id="calGridPrev"></div>
+            <div class="cal-grid cal-grid-curr" id="calGrid"></div>
+            <div class="cal-grid cal-grid-next" id="calGridNext"></div>
+          </div>
         </div>
 
         <p class="stats-heading">本月小統計</p>
@@ -313,7 +317,7 @@
   <div class="select-bar is-hidden" id="selectBar">
     <div class="select-bar-top">
       <p id="selectCount">已選 0 件</p>
-      <button type="button" class="btn-secondary" id="btnSelectAll">全選</button>
+      <button type="button" class="btn-select-all" id="btnSelectAll">全選</button>
     </div>
     <div class="select-bar-actions">
       <button type="button" class="btn-secondary" id="btnSelectWash">送洗</button>
@@ -1287,7 +1291,7 @@
   <img class="photo-viewer-img" id="photoViewerImg" alt="">
 </div>
 
-<script src="seed-items.js?v=20260922k"></script>
-<script src="app.js?v=20260922k"></script>
+<script src="seed-items.js?v=20260922m"></script>
+<script src="app.js?v=20260922m"></script>
 </body>
 </html>

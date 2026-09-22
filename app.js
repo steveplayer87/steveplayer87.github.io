@@ -215,12 +215,12 @@ function getCategoryAspectRatio(category) {
 const MAIN_SLOTS = ['top', 'bottom', 'shoes'];
 const EXTRA_SLOTS = ['outer', 'hat', 'accessory'];
 const ALL_SLOTS = MAIN_SLOTS.concat(EXTRA_SLOTS);
-const HOME_SLOT_RATIOS = { hat: 2.2, top: 1.08, bottom: 0.72, shoes: 2.2 };
+const HOME_SLOT_RATIOS = { hat: 2.2, top: 1.08, bottom: 0.72, shoes: 1.45 };
 const OUTFIT_LAYOUT_DEFAULTS = {
   hat: { scale: 92, x: 0, y: 0 },
   top: { scale: 100, x: 0, y: 0 },
-  bottom: { scale: 100, x: 0, y: 0 },
-  shoes: { scale: 92, x: 0, y: 0 },
+  bottom: { scale: 104, x: 0, y: 0 },
+  shoes: { scale: 102, x: 0, y: 0 },
 };
 function normalizeOutfitLayout(layout) {
   const result = {};
@@ -316,7 +316,55 @@ function readFileAsImage(file) {
     reader.readAsDataURL(file);
   });
 }
-async function compressImageFile(file, maxDim = 640, quality = 0.82) {
+function knockoutWhiteCanvas(canvas) {
+  try {
+    const w = canvas.width, h = canvas.height;
+    if (!w || !h) return;
+    const ctx = canvas.getContext('2d');
+    const imgData = ctx.getImageData(0, 0, w, h);
+    const data = imgData.data;
+    const cornerIndices = [0, (w - 1) * 4, (w * (h - 1)) * 4, (w * h - 1) * 4];
+    let whiteCorners = 0;
+    for (const idx of cornerIndices) {
+      if (data[idx + 3] >= 20 && data[idx] >= 230 && data[idx + 1] >= 230 && data[idx + 2] >= 230) whiteCorners++;
+    }
+    if (whiteCorners === 0) return;
+    const visited = new Uint8Array(w * h);
+    const queue = new Int32Array(w * h);
+    let qHead = 0, qTail = 0;
+    const isWhite = (idx) => {
+      if (data[idx + 3] < 20) return true;
+      return data[idx] >= 230 && data[idx + 1] >= 230 && data[idx + 2] >= 230;
+    };
+    for (let x = 0; x < w; x++) {
+      let p = x;
+      if (isWhite(p * 4)) { visited[p] = 1; queue[qTail++] = p; }
+      p = (h - 1) * w + x;
+      if (isWhite(p * 4)) { visited[p] = 1; queue[qTail++] = p; }
+    }
+    for (let y = 0; y < h; y++) {
+      let p = y * w;
+      if (!visited[p] && isWhite(p * 4)) { visited[p] = 1; queue[qTail++] = p; }
+      p = y * w + (w - 1);
+      if (!visited[p] && isWhite(p * 4)) { visited[p] = 1; queue[qTail++] = p; }
+    }
+    while (qHead < qTail) {
+      const p = queue[qHead++];
+      const x = p % w;
+      const y = (p / w) | 0;
+      if (x > 0 && !visited[p - 1] && isWhite((p - 1) * 4)) { visited[p - 1] = 1; queue[qTail++] = p - 1; }
+      if (x < w - 1 && !visited[p + 1] && isWhite((p + 1) * 4)) { visited[p + 1] = 1; queue[qTail++] = p + 1; }
+      if (y > 0 && !visited[p - w] && isWhite((p - w) * 4)) { visited[p - w] = 1; queue[qTail++] = p - w; }
+      if (y < h - 1 && !visited[p + w] && isWhite((p + w) * 4)) { visited[p + w] = 1; queue[qTail++] = p + w; }
+    }
+    for (let i = 0; i < w * h; i++) {
+      if (visited[i]) data[i * 4 + 3] = 0;
+    }
+    ctx.putImageData(imgData, 0, 0);
+  } catch(e) {}
+}
+
+async function compressImageFile(file, maxDim = 640) {
   const img = await readFileAsImage(file);
   let { width, height } = img;
   if (width > height) {
@@ -327,16 +375,10 @@ async function compressImageFile(file, maxDim = 640, quality = 0.82) {
   const canvas = document.createElement('canvas');
   canvas.width = width; canvas.height = height;
   const ctx = canvas.getContext('2d');
-  const isTransparent = file.type === 'image/png' || file.type === 'image/webp' || file.type === 'image/svg+xml' || (file.name && /\.(png|webp|svg)$/i.test(file.name));
-  if (isTransparent) {
-    ctx.clearRect(0, 0, width, height);
-    ctx.drawImage(img, 0, 0, width, height);
-    return canvas.toDataURL('image/png');
-  }
-  ctx.fillStyle = '#fff';
-  ctx.fillRect(0, 0, width, height);
+  ctx.clearRect(0, 0, width, height);
   ctx.drawImage(img, 0, 0, width, height);
-  return canvas.toDataURL('image/jpeg', quality);
+  knockoutWhiteCanvas(canvas);
+  return canvas.toDataURL('image/png');
 }
 
 /* ---------------------------- Photo adjust (crop/zoom/pan to a target ratio) ---------------------------- */
@@ -351,7 +393,7 @@ function openPhotoAdjust(imgSrc, category, onApply) {
   frame.style.width = frameW + 'px';
   frame.style.height = frameH + 'px';
   const isPng = imgSrc.startsWith('data:image/png') || imgSrc.startsWith('data:image/webp') || /\.(png|webp)$/i.test(imgSrc);
-  frame.style.backgroundColor = isPng ? 'transparent' : '#fff';
+  frame.style.backgroundColor = 'transparent';
   const img = document.getElementById('photoAdjustImg');
   photoAdjust = { scale: 1, x: 0, y: 0, frameW, frameH, minScale: 0.5, maxScale: 2.5, isPng, onApply };
   img.onload = () => {
@@ -463,18 +505,13 @@ function wirePhotoAdjust() {
     const totalScale = s.baseScale * s.scale;
     const canvas = document.createElement('canvas');
     canvas.width = outW; canvas.height = outH;
-    const ctx = canvas.getContext('2d');
-    if (s.isPng) {
-      ctx.clearRect(0, 0, outW, outH);
-    } else {
-      ctx.fillStyle = '#fff';
-      ctx.fillRect(0, 0, outW, outH);
-    }
+    ctx.clearRect(0, 0, outW, outH);
     const img = document.getElementById('photoAdjustImg');
     ctx.drawImage(img, s.x * scaleOut, s.y * scaleOut, s.iw * totalScale * scaleOut, s.ih * totalScale * scaleOut);
+    knockoutWhiteCanvas(canvas);
     let dataUrl;
     try {
-      dataUrl = s.isPng ? canvas.toDataURL('image/png') : canvas.toDataURL('image/jpeg', 0.86);
+      dataUrl = canvas.toDataURL('image/png');
     } catch (err) {
       toast('照片儲存失敗，請重新選取照片');
       return;
@@ -1380,6 +1417,102 @@ function itemPhotoStyle(item) {
   return item.image ? `background-image:url('${item.image}');background-repeat:no-repeat;background-position:center;background-size:contain;background-color:transparent;` : 'background-color:transparent;';
 }
 
+const transparentCleanCache = new Map();
+function cleanTransparentImage(imgUrl, callback) {
+  if (!imgUrl || typeof imgUrl !== 'string') {
+    if (callback) callback(imgUrl, false);
+    return;
+  }
+  if (transparentCleanCache.has(imgUrl)) {
+    if (callback) callback(transparentCleanCache.get(imgUrl), false);
+    return;
+  }
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => {
+    try {
+      const w = img.naturalWidth || img.width;
+      const h = img.naturalHeight || img.height;
+      if (!w || !h) {
+        transparentCleanCache.set(imgUrl, imgUrl);
+        if (callback) callback(imgUrl, false);
+        return;
+      }
+      const cvs = document.createElement('canvas');
+      cvs.width = w; cvs.height = h;
+      const ctx = cvs.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      const imgData = ctx.getImageData(0, 0, w, h);
+      const data = imgData.data;
+
+      const cornerIndices = [0, (w - 1) * 4, (w * (h - 1)) * 4, (w * h - 1) * 4];
+      let whiteCorners = 0;
+      let transCorners = 0;
+      for (const idx of cornerIndices) {
+        if (data[idx + 3] < 20) transCorners++;
+        else if (data[idx] >= 230 && data[idx + 1] >= 230 && data[idx + 2] >= 230) whiteCorners++;
+      }
+      if (transCorners === 4 || (transCorners > 0 && whiteCorners === 0)) {
+        transparentCleanCache.set(imgUrl, imgUrl);
+        if (callback) callback(imgUrl, false);
+        return;
+      }
+
+      const visited = new Uint8Array(w * h);
+      const queue = new Int32Array(w * h);
+      let qHead = 0, qTail = 0;
+      const isWhite = (idx) => {
+        if (data[idx + 3] < 20) return true;
+        return data[idx] >= 230 && data[idx + 1] >= 230 && data[idx + 2] >= 230;
+      };
+      for (let x = 0; x < w; x++) {
+        let p = x;
+        if (isWhite(p * 4)) { visited[p] = 1; queue[qTail++] = p; }
+        p = (h - 1) * w + x;
+        if (isWhite(p * 4)) { visited[p] = 1; queue[qTail++] = p; }
+      }
+      for (let y = 0; y < h; y++) {
+        let p = y * w;
+        if (!visited[p] && isWhite(p * 4)) { visited[p] = 1; queue[qTail++] = p; }
+        p = y * w + (w - 1);
+        if (!visited[p] && isWhite(p * 4)) { visited[p] = 1; queue[qTail++] = p; }
+      }
+      while (qHead < qTail) {
+        const p = queue[qHead++];
+        const x = p % w;
+        const y = (p / w) | 0;
+        if (x > 0 && !visited[p - 1] && isWhite((p - 1) * 4)) { visited[p - 1] = 1; queue[qTail++] = p - 1; }
+        if (x < w - 1 && !visited[p + 1] && isWhite((p + 1) * 4)) { visited[p + 1] = 1; queue[qTail++] = p + 1; }
+        if (y > 0 && !visited[p - w] && isWhite((p - w) * 4)) { visited[p - w] = 1; queue[qTail++] = p - w; }
+        if (y < h - 1 && !visited[p + w] && isWhite((p + w) * 4)) { visited[p + w] = 1; queue[qTail++] = p + w; }
+      }
+      let modified = false;
+      for (let i = 0; i < w * h; i++) {
+        if (visited[i]) {
+          if (data[i * 4 + 3] !== 0) { data[i * 4 + 3] = 0; modified = true; }
+        }
+      }
+      if (modified) {
+        ctx.putImageData(imgData, 0, 0);
+        const cleanUrl = cvs.toDataURL('image/png');
+        transparentCleanCache.set(imgUrl, cleanUrl);
+        if (callback) callback(cleanUrl, true);
+      } else {
+        transparentCleanCache.set(imgUrl, imgUrl);
+        if (callback) callback(imgUrl, false);
+      }
+    } catch(e) {
+      transparentCleanCache.set(imgUrl, imgUrl);
+      if (callback) callback(imgUrl, false);
+    }
+  };
+  img.onerror = () => {
+    transparentCleanCache.set(imgUrl, imgUrl);
+    if (callback) callback(imgUrl, false);
+  };
+  img.src = imgUrl;
+}
+
 const trimBoundsCache = new Map();
 function getImageTrimBounds(imgUrl, callback) {
   if (!imgUrl) return;
@@ -1859,8 +1992,9 @@ function renderHome() {
       btn.classList.add('is-filled');
       btn.classList.toggle('has-photo', !!item.image);
       const pos = (slot === 'top' || slot === 'hat') ? 'center bottom' : 'center top';
-      const bgStyle = item.image
-        ? `background-image:url('${item.image}');background-repeat:no-repeat;background-position:${pos};background-size:contain;background-color:transparent;aspect-ratio:${ratio};`
+      const cleanImg = transparentCleanCache.get(item.image) || item.image;
+      const bgStyle = cleanImg
+        ? `background-image:url('${cleanImg}');background-repeat:no-repeat;background-position:${pos};background-size:contain;background-color:transparent;aspect-ratio:${ratio};`
         : `aspect-ratio:${ratio};background-color:transparent;`;
       thumb.setAttribute('style', bgStyle);
       thumb.style.transform = `translate(${layout.x}%, ${layout.y}%) scale(${layout.scale / 100})`;
@@ -1868,13 +2002,24 @@ function renderHome() {
       thumb.innerHTML = thumbInner(item);
       btn.setAttribute('aria-label', item.name);
 
+      if (item.image) {
+        cleanTransparentImage(item.image, (cleanUrl, changed) => {
+          if (changed) {
+            item.image = cleanUrl;
+            saveState();
+          }
+          thumb.style.backgroundImage = `url('${cleanUrl}')`;
+          thumb.style.backgroundColor = 'transparent';
+        });
+      }
+
       if (item.image && (slot === 'top' || slot === 'bottom')) {
         getImageTrimBounds(item.image, bounds => {
           let extraY = 0;
           if (slot === 'top' && bounds.padBottom > 0.02) {
-            extraY = Math.round(bounds.padBottom * 22);
+            extraY = Math.round(bounds.padBottom * 30);
           } else if (slot === 'bottom' && bounds.padTop > 0.02) {
-            extraY = -Math.round(bounds.padTop * 22);
+            extraY = -Math.round(bounds.padTop * 30);
           }
           const baseScale = layout.scale / 100;
           thumb.style.transform = `translate(${layout.x}%, calc(${layout.y}% + ${extraY}px)) scale(${baseScale})`;
@@ -2171,7 +2316,14 @@ function renderWardrobe() {
 function toggleItemSelection(id, cardEl) {
   if (uiSelectedIds.has(id)) uiSelectedIds.delete(id); else uiSelectedIds.add(id);
   const isSelected = uiSelectedIds.has(id);
-  document.getElementById('selectCount').textContent = `已選 ${uiSelectedIds.size} 件`;
+  const countEl = document.getElementById('selectCount');
+  if (countEl) countEl.textContent = `已選 ${uiSelectedIds.size} 件`;
+  const btnAll = document.getElementById('btnSelectAll');
+  if (btnAll) {
+    const visible = getVisibleWardrobeItems();
+    const allSelected = visible.length > 0 && visible.every(i => uiSelectedIds.has(i.id));
+    btnAll.textContent = allSelected ? '取消全選' : '全選';
+  }
   const el = cardEl || document.querySelector(`.item-card[data-id="${id}"]`);
   if (el) {
     el.classList.toggle('is-selected', isSelected);
@@ -2287,13 +2439,19 @@ function allOotdEntries() {
   return entries;
 }
 
-function renderHistory() {
-  document.getElementById('calTitle').textContent = `${uiCalMonth.y} 年 ${uiCalMonth.m + 1} 月`;
-  const grid = document.getElementById('calGrid');
+function getAdjacentMonth(y, m, offset) {
+  let ny = y, nm = m + offset;
+  while (nm < 0) { nm += 12; ny--; }
+  while (nm > 11) { nm -= 12; ny++; }
+  return { y: ny, m: nm };
+}
+
+function renderMonthGrid(grid, y, m) {
+  if (!grid) return;
   grid.innerHTML = '';
-  const firstDay = new Date(uiCalMonth.y, uiCalMonth.m, 1);
+  const firstDay = new Date(y, m, 1);
   const startOffset = firstDay.getDay();
-  const daysInMonth = new Date(uiCalMonth.y, uiCalMonth.m + 1, 0).getDate();
+  const daysInMonth = new Date(y, m + 1, 0).getDate();
   const entries = allOotdEntries();
   const byDate = {};
   entries.forEach(e => { if (e.date) (byDate[e.date] = byDate[e.date] || []).push(e); });
@@ -2311,7 +2469,7 @@ function renderHistory() {
     grid.appendChild(empty);
   }
   for (let d = 1; d <= daysInMonth; d++) {
-    const dateStr = `${uiCalMonth.y}-${String(uiCalMonth.m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const cell = document.createElement('button');
     cell.type = 'button';
     cell.className = 'cal-cell';
@@ -2325,9 +2483,12 @@ function renderHistory() {
         { item: entry.top ? findItem(entry.top) : null, className: 'cal-thumb-top' },
         { item: entry.bottom ? findItem(entry.bottom) : null, className: 'cal-thumb-bottom' },
       ].filter(({ item }) => item);
-      thumbsHtml = `<span class="cal-thumbs">${thumbItems.map(({ item, className }) =>
-        `<span class="cal-thumb ${className}" style="${calendarPhotoStyle(item)}">${item.image ? '' : categoryIcon(item.category)}</span>`
-      ).join('')}</span>`;
+      thumbsHtml = `<span class="cal-thumbs">${thumbItems.map(({ item, className }) => {
+        const cleanImg = transparentCleanCache.get(item.image) || item.image;
+        const pos = className === 'cal-thumb-bottom' ? 'center top' : 'center bottom';
+        const style = cleanImg ? `background-image:url('${cleanImg}');background-repeat:no-repeat;background-position:${pos};background-size:contain;background-color:transparent;` : 'background-color:transparent;';
+        return `<span class="cal-thumb ${className}" style="${style}">${cleanImg ? '' : categoryIcon(item.category)}</span>`;
+      }).join('')}</span>`;
     }
     let dotsHtml = '';
     if (laundryDays.has(dateStr)) dotsHtml += `<span class="cal-event-dot cal-dot-laundry"></span>`;
@@ -2341,6 +2502,15 @@ function renderHistory() {
     else cell.addEventListener('click', () => openBackfillModal(dateStr));
     grid.appendChild(cell);
   }
+}
+
+function renderHistory() {
+  document.getElementById('calTitle').textContent = `${uiCalMonth.y} 年 ${uiCalMonth.m + 1} 月`;
+  const prevMonth = getAdjacentMonth(uiCalMonth.y, uiCalMonth.m, -1);
+  const nextMonth = getAdjacentMonth(uiCalMonth.y, uiCalMonth.m, 1);
+  renderMonthGrid(document.getElementById('calGridPrev'), prevMonth.y, prevMonth.m);
+  renderMonthGrid(document.getElementById('calGrid'), uiCalMonth.y, uiCalMonth.m);
+  renderMonthGrid(document.getElementById('calGridNext'), nextMonth.y, nextMonth.m);
   renderCalStats();
   renderRank();
 }
@@ -3935,8 +4105,16 @@ function renderOutfitStudio() {
     const pos = (slot === 'top' || slot === 'hat') ? 'center bottom' : 'center top';
 
     if (item && item.image) {
-      thumb.setAttribute('style', `background-image:url('${item.image}');background-repeat:no-repeat;background-position:${pos};background-size:contain;background-color:transparent;aspect-ratio:${ratio};`);
+      const cleanImg = transparentCleanCache.get(item.image) || item.image;
+      thumb.setAttribute('style', `background-image:url('${cleanImg}');background-repeat:no-repeat;background-position:${pos};background-size:contain;background-color:transparent;aspect-ratio:${ratio};`);
       thumb.innerHTML = '';
+      cleanTransparentImage(item.image, (cleanUrl, changed) => {
+        if (changed) {
+          item.image = cleanUrl;
+          saveState();
+        }
+        thumb.style.backgroundImage = `url('${cleanUrl}')`;
+      });
     } else if (item) {
       thumb.setAttribute('style', `aspect-ratio:${ratio};background-color:transparent;`);
       thumb.innerHTML = thumbInner(item);
@@ -4465,28 +4643,60 @@ function openNumberGridPicker(btn) {
 }
 
 /* ---------------------------- Calendar swipe ---------------------------- */
+let isCalAnimating = false;
+function animateCalendarMonthChange(direction, onComplete) {
+  if (isCalAnimating) return;
+  const track = document.getElementById('calTrack');
+  if (!track) {
+    if (direction === 'next') {
+      uiCalMonth.m++;
+      if (uiCalMonth.m > 11) { uiCalMonth.m = 0; uiCalMonth.y++; }
+    } else {
+      uiCalMonth.m--;
+      if (uiCalMonth.m < 0) { uiCalMonth.m = 11; uiCalMonth.y--; }
+    }
+    renderHistory();
+    if (onComplete) onComplete();
+    return;
+  }
+  isCalAnimating = true;
+  track.style.transition = 'transform 0.28s cubic-bezier(0.25, 1, 0.5, 1)';
+  const targetX = direction === 'next' ? '-66.666667%' : '0%';
+  track.style.transform = `translateX(${targetX})`;
+  setTimeout(() => {
+    if (direction === 'next') {
+      uiCalMonth.m++;
+      if (uiCalMonth.m > 11) { uiCalMonth.m = 0; uiCalMonth.y++; }
+    } else {
+      uiCalMonth.m--;
+      if (uiCalMonth.m < 0) { uiCalMonth.m = 11; uiCalMonth.y--; }
+    }
+    track.style.transition = 'none';
+    track.style.transform = 'translateX(-33.333333%)';
+    renderHistory();
+    isCalAnimating = false;
+    if (onComplete) onComplete();
+  }, 290);
+}
+
 function wireCalendarSwipe() {
   const area = document.getElementById('calSwipeArea');
-  if (!area) return;
+  const track = document.getElementById('calTrack');
+  if (!area || !track) return;
   let startX = 0, startY = 0, currentX = 0, dragging = false, horizontal = false;
-  let isAnimating = false;
 
   area.addEventListener('touchstart', e => {
-    if (isAnimating) return;
+    if (isCalAnimating) return;
     startX = e.touches[0].clientX;
     startY = e.touches[0].clientY;
     currentX = startX;
     dragging = true;
     horizontal = false;
-    const grid = document.getElementById('calGrid');
-    if (grid) {
-      grid.style.transition = 'none';
-      grid.style.opacity = '1';
-    }
+    track.style.transition = 'none';
   }, { passive: true });
 
   area.addEventListener('touchmove', e => {
-    if (!dragging || isAnimating) return;
+    if (!dragging || isCalAnimating) return;
     currentX = e.touches[0].clientX;
     const dx = currentX - startX;
     const dy = e.touches[0].clientY - startY;
@@ -4494,61 +4704,24 @@ function wireCalendarSwipe() {
       horizontal = true;
     }
     if (horizontal) {
-      const grid = document.getElementById('calGrid');
-      if (grid) {
-        grid.style.transform = `translateX(${dx}px)`;
-        grid.style.opacity = '1';
-      }
+      track.style.transform = `translateX(calc(-33.333333% + ${dx}px))`;
     }
   }, { passive: true });
 
   area.addEventListener('touchend', e => {
-    if (!dragging || isAnimating) return;
+    if (!dragging || isCalAnimating) return;
     dragging = false;
-    const grid = document.getElementById('calGrid');
-    if (!grid) return;
-
     if (horizontal) {
       const dx = currentX - startX;
-      const threshold = 50;
+      const threshold = 45;
       if (Math.abs(dx) > threshold) {
-        isAnimating = true;
-        const goingNext = dx < 0;
-        const exitX = goingNext ? -100 : 100;
-        const enterX = goingNext ? 100 : -100;
-
-        grid.style.transition = 'transform 0.22s cubic-bezier(0.25, 1, 0.5, 1)';
-        grid.style.transform = `translateX(${exitX}%)`;
-
-        setTimeout(() => {
-          if (goingNext) {
-            uiCalMonth.m++;
-            if (uiCalMonth.m > 11) { uiCalMonth.m = 0; uiCalMonth.y++; }
-          } else {
-            uiCalMonth.m--;
-            if (uiCalMonth.m < 0) { uiCalMonth.m = 11; uiCalMonth.y--; }
-          }
-          grid.style.transition = 'none';
-          grid.style.transform = `translateX(${enterX}%)`;
-          renderHistory();
-          void grid.offsetWidth;
-          requestAnimationFrame(() => {
-            grid.style.transition = 'transform 0.24s cubic-bezier(0.25, 1, 0.5, 1)';
-            grid.style.transform = 'translateX(0)';
-            setTimeout(() => {
-              grid.style.transition = '';
-              grid.style.transform = '';
-              isAnimating = false;
-            }, 250);
-          });
-        }, 220);
+        animateCalendarMonthChange(dx < 0 ? 'next' : 'prev');
       } else {
-        grid.style.transition = 'transform 0.2s ease-out';
-        grid.style.transform = 'translateX(0)';
+        track.style.transition = 'transform 0.2s ease-out';
+        track.style.transform = 'translateX(-33.333333%)';
         setTimeout(() => {
-          grid.style.transition = '';
-          grid.style.transform = '';
-        }, 200);
+          track.style.transition = '';
+        }, 210);
       }
     }
     horizontal = false;
@@ -5344,6 +5517,18 @@ function wireEvents() {
     openFilterModal();
   });
 
+  function updateSelectBarUi() {
+    const count = uiSelectedIds.size;
+    const countEl = document.getElementById('selectCount');
+    if (countEl) countEl.textContent = `已選 ${count} 件`;
+    const btnAll = document.getElementById('btnSelectAll');
+    if (btnAll) {
+      const visible = getVisibleWardrobeItems();
+      const allSelected = visible.length > 0 && visible.every(i => uiSelectedIds.has(i.id));
+      btnAll.textContent = allSelected ? '取消全選' : '全選';
+    }
+  }
+
   function setSelectMode(on) {
     uiSelectMode = on;
     uiSelectedIds.clear();
@@ -5354,7 +5539,7 @@ function wireEvents() {
     }
     document.getElementById('selectBar').classList.toggle('is-hidden', !on);
     document.getElementById('btnAddItem').classList.toggle('is-hidden', on);
-    document.getElementById('selectCount').textContent = '已選 0 件';
+    updateSelectBarUi();
     renderWardrobe();
   }
   document.getElementById('btnSelectMode').addEventListener('click', () => setSelectMode(!uiSelectMode));
@@ -5364,7 +5549,7 @@ function wireEvents() {
     const allSelected = visible.length > 0 && visible.every(i => uiSelectedIds.has(i.id));
     if (allSelected) uiSelectedIds.clear();
     else visible.forEach(i => uiSelectedIds.add(i.id));
-    document.getElementById('selectCount').textContent = `已選 ${uiSelectedIds.size} 件`;
+    updateSelectBarUi();
     renderWardrobe();
   });
   document.getElementById('btnSelectWash')?.addEventListener('click', () => {
@@ -5614,12 +5799,10 @@ function wireEvents() {
     renderRank();
   });
   document.getElementById('calPrev').addEventListener('click', () => {
-    uiCalMonth.m--; if (uiCalMonth.m < 0) { uiCalMonth.m = 11; uiCalMonth.y--; }
-    renderHistory();
+    animateCalendarMonthChange('prev');
   });
   document.getElementById('calNext').addEventListener('click', () => {
-    uiCalMonth.m++; if (uiCalMonth.m > 11) { uiCalMonth.m = 0; uiCalMonth.y++; }
-    renderHistory();
+    animateCalendarMonthChange('next');
   });
 
   // brand search (public Simple Icons catalog; a missing icon never blocks saving)
@@ -5672,7 +5855,7 @@ function wireEvents() {
       }
       formDirty = true;
       const wrap = document.getElementById('photoPreviewWrap');
-      wrap.setAttribute('style', `background-color:#fff;background-image:url('${pendingPhoto}')`);
+      wrap.setAttribute('style', `background-color:transparent;background-image:url('${pendingPhoto}')`);
       wrap.classList.add('has-photo');
       wrap.innerHTML = '';
       document.getElementById('btnReadjustPhoto').classList.toggle('is-hidden', !editingItemId);
@@ -5689,7 +5872,7 @@ function wireEvents() {
     pendingPhotoBack = tmp;
     const wrap = document.getElementById('photoPreviewWrap');
     if (pendingPhoto) {
-      wrap.setAttribute('style', `background-color:#fff;background-image:url('${pendingPhoto}')`);
+      wrap.setAttribute('style', `background-color:transparent;background-image:url('${pendingPhoto}')`);
       wrap.classList.add('has-photo');
       wrap.innerHTML = '';
     } else {
@@ -7202,18 +7385,14 @@ function studioCutoutCanvas(dataUrl) {
           const r = data[i], g = data[i + 1], b = data[i + 2];
           const dist = Math.sqrt((r - bgR) ** 2 + (g - bgG) ** 2 + (b - bgB) ** 2);
           if (dist < tolerance) {
-            data[i] = 255;
-            data[i + 1] = 255;
-            data[i + 2] = 255;
+            data[i + 3] = 0;
           } else if (dist < tolerance + 18) {
             const ratio = (dist - tolerance) / 18;
-            data[i] = Math.round(data[i] * ratio + 255 * (1 - ratio));
-            data[i + 1] = Math.round(data[i + 1] * ratio + 255 * (1 - ratio));
-            data[i + 2] = Math.round(data[i + 2] * ratio + 255 * (1 - ratio));
+            data[i + 3] = Math.round(data[i + 3] * ratio);
           }
         }
         ctx.putImageData(imgData, 0, 0);
-        resolve(canvas.toDataURL('image/jpeg', 0.88));
+        resolve(canvas.toDataURL('image/png'));
       } catch (err) {
         reject(err);
       }
