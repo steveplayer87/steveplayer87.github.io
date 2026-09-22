@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Wardrobe Master">
-<link rel="stylesheet" href="styles.css?v=20260922a">
+<link rel="stylesheet" href="styles.css?v=20260922b">
 </head>
 <body>
 
@@ -592,15 +592,15 @@
         <button type="button" class="btn-secondary settings-wide-btn" id="btnOpenOutfitEditor"><span data-icon="edit"></span>編輯今日穿搭</button>
       </div>
 
-      <div class="settings-section weather-settings">
-        <p class="field-label-standalone">景觀窗天氣城市</p>
-        <div class="weather-search-row">
-          <input type="search" id="weatherCityInput" placeholder="輸入城市，例如：台北">
-          <button type="button" class="btn-secondary" id="btnWeatherSearch">搜尋</button>
+      <div class="settings-section">
+        <div class="settings-label-row">
+          <p class="field-label-standalone">天氣與景觀設定</p>
+          <span class="settings-helper" id="settingsWeatherSummary">桃園市中壢區 · 晴天 26°</span>
         </div>
-        <div class="weather-search-results" id="weatherSearchResults"></div>
-        <p class="settings-helper" id="weatherStatus">選擇城市後，景觀窗會顯示目前天氣。</p>
-        <button type="button" class="link-more-btn" id="btnWeatherRefresh">更新目前天氣</button>
+        <button type="button" class="btn-secondary settings-wide-btn" id="btnOpenWeatherSettings">
+          <span data-icon="cloud"></span>天氣設定
+        </button>
+        <p class="settings-helper" style="margin-top:6px;">自訂顯示地點、GPS 定位、切換不同日夜與氣候場景預覽。</p>
       </div>
 
       <div class="threshold-row">
@@ -639,24 +639,6 @@
         <p class="settings-helper">設定後即可在新增單品時使用 Gemini 智慧修圖、去背棚拍與衣物自動辨識。</p>
       </div>
 
-      <!-- Weather Scenario Simulator -->
-      <div class="settings-section">
-        <p class="field-label-standalone">天氣情境模擬與預覽</p>
-        <p class="settings-helper">點選快速切換各種天氣與日夜情境，即時預覽主頁天空與氛圍。</p>
-        <div class="weather-sim-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px;">
-          <button type="button" class="btn-secondary weather-sim-btn" data-sim="clear_day">☀️ 晴天・白天</button>
-          <button type="button" class="btn-secondary weather-sim-btn" data-sim="clear_night">🌙 晴天・夜晚</button>
-          <button type="button" class="btn-secondary weather-sim-btn" data-sim="cloudy_day">☁️ 陰天・白天</button>
-          <button type="button" class="btn-secondary weather-sim-btn" data-sim="cloudy_night">☁️ 陰天・夜晚</button>
-          <button type="button" class="btn-secondary weather-sim-btn" data-sim="rain_day">🌧️ 雨天・白天</button>
-          <button type="button" class="btn-secondary weather-sim-btn" data-sim="rain_night">🌧️ 雨天・夜晚</button>
-          <button type="button" class="btn-secondary weather-sim-btn" data-sim="heavy_day">⛈️ 大雨・白天</button>
-          <button type="button" class="btn-secondary weather-sim-btn" data-sim="heavy_night">⛈️ 大雨・夜晚</button>
-          <button type="button" class="btn-secondary weather-sim-btn" data-sim="sun_shower" style="grid-column:1 / -1;">🌦️ 晴時多雲偶陣雨</button>
-          <button type="button" class="btn-secondary weather-sim-btn" data-sim="real" style="grid-column:1 / -1;border-style:dashed;">🔄 跟隨真實天氣（恢復定位）</button>
-        </div>
-      </div>
-
       <button type="submit" class="btn-primary">儲存設定</button>
     </form>
     <div class="settings-footer">
@@ -674,6 +656,106 @@
         <div class="settings-history-actions">
           <button class="btn-secondary btn-with-icon" id="btnUndo" disabled><span data-icon="undo"></span><span><b>上一步</b><small id="undoActionDesc">無可還原操作</small></span></button>
           <button class="btn-secondary btn-with-icon" id="btnRedo" disabled><span data-icon="redo"></span><span><b>下一步</b><small id="redoActionDesc">無可重做操作</small></span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Weather Settings Modal -->
+  <div class="modal-sheet modal-sheet-tall" id="modal-weather-settings" data-modal>
+    <div class="modal-handle"></div>
+    <div class="modal-head">
+      <h2>天氣設定</h2>
+      <button class="modal-close" data-close>✕</button>
+    </div>
+
+    <div class="weather-modal-content">
+      <!-- Section 1: Weather Preview Carousel -->
+      <div class="weather-preview-section">
+        <div class="weather-carousel-wrap">
+          <button type="button" class="weather-nav-btn weather-nav-prev" id="btnWeatherPrev" aria-label="上一種天氣情境">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+
+          <div class="weather-preview-stage" id="weatherPreviewStage">
+            <div class="weather-preview-sky scene-sky" id="weatherPreviewSky">
+              <span class="scene-weather-art" aria-hidden="true">
+                <span class="scene-art-sun"></span>
+                <span class="scene-art-moon"></span>
+                <span class="scene-art-cloud"></span>
+                <span class="scene-art-rain"></span>
+              </span>
+              <span class="scene-orb" id="weatherPreviewOrb"></span>
+              <span class="scene-star s1"></span>
+              <span class="scene-star s2"></span>
+              <span class="scene-star s3"></span>
+            </div>
+
+            <div class="weather-preview-info">
+              <div class="weather-preview-location" id="weatherPreviewLocation">桃園市中壢區</div>
+              <div class="weather-preview-weather" id="weatherPreviewWeather">晴天 26°</div>
+              <div class="weather-preview-badge" id="weatherPreviewBadge">☀️ 晴天・白天</div>
+            </div>
+          </div>
+
+          <button type="button" class="weather-nav-btn weather-nav-next" id="btnWeatherNext" aria-label="下一種天氣情境">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+        </div>
+
+        <!-- Dot Indicators -->
+        <div class="weather-preview-dots" id="weatherPreviewDots"></div>
+
+        <!-- Apply / Reset Actions -->
+        <div class="weather-preview-actions">
+          <button type="button" class="btn-secondary" id="btnApplyPreviewScene">套用此情境至主頁</button>
+          <button type="button" class="btn-secondary is-hidden" id="btnResetRealWeather" style="border-style:dashed;">恢復真實天氣</button>
+        </div>
+      </div>
+
+      <hr class="weather-divider">
+
+      <!-- Section 2: Location Settings -->
+      <div class="weather-location-section">
+        <h3 class="weather-section-title">地點設定</h3>
+        
+        <button type="button" class="btn-secondary settings-wide-btn" id="btnUseCurrentLocation" style="display:flex;align-items:center;justify-content:center;gap:8px;font-weight:600;">
+          <span data-icon="mapPin"></span>使用現在位置（GPS 定位）
+        </button>
+
+        <div class="weather-search-row" style="margin-top:10px;">
+          <input type="search" id="weatherCityInput" placeholder="搜尋城市或鄉鎮，例如：中壢、台北…">
+          <button type="button" class="btn-secondary" id="btnWeatherSearch">搜尋</button>
+        </div>
+        <div class="weather-search-results" id="weatherSearchResults"></div>
+        <p class="settings-helper" id="weatherStatus" style="margin-top:8px;">選擇城市後，景觀窗會顯示目前天氣。</p>
+      </div>
+
+      <hr class="weather-divider">
+
+      <!-- Section 3: Fine-Tuning -->
+      <div class="weather-finetune-section">
+        <h3 class="weather-section-title">其他微調</h3>
+
+        <div class="settings-label-row">
+          <p class="field-label-standalone" style="margin:0;">氣溫體感微調</p>
+          <output id="weatherTempOffsetValue" style="font-weight:700;font-size:13px;">0°C</output>
+        </div>
+        <input type="range" id="weatherTempOffset" min="-4" max="4" step="1" value="0" style="width:100%;margin-top:6px;">
+        <p class="settings-helper">自訂氣溫偏移值（-4°C ~ +4°C），預報偏涼或偏熱時可自行校正。</p>
+
+        <div class="settings-label-row" style="margin-top:14px;">
+          <p class="field-label-standalone" style="margin:0;">溫度單位</p>
+          <div class="chip-row" style="gap:6px;margin:0;">
+            <button type="button" class="chip is-active" id="btnTempUnitC">°C 攝氏</button>
+            <button type="button" class="chip" id="btnTempUnitF">°F 華氏</button>
+          </div>
+        </div>
+
+        <div style="margin-top:18px;">
+          <button type="button" class="btn-secondary settings-wide-btn" id="btnWeatherRefresh">
+            🔄 立即重新整理氣象資料
+          </button>
         </div>
       </div>
     </div>
@@ -1066,7 +1148,7 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="seed-items.js?v=20260922a"></script>
-<script src="app.js?v=20260922a"></script>
+<script src="seed-items.js?v=20260922b"></script>
+<script src="app.js?v=20260922b"></script>
 </body>
 </html>

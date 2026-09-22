@@ -52,6 +52,8 @@ const ICONS = {
   copy: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`,
   trash: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>`,
   back: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>`,
+  cloud: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>`,
+  mapPin: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>`,
 };
 function applyStaticIcons() {
   document.querySelectorAll('[data-icon]').forEach(el => {
@@ -625,7 +627,7 @@ function normalizeLoadedState() {
   state.profile = state.profile || {};
   state.profile.cardImageScale = Math.min(100, Math.max(45, Number(state.profile.cardImageScale) || 72));
   state.profile.avatar = typeof state.profile.avatar === 'string' ? state.profile.avatar : '';
-  state.profile.weather = Object.assign({ city: '', latitude: null, longitude: null, timezone: 'auto', current: null, updatedAt: 0 }, state.profile.weather || {});
+  state.profile.weather = Object.assign({ city: '', area: '', latitude: null, longitude: null, timezone: 'auto', current: null, updatedAt: 0, tempOffset: 0, tempUnit: 'C' }, state.profile.weather || {});
   state.profile.outfitLayout = normalizeOutfitLayout(state.profile.outfitLayout);
   state.laundry = Object.assign({ lastWashDate: todayStr(), cycleDays: 2, snoozedUntil: null, history: [] }, state.laundry || {});
   state.laundry.history = Array.isArray(state.laundry.history) ? state.laundry.history : [];
@@ -1429,30 +1431,67 @@ function weatherText(code, isNight) {
   }
   return item;
 }
+function formatDisplayTemp(celsius) {
+  if (!Number.isFinite(Number(celsius))) return '';
+  const offset = Number(state.profile.weather?.tempOffset || 0);
+  const adjustedC = Number(celsius) + offset;
+  if (state.profile.weather?.tempUnit === 'F') {
+    const f = Math.round(adjustedC * 9 / 5 + 32);
+    return `${f}°F`;
+  }
+  return `${Math.round(adjustedC)}°`;
+}
 function weatherAreaLabel(weather) {
   const raw = weather?.area || String(weather?.city || '').split(' · ')[0] || '';
-  return raw || '尚未設定地區';
+  return raw || '桃園市中壢區';
 }
 function renderWeather() {
   const el = document.getElementById('sceneWeather');
-  if (!el) return;
+  const sumEl = document.getElementById('settingsWeatherSummary');
   const w = state.profile.weather || {};
   const area = weatherAreaLabel(w);
-  if (!w.city || !w.current) { el.textContent = w.city ? `${area}・天氣更新中` : '設定地區後顯示天氣'; return; }
+  if (!w.city || !w.current) {
+    const fallback = w.city ? `${area}・天氣更新中` : '設定地區後顯示天氣';
+    if (el) el.textContent = fallback;
+    if (sumEl) sumEl.textContent = fallback;
+    return;
+  }
   const isNight = w.current.is_day != null ? Number(w.current.is_day) === 0 : (new Date().getHours() >= 18 || new Date().getHours() < 6);
   const [label, symbol] = weatherText(w.current.weather_code, isNight);
-  const temp = Number.isFinite(Number(w.current.temperature_2m)) ? `${Math.round(Number(w.current.temperature_2m))}°` : '';
-  el.textContent = `${area}・${symbol} ${label}${temp ? ` ${temp}` : ''}`;
+  const temp = formatDisplayTemp(w.current.temperature_2m);
+  const text = `${area}・${symbol} ${label}${temp ? ` ${temp}` : ''}`;
+  if (el) el.textContent = text;
+  if (sumEl) sumEl.textContent = text;
+  updateWeatherPreview();
 }
 function syncWeatherSettings() {
   const input = document.getElementById('weatherCityInput');
   const status = document.getElementById('weatherStatus');
-  if (!input || !status) return;
+  const offsetInput = document.getElementById('weatherTempOffset');
+  const offsetValue = document.getElementById('weatherTempOffsetValue');
+  const btnUnitC = document.getElementById('btnTempUnitC');
+  const btnUnitF = document.getElementById('btnTempUnitF');
   const w = state.profile.weather || {};
-  input.value = w.city || '';
-  status.textContent = w.city && w.current ? `${w.city}・上次更新 ${new Date(w.updatedAt || Date.now()).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })}` : (w.city ? `${w.city}・等待天氣資料` : '選擇城市後，景觀窗會顯示目前天氣。');
+  if (input) input.value = w.city || '';
+  if (status) {
+    const area = weatherAreaLabel(w);
+    status.textContent = w.city && w.current
+      ? `目前地點：${area}・上次更新 ${new Date(w.updatedAt || Date.now()).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })}`
+      : (w.city ? `目前地點：${area}・等待天氣資料` : '選擇城市或使用 GPS 定位後，景觀窗會顯示目前天氣。');
+  }
+  if (offsetInput && offsetValue) {
+    const off = Number(w.tempOffset || 0);
+    offsetInput.value = String(off);
+    offsetValue.textContent = (off > 0 ? `+${off}` : `${off}`) + '°C';
+  }
+  if (btnUnitC && btnUnitF) {
+    const isF = w.tempUnit === 'F';
+    btnUnitC.classList.toggle('is-active', !isF);
+    btnUnitF.classList.toggle('is-active', isF);
+  }
+  updateWeatherPreview();
 }
-const CITY_SEARCH_ALIASES = { '台北': 'Taipei', '臺北': 'Taipei', '台中': 'Taichung', '臺中': 'Taichung', '台南': 'Tainan', '臺南': 'Tainan', '高雄': 'Kaohsiung', '新竹': 'Hsinchu', '基隆': 'Keelung', '桃園': 'Taoyuan', '香港': 'Hong Kong', '澳門': 'Macau' };
+const CITY_SEARCH_ALIASES = { '台北': 'Taipei', '臺北': 'Taipei', '中壢': 'Zhongli', '桃園': 'Taoyuan', '台中': 'Taichung', '臺中': 'Taichung', '台南': 'Tainan', '臺南': 'Tainan', '高雄': 'Kaohsiung', '新竹': 'Hsinchu', '基隆': 'Keelung', '香港': 'Hong Kong', '澳門': 'Macau' };
 async function searchWeatherCities() {
   const input = document.getElementById('weatherCityInput');
   const results = document.getElementById('weatherSearchResults');
@@ -1478,12 +1517,126 @@ async function searchWeatherCities() {
 }
 async function selectWeatherLocation(location) {
   if (!location) return;
-  const area = location.admin2 || location.admin1 || location.name;
-  state.profile.weather = { city: location.name, area, latitude: location.latitude, longitude: location.longitude, timezone: location.timezone || 'auto', current: null, updatedAt: 0 };
-  saveState();
+  const area = [location.admin1 || location.admin2, location.name].filter(Boolean).join('');
+  const city = location.name;
+  state.profile.weather = Object.assign(state.profile.weather || {}, {
+    city,
+    area: area || city,
+    latitude: location.latitude,
+    longitude: location.longitude,
+    timezone: location.timezone || 'auto',
+    current: null,
+    updatedAt: 0,
+  });
+  saveState({ action: `設定天氣城市為「${area || city}」` });
   syncWeatherSettings();
   renderHeader();
   await refreshWeather(true);
+  updateWeatherPreview();
+  toast(`已選擇「${area || city}」`);
+}
+
+let currentPreviewSceneIndex = 0;
+const WEATHER_PREVIEW_SCENES = [
+  { id: 'real', name: '即時真實天氣', badge: '🔄 即時真實天氣', isReal: true },
+  { id: 'clear_day', name: '晴天・白天', badge: '☀️ 晴天・白天', label: '晴天', symbol: '☀', code: 0, is_day: 1, temp: 26, isNight: false, isRain: false, isCloudy: false, isClear: true },
+  { id: 'clear_night', name: '晴天・夜晚', badge: '🌙 晴天・夜晚', label: '晴朗夜晚', symbol: '🌙', code: 0, is_day: 0, temp: 20, isNight: true, isRain: false, isCloudy: false, isClear: true },
+  { id: 'cloudy_day', name: '陰天・白天', badge: '☁️ 陰天・白天', label: '陰天', symbol: '☁', code: 3, is_day: 1, temp: 22, isNight: false, isRain: false, isCloudy: true, isClear: false },
+  { id: 'cloudy_night', name: '陰天・夜晚', badge: '☁️ 陰天・夜晚', label: '陰天夜晚', symbol: '☁', code: 3, is_day: 0, temp: 19, isNight: true, isRain: false, isCloudy: true, isClear: false },
+  { id: 'rain_day', name: '雨天・白天', badge: '🌧️ 雨天・白天', label: '小雨', symbol: '🌧', code: 61, is_day: 1, temp: 21, isNight: false, isRain: true, isCloudy: true, isClear: false },
+  { id: 'rain_night', name: '雨天・夜晚', badge: '🌧️ 雨天・夜晚', label: '雨夜', symbol: '🌧', code: 61, is_day: 0, temp: 18, isNight: true, isRain: true, isCloudy: true, isClear: false },
+  { id: 'heavy_day', name: '大雨・白天', badge: '⛈️ 大雨・白天', label: '大雨', symbol: '⛈', code: 65, is_day: 1, temp: 19, isNight: false, isRain: true, isCloudy: true, isClear: false },
+  { id: 'heavy_night', name: '大雨・夜晚', badge: '⛈️ 大雨・夜晚', label: '大雨夜晚', symbol: '⛈', code: 65, is_day: 0, temp: 17, isNight: true, isRain: true, isCloudy: true, isClear: false },
+  { id: 'sun_shower', name: '晴時多雲偶陣雨', badge: '🌦️ 晴時多雲偶陣雨', label: '晴時多雲偶陣雨', symbol: '🌦', code: 80, is_day: 1, temp: 24, isNight: false, isRain: true, isCloudy: true, isClear: false },
+];
+
+function updateWeatherPreview() {
+  const scene = WEATHER_PREVIEW_SCENES[currentPreviewSceneIndex];
+  if (!scene) return;
+  const sky = document.getElementById('weatherPreviewSky');
+  const locEl = document.getElementById('weatherPreviewLocation');
+  const weatherEl = document.getElementById('weatherPreviewWeather');
+  const badgeEl = document.getElementById('weatherPreviewBadge');
+  const btnApply = document.getElementById('btnApplyPreviewScene');
+  const btnReset = document.getElementById('btnResetRealWeather');
+
+  const w = state.profile.weather || {};
+  const area = weatherAreaLabel(w);
+  if (locEl) locEl.textContent = area;
+
+  let isNight = false;
+  let isRain = false;
+  let isCloudy = false;
+  let isClear = true;
+  let weatherTextStr = '';
+  let tempStr = '';
+
+  if (scene.isReal) {
+    const cur = w.current;
+    if (cur) {
+      isNight = cur.is_day != null ? Number(cur.is_day) === 0 : (new Date().getHours() >= 18 || new Date().getHours() < 6);
+      const code = Number(cur.weather_code);
+      const rainCodes = [51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82, 95, 96, 99];
+      const cloudyCodes = [2, 3, 45, 48];
+      isRain = rainCodes.includes(code);
+      isCloudy = cloudyCodes.includes(code);
+      isClear = !isRain && !isCloudy;
+      const [label, symbol] = weatherText(code, isNight);
+      weatherTextStr = `${label}`;
+      tempStr = formatDisplayTemp(cur.temperature_2m);
+    } else {
+      weatherTextStr = '正在載入氣象…';
+      tempStr = '';
+    }
+  } else {
+    isNight = !!scene.isNight;
+    isRain = !!scene.isRain;
+    isCloudy = !!scene.isCloudy;
+    isClear = !!scene.isClear;
+    weatherTextStr = scene.label;
+    tempStr = formatDisplayTemp(scene.temp);
+  }
+
+  if (weatherEl) {
+    weatherEl.textContent = `${weatherTextStr} ${tempStr}`.trim();
+  }
+  if (badgeEl) {
+    badgeEl.textContent = scene.badge;
+  }
+
+  if (sky) {
+    sky.classList.toggle('is-night', isNight);
+    sky.classList.toggle('is-rain', isRain);
+    sky.classList.toggle('is-cloudy', isCloudy);
+    sky.classList.toggle('is-clear', isClear);
+  }
+
+  const dotsContainer = document.getElementById('weatherPreviewDots');
+  if (dotsContainer) {
+    dotsContainer.innerHTML = WEATHER_PREVIEW_SCENES.map((s, i) =>
+      `<span class="weather-dot ${i === currentPreviewSceneIndex ? 'is-active' : ''}" data-index="${i}" title="${escapeHtml(s.name)}"></span>`
+    ).join('');
+    dotsContainer.querySelectorAll('.weather-dot').forEach(dot => {
+      dot.addEventListener('click', () => {
+        currentPreviewSceneIndex = Number(dot.dataset.index);
+        updateWeatherPreview();
+      });
+    });
+  }
+
+  const isCurrentActive = scene.isReal ? !state.weatherSimulation : state.weatherSimulation === scene.id;
+  if (btnApply) {
+    if (isCurrentActive) {
+      btnApply.textContent = '✓ 目前首頁已套用此場景';
+      btnApply.classList.add('is-active-btn');
+    } else {
+      btnApply.textContent = scene.isReal ? '套用即時真實天氣至首頁' : `套用「${scene.name}」至主頁`;
+      btnApply.classList.remove('is-active-btn');
+    }
+  }
+  if (btnReset) {
+    btnReset.classList.toggle('is-hidden', !state.weatherSimulation);
+  }
 }
 async function refreshWeather(force = false) {
   if (state.weatherSimulation && !force) {
@@ -4990,19 +5143,25 @@ function wireEvents() {
     e.target.value = '';
   });
   document.getElementById('btnClearAvatar').addEventListener('click', () => { state.profile.avatar = ''; saveState(); renderAvatar(); toast('已移除自訂頭像'); });
-  document.getElementById('btnWeatherSearch').addEventListener('click', searchWeatherCities);
-  document.getElementById('weatherCityInput').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); searchWeatherCities(); } });
-  document.getElementById('weatherSearchResults').addEventListener('click', e => { const btn = e.target.closest('.weather-result'); if (!btn) return; const loc = e.currentTarget._locations?.[Number(btn.dataset.weatherIndex)]; selectWeatherLocation(loc); });
-  document.getElementById('btnWeatherRefresh').addEventListener('click', () => {
-    state.weatherSimulation = null;
-    document.querySelectorAll('.weather-sim-btn').forEach(b => b.classList.remove('is-active'));
-    refreshWeather(true);
+  // Weather settings modal entrance
+  document.getElementById('btnOpenWeatherSettings')?.addEventListener('click', () => {
+    syncWeatherSettings();
+    openModal('modal-weather-settings');
+  });
+
+  // Weather Carousel Nav
+  document.getElementById('btnWeatherPrev')?.addEventListener('click', () => {
+    currentPreviewSceneIndex = (currentPreviewSceneIndex - 1 + WEATHER_PREVIEW_SCENES.length) % WEATHER_PREVIEW_SCENES.length;
+    updateWeatherPreview();
+  });
+  document.getElementById('btnWeatherNext')?.addEventListener('click', () => {
+    currentPreviewSceneIndex = (currentPreviewSceneIndex + 1) % WEATHER_PREVIEW_SCENES.length;
+    updateWeatherPreview();
   });
 
   function applyWeatherSimulation(simKey) {
     if (simKey === 'real') {
       state.weatherSimulation = null;
-      document.querySelectorAll('.weather-sim-btn').forEach(b => b.classList.remove('is-active'));
       refreshWeather(true);
       toast('已恢復真實天氣');
       renderHeader();
@@ -5024,8 +5183,10 @@ function wireEvents() {
     if (!cfg) return;
     state.weatherSimulation = simKey;
     if (!state.profile.weather) state.profile.weather = {};
-    state.profile.weather.city = cfg.city;
-    state.profile.weather.area = cfg.city;
+    const curCity = state.profile.weather.city || '桃園市中壢區';
+    const curArea = state.profile.weather.area || '桃園市中壢區';
+    state.profile.weather.city = curCity;
+    state.profile.weather.area = curArea;
     state.profile.weather.current = { weather_code: cfg.weather_code, is_day: cfg.is_day, temperature_2m: cfg.temperature_2m };
     state.profile.weather.updatedAt = Date.now();
     saveState({ action: `切換天氣情境至「${cfg.label}」` });
@@ -5034,14 +5195,134 @@ function wireEvents() {
     syncWeatherSettings();
     toast(`已套用天氣情境：${cfg.symbol} ${cfg.label}`);
   }
-  document.querySelectorAll('.weather-sim-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      applyWeatherSimulation(btn.dataset.sim);
-      document.querySelectorAll('.weather-sim-btn').forEach(b => b.classList.remove('is-active'));
-      if (btn.dataset.sim !== 'real') {
-        btn.classList.add('is-active');
-      }
-    });
+
+  document.getElementById('btnApplyPreviewScene')?.addEventListener('click', () => {
+    const scene = WEATHER_PREVIEW_SCENES[currentPreviewSceneIndex];
+    if (!scene) return;
+    applyWeatherSimulation(scene.id);
+    updateWeatherPreview();
+  });
+
+  document.getElementById('btnResetRealWeather')?.addEventListener('click', () => {
+    state.weatherSimulation = null;
+    refreshWeather(true);
+    toast('已恢復跟隨真實天氣');
+    currentPreviewSceneIndex = 0;
+    updateWeatherPreview();
+  });
+
+  // Use Current Location (GPS)
+  document.getElementById('btnUseCurrentLocation')?.addEventListener('click', () => {
+    const btn = document.getElementById('btnUseCurrentLocation');
+    const statusEl = document.getElementById('weatherStatus');
+    if (!navigator.geolocation) {
+      toast('此裝置或瀏覽器不支援 GPS 定位');
+      return;
+    }
+    btn.disabled = true;
+    const oldText = btn.innerHTML;
+    btn.innerHTML = '<span>📍 正在取得 GPS 定位…</span>';
+    if (statusEl) statusEl.textContent = '正在連線 GPS 衛星…';
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+        if (statusEl) statusEl.textContent = '已取得經緯度，正在解析行政區…';
+        let cityName = '目前位置';
+        let areaLabel = '';
+
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=zh-TW`, {
+            headers: { 'User-Agent': 'WardrobeMasterApp/1.0' }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            const addr = data.address || {};
+            const city = addr.city || addr.county || addr.state || '';
+            const town = addr.town || addr.suburb || addr.district || '';
+            if (city || town) {
+              areaLabel = `${city}${town}`;
+              cityName = town || city || '目前位置';
+            }
+          }
+        } catch (e) {
+          console.warn('Reverse geocoding error:', e);
+        }
+
+        if (!areaLabel) areaLabel = cityName;
+
+        state.profile.weather = Object.assign(state.profile.weather || {}, {
+          city: cityName,
+          area: areaLabel,
+          latitude: lat,
+          longitude: lon,
+          timezone: 'auto',
+          current: null,
+          updatedAt: 0,
+        });
+        saveState({ action: `設定天氣地點為「${areaLabel}」` });
+        btn.innerHTML = oldText;
+        btn.disabled = false;
+        toast(`已定位至「${areaLabel}」`);
+        await refreshWeather(true);
+        updateWeatherPreview();
+      },
+      (err) => {
+        btn.innerHTML = oldText;
+        btn.disabled = false;
+        let msg = '無法取得定位權限';
+        if (err.code === 1) msg = '請允許位置權限以取得目前天氣';
+        else if (err.code === 2) msg = '位置訊號不可用';
+        else if (err.code === 3) msg = '定位逾時';
+        toast(msg);
+        if (statusEl) statusEl.textContent = msg + '，可手動搜尋城市。';
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+    );
+  });
+
+  document.getElementById('btnWeatherSearch')?.addEventListener('click', searchWeatherCities);
+  document.getElementById('weatherCityInput')?.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); searchWeatherCities(); } });
+  document.getElementById('weatherSearchResults')?.addEventListener('click', e => {
+    const btn = e.target.closest('.weather-result');
+    if (!btn) return;
+    const loc = e.currentTarget._locations?.[Number(btn.dataset.weatherIndex)];
+    selectWeatherLocation(loc);
+  });
+  document.getElementById('btnWeatherRefresh')?.addEventListener('click', () => {
+    state.weatherSimulation = null;
+    refreshWeather(true);
+    toast('已同步最新氣象資料');
+    updateWeatherPreview();
+  });
+
+  // Weather fine-tunings
+  document.getElementById('weatherTempOffset')?.addEventListener('input', e => {
+    const val = Number(e.target.value);
+    const out = document.getElementById('weatherTempOffsetValue');
+    if (out) out.textContent = (val > 0 ? `+${val}` : `${val}`) + '°C';
+    if (!state.profile.weather) state.profile.weather = {};
+    state.profile.weather.tempOffset = val;
+    renderWeather();
+    updateWeatherPreview();
+  });
+  document.getElementById('weatherTempOffset')?.addEventListener('change', () => {
+    saveState();
+  });
+  document.getElementById('btnTempUnitC')?.addEventListener('click', () => {
+    if (!state.profile.weather) state.profile.weather = {};
+    state.profile.weather.tempUnit = 'C';
+    saveState();
+    syncWeatherSettings();
+    renderWeather();
+  });
+  document.getElementById('btnTempUnitF')?.addEventListener('click', () => {
+    if (!state.profile.weather) state.profile.weather = {};
+    state.profile.weather.tempUnit = 'F';
+    saveState();
+    syncWeatherSettings();
+    renderWeather();
   });
 
   document.getElementById('btnUndo').addEventListener('click', undoState);
