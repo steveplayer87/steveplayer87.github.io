@@ -1722,12 +1722,21 @@ function renderHome() {
   renderChipList('basketList', 'basketEmpty', basket, { pendingConsumables });
   const daysSinceWash = Math.max(0, daysBetween(state.laundry.lastWashDate, todayStr()));
   const totalBasketCount = basket.length + pendingConsumables.length;
-  document.getElementById('basketTitle').textContent = `洗衣籃・${totalBasketCount ? `${totalBasketCount}件` : `${daysSinceWash}天`}`;
+  document.getElementById('basketTitle').textContent = `洗衣籃・${daysSinceWash}天`;
+  const basketBadge = document.getElementById('basketBadge');
+  if (basketBadge) {
+    basketBadge.textContent = totalBasketCount > 0 ? String(totalBasketCount) : '';
+    basketBadge.style.display = totalBasketCount > 0 ? 'inline-flex' : 'none';
+  }
   const activeTowelCount = (state.activeTowel && state.consumables.some(c => c.id === state.activeTowel)) ? 1 : 0;
   const rackCount = rack.length + activeTowelCount;
-  const tempRackTitle = document.querySelector('#card-rack .rack-title');
-  if (tempRackTitle) tempRackTitle.textContent = `暫存衣架・${rackCount}件`;
-  document.getElementById('basketCardStatus')?.replaceChildren(document.createTextNode(basket.length || pendingConsumables.length ? '等待清洗中' : ''));
+  const rackTitle = document.getElementById('rackTitle') || document.querySelector('#card-rack .rack-title');
+  if (rackTitle) rackTitle.textContent = '暫存衣架';
+  const rackBadge = document.getElementById('rackBadge');
+  if (rackBadge) {
+    rackBadge.textContent = rackCount > 0 ? String(rackCount) : '';
+    rackBadge.style.display = rackCount > 0 ? 'inline-flex' : 'none';
+  }
 }
 function renderChipList(listId, emptyId, items, opts) {
   const list = document.getElementById(listId);
@@ -1988,6 +1997,8 @@ function buildItemCard(item, opts) {
 
 /* ---- History tab ---- */
 let uiCalMonth = (() => { const d = new Date(); return { y: d.getFullYear(), m: d.getMonth() }; })();
+let uiRankPeriod = 'all'; // 'all' | 'month' | '30d'
+let uiRankCategory = 'all'; // 'all' | 'top' | 'bottom' | 'outer' | 'shoes' | 'hat' | 'accessory'
 
 function allOotdEntries() {
   const today = todayStr();
@@ -2099,31 +2110,71 @@ function renderRank() {
   const list = document.getElementById('rankList');
   const statsWrap = document.getElementById('rankStats');
   const entries = allOotdEntries();
+  const today = todayStr();
   const monthPrefix = `${uiCalMonth.y}-${String(uiCalMonth.m + 1).padStart(2, '0')}`;
-  const monthEntries = entries.filter(e => e.date?.startsWith(monthPrefix));
-  const activeItems = state.items.filter(i => i.status !== 'retired');
-  const wornItems = new Set(monthEntries.flatMap(e => ALL_SLOTS.map(s => e[s]).filter(Boolean)));
-  const totalWear = state.items.reduce((sum, i) => sum + (i.totalWearCount || 0), 0);
-  const rankedAll = state.items.slice().sort((a, b) => (b.totalWearCount || 0) - (a.totalWearCount || 0));
-  const topWear = rankedAll[0]?.totalWearCount || 0;
-  const laundryCount = state.items.filter(i => i.status === 'dirty').length;
-  const monthWear = monthEntries.reduce((sum, e) => sum + ALL_SLOTS.filter(s => e[s]).length, 0);
+
+  // Filter entries by period
+  let periodEntries = entries;
+  if (uiRankPeriod === 'month') {
+    periodEntries = entries.filter(e => e.date?.startsWith(monthPrefix));
+  } else if (uiRankPeriod === '30d') {
+    periodEntries = entries.filter(e => e.date && daysBetween(e.date, today) <= 30);
+  }
+
+  // Count wear per item in this period
+  const periodWearCounts = {};
+  periodEntries.forEach(e => {
+    ALL_SLOTS.forEach(slot => {
+      const itemId = e[slot];
+      if (itemId) periodWearCounts[itemId] = (periodWearCounts[itemId] || 0) + 1;
+    });
+  });
+
+  // Filter items by category
+  let itemsToRank = state.items.filter(i => i.status !== 'retired');
+  if (uiRankCategory !== 'all') {
+    itemsToRank = itemsToRank.filter(i => i.category === uiRankCategory);
+  }
+
+  // Attach wear count and filter > 0
+  const ranked = itemsToRank.map(item => ({
+    item,
+    count: uiRankPeriod === 'all' ? (item.totalWearCount || 0) : (periodWearCounts[item.id] || 0)
+  }))
+  .filter(x => x.count > 0)
+  .sort((a, b) => b.count - a.count);
+
+  // Sync active states for pills & tabs
+  document.querySelectorAll('#rankPeriodPills .rank-period-btn').forEach(btn => {
+    btn.classList.toggle('is-active', btn.dataset.period === uiRankPeriod);
+  });
+  document.querySelectorAll('#rankCategoryTabs .cat-tab').forEach(btn => {
+    btn.classList.toggle('is-active', btn.dataset.cat === uiRankCategory);
+  });
+
+  // Stats calculation
+  const totalWearInPeriod = Object.values(periodWearCounts).reduce((a, b) => a + b, 0);
+  const activeItemsCount = itemsToRank.length;
+  const wornItemsInPeriod = ranked.length;
+  const daysLogged = new Set(periodEntries.map(e => e.date)).size;
+
+  const periodName = uiRankPeriod === 'month' ? '本月' : (uiRankPeriod === '30d' ? '近 30 天' : '歷史累積');
+  const catName = uiRankCategory === 'all' ? '全單品' : categoryLabel(uiRankCategory);
+
   const stats = [
-    { label: '最常穿比例', value: `${totalWear ? Math.round(topWear / totalWear * 100) : 0}%` },
-    { label: '本月穿搭天數', value: `${new Set(monthEntries.map(e => e.date)).size} 天` },
-    { label: '本月選用單品', value: `${wornItems.size} 件` },
-    { label: '本月穿著次數', value: `${monthWear} 次` },
-    { label: '衣櫥使用率', value: `${activeItems.length ? Math.round(wornItems.size / activeItems.length * 100) : 0}%` },
-    { label: '目前待洗單品', value: `${laundryCount} 件` },
+    { label: `${periodName}穿著次數`, value: `${uiRankPeriod === 'all' ? state.items.reduce((s, i) => s + (i.totalWearCount || 0), 0) : totalWearInPeriod} 次` },
+    { label: `${periodName}穿搭天數`, value: `${daysLogged} 天` },
+    { label: `${catName}上榜款數`, value: `${wornItemsInPeriod} 件` },
+    { label: `${catName}穿搭率`, value: `${activeItemsCount ? Math.round(wornItemsInPeriod / activeItemsCount * 100) : 0}%` },
   ];
   if (statsWrap) statsWrap.innerHTML = stats.map(s => `<div class="rank-stat-card"><p>${s.label}</p><b>${s.value}</b></div>`).join('');
-  const ranked = state.items.filter(i => (i.totalWearCount||0) > 0)
-    .slice().sort((a,b) => (b.totalWearCount||0) - (a.totalWearCount||0)).slice(0, 21);
+
   list.innerHTML = '';
   if (!ranked.length) {
-    list.innerHTML = `<p class="empty-hint">還沒有穿搭紀錄，去主頁試穿看看吧</p>`;
+    list.innerHTML = `<p class="empty-hint" style="grid-column: 1 / -1; text-align: center; padding: 24px 0;">在「${periodName}」期間，${catName}還沒有穿搭紀錄</p>`;
+    return;
   }
-  ranked.forEach((item, idx) => {
+  ranked.slice(0, 30).forEach(({ item, count }, idx) => {
     const card = document.createElement('button');
     card.type = 'button';
     card.className = 'item-card';
@@ -2132,7 +2183,7 @@ function renderRank() {
       <span class="rank-badge">#${idx + 1}</span>
       <div class="item-info">
         <p class="item-name">${escapeHtml(item.name)}</p>
-        <p class="item-wear">穿過 ${item.totalWearCount} 次</p>
+        <p class="item-wear">穿過 ${count} 次</p>
       </div>`;
     card.addEventListener('click', () => openItemDetail(item.id));
     list.appendChild(card);
@@ -2177,7 +2228,7 @@ function openDayDetail(dateStr, entry) {
       } },
     ]);
   });
-  openModal('modal-day-detail');
+  openModal('modal-day');
 }
 
 
@@ -4746,6 +4797,18 @@ function wireEvents() {
     document.getElementById('panel-calendar').hidden = seg !== 'calendar';
     document.getElementById('panel-rank').hidden = seg !== 'rank';
   });
+  document.getElementById('rankPeriodPills')?.addEventListener('click', e => {
+    const btn = e.target.closest('.rank-period-btn');
+    if (!btn) return;
+    uiRankPeriod = btn.dataset.period;
+    renderRank();
+  });
+  document.getElementById('rankCategoryTabs')?.addEventListener('click', e => {
+    const btn = e.target.closest('.cat-tab');
+    if (!btn) return;
+    uiRankCategory = btn.dataset.cat;
+    renderRank();
+  });
   document.getElementById('calPrev').addEventListener('click', () => {
     uiCalMonth.m--; if (uiCalMonth.m < 0) { uiCalMonth.m = 11; uiCalMonth.y--; }
     renderHistory();
@@ -6518,7 +6581,9 @@ async function init() {
       window.location.reload();
     });
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js').catch(() => {});
+      navigator.serviceWorker.register('sw.js').then(reg => {
+        reg.update().catch(() => {});
+      }).catch(() => {});
     });
   }
 }

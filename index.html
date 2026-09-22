@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Wardrobe Master">
-<link rel="stylesheet" href="styles.css?v=20260922d">
+<link rel="stylesheet" href="styles.css?v=20260922e">
 </head>
 <body>
 
@@ -84,7 +84,7 @@
           <div class="rack-card-head">
             <span class="rack-icon" data-icon="basket"></span>
             <p class="rack-title" id="basketTitle">洗衣籃</p>
-            <span class="rack-card-status" id="basketCardStatus"></span>
+            <span class="rack-badge-bubble" id="basketBadge"></span>
           </div>
           <div class="rack-items" id="basketList"></div>
           <p class="rack-empty" id="basketEmpty">洗衣籃是空的</p>
@@ -92,7 +92,8 @@
         <div class="rack-card" id="card-rack" role="button" tabindex="0">
           <div class="rack-card-head">
             <span class="rack-icon" data-icon="rack"></span>
-            <p class="rack-title">暫存衣架</p>
+            <p class="rack-title" id="rackTitle">暫存衣架</p>
+            <span class="rack-badge-bubble" id="rackBadge"></span>
           </div>
           <div class="rack-items" id="tempRackList"></div>
           <p class="rack-empty" id="tempRackEmpty">還沒有衣物在暫存</p>
@@ -126,6 +127,22 @@
       </div>
 
       <div class="seg-panel" id="panel-rank" hidden>
+        <div class="rank-controls">
+          <div class="rank-period-pills" id="rankPeriodPills">
+            <button type="button" class="rank-period-btn is-active" data-period="all">全部歷史</button>
+            <button type="button" class="rank-period-btn" data-period="month">本月</button>
+            <button type="button" class="rank-period-btn" data-period="30d">近 30 天</button>
+          </div>
+          <div class="category-tabs rank-cat-tabs" id="rankCategoryTabs">
+            <button type="button" class="cat-tab is-active" data-cat="all">全部</button>
+            <button type="button" class="cat-tab" data-cat="top">上衣</button>
+            <button type="button" class="cat-tab" data-cat="bottom">褲子</button>
+            <button type="button" class="cat-tab" data-cat="outer">外套</button>
+            <button type="button" class="cat-tab" data-cat="shoes">鞋子</button>
+            <button type="button" class="cat-tab" data-cat="hat">帽子</button>
+            <button type="button" class="cat-tab" data-cat="accessory">配件</button>
+          </div>
+        </div>
         <div class="item-grid" id="rankList"></div>
         <p class="stats-heading">穿搭統計</p>
         <div class="rank-stats" id="rankStats"></div>
@@ -1148,7 +1165,7 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="seed-items.js?v=20260922c"></script>
-<script src="app.js?v=20260922c"></script>
+<script src="seed-items.js?v=20260922e"></script>
+<script src="app.js?v=20260922e"></script>
 </body>
 </html>

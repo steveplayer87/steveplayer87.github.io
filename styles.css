@@ -760,9 +760,11 @@ body.home-page.night-page {
 #app.is-home-view #mainScroll {
   background: transparent;
   position: relative;
-  padding: 0 16px calc(72px + var(--safe-bottom));
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  padding: 0 16px;
+  overflow-y: hidden !important;
+  overflow-x: hidden !important;
+  display: flex;
+  flex-direction: column;
 }
 #app.is-home-view #mainScroll::before {
   content: "";
@@ -819,6 +821,10 @@ body.home-page.night-page {
   z-index: 1;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
+  flex: 1;
+  min-height: 0;
+  padding-bottom: calc(52px + var(--safe-bottom) + 8px);
 }
 #app.is-home-view .app-header {
   background: transparent !important;
@@ -1115,16 +1121,16 @@ body.home-page.night-page {
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
 }
 #app.is-home-view .rack-row {
-  margin-top: 10px;
-  margin-bottom: 12px;
-  padding: 0;
-  display: flex;
-  gap: 10px;
-  align-items: stretch;
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  z-index: 2;
+  margin: 4px 0 0 !important;
+  padding: 0 !important;
+  display: flex !important;
+  gap: 10px !important;
+  align-items: stretch !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  z-index: 10 !important;
+  flex-shrink: 0 !important;
 }
 #app.is-home-view .rack-card {
   flex: 1 1 0;
@@ -1136,12 +1142,12 @@ body.home-page.night-page {
   min-height: 48px;
   height: auto;
   padding: 10px 12px;
-  border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.72);
-  background: rgba(255, 255, 255, 0.88);
+  border-radius: 18px 18px 14px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.76);
+  background: rgba(255, 255, 255, 0.90);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  box-shadow: 0 4px 16px rgba(47, 72, 116, 0.08);
+  box-shadow: 0 4px 16px rgba(47, 72, 116, 0.10);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -1149,12 +1155,12 @@ body.home-page.night-page {
   transition: transform 160ms ease, box-shadow 160ms ease;
 }
 #app.is-home-view .rack-card:active {
-  transform: scale(0.975);
+  transform: scale(0.965);
 }
 #app.is-home-view.is-night-view .rack-card {
-  background: rgba(30, 36, 70, 0.88);
+  background: rgba(30, 36, 70, 0.90);
   border-color: rgba(255, 255, 255, 0.16);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
   color: #fff;
 }
 #app.is-home-view .rack-card-head {
@@ -1168,48 +1174,40 @@ body.home-page.night-page {
 }
 #app.is-home-view .rack-title {
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 850;
   white-space: nowrap;
 }
 #app.is-home-view.is-night-view .rack-title {
   color: #fff;
 }
-#app.is-home-view .rack-card-status {
-  display: inline;
-  margin-left: auto;
-  color: var(--color-coral);
-  font-size: 10.5px;
-  font-weight: 800;
-  white-space: nowrap;
-}
-#app.is-home-view .rack-items {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-top: 6px;
-}
-#app.is-home-view .rack-items:empty {
-  display: none;
-  margin-top: 0;
-}
+#app.is-home-view .rack-items,
 #app.is-home-view .rack-empty {
-  display: block;
-  font-size: 11px;
-  color: var(--color-ink-faint);
-  padding: 3px 0 1px;
-}
-#app.is-home-view .rack-empty[hidden] {
   display: none !important;
 }
-#app.is-home-view.is-night-view .rack-empty {
-  color: rgba(255, 255, 255, 0.55);
+
+/* Red floating badge bubble for rack cards */
+.rack-badge-bubble {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #FF4B4B 0%, #D81B1B 100%);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 850;
+  line-height: 1;
+  box-shadow: 0 2px 8px rgba(216, 27, 27, 0.45);
+  margin-left: auto;
+  border: 1.5px solid rgba(255, 255, 255, 0.9);
+  flex-shrink: 0;
 }
-.extras-clear-btn { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; margin: 0 0 10px; }
-.extras-clear-btn svg { width: 16px; height: 16px; }
 
 /* Home view frosted tab bar */
 #app.is-home-view .tab-bar {
-  background: rgba(255, 255, 255, 0.82);
+  background: rgba(255, 255, 255, 0.84);
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   border-top: 1px solid rgba(255, 255, 255, 0.70);
@@ -1227,12 +1225,101 @@ body.home-page.night-page {
   color: #fff;
 }
 
+#app.is-home-view .scene-sky { height: 68px !important; }
+#app.is-home-view .figure-board { width: min(108px, 30%) !important; gap: 1px !important; }
+#app.is-home-view .figure-core { gap: 0 !important; }
+#app.is-home-view .figure-thumb { padding: 6% !important; }
 
-/* =========================== Round 6: compact first viewport and weather states =========================== */
-#app.is-home-view .scene-sky { height: 122px; }
-#app.is-home-view .figure-board { width: min(104px, 31%); gap: 1px; }
-#app.is-home-view .figure-core { gap: 0; }
-#app.is-home-view .figure-thumb { padding: 8%; }
+/* Zoom modal expansion animation from bottom cards */
+#modal-laundry.modal-sheet {
+  transform: scale(0.38) translate(-60px, 80px);
+  transform-origin: bottom left;
+  opacity: 0;
+  transition: transform 0.34s cubic-bezier(0.18, 0.9, 0.28, 1), opacity 0.25s ease;
+}
+#modal-laundry.modal-sheet.is-shown {
+  transform: scale(1) translate(0, 0);
+  opacity: 1;
+}
+
+#modal-rack-overview.modal-sheet {
+  transform: scale(0.38) translate(60px, 80px);
+  transform-origin: bottom right;
+  opacity: 0;
+  transition: transform 0.34s cubic-bezier(0.18, 0.9, 0.28, 1), opacity 0.25s ease;
+}
+#modal-rack-overview.modal-sheet.is-shown {
+  transform: scale(1) translate(0, 0);
+  opacity: 1;
+}
+
+/* History Calendar blending for transparent background photos */
+.cal-thumb, .day-detail-row .ddr-thumb, .item-photo img {
+  mix-blend-mode: multiply;
+  background-color: transparent !important;
+}
+.cal-cell.has-ootd {
+  background: #E8F0FB !important;
+}
+
+/* Rank Category and Period Controls */
+.rank-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 6px 0 16px;
+}
+.rank-period-pills {
+  display: flex;
+  gap: 6px;
+}
+.rank-period-btn {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 11.5px;
+  font-weight: 750;
+  border: 1px solid var(--color-line);
+  background: var(--color-surface);
+  color: var(--color-ink-soft);
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+.rank-period-btn.is-active {
+  background: var(--color-denim-deep);
+  color: #fff;
+  border-color: var(--color-denim-deep);
+  box-shadow: 0 3px 10px rgba(44,66,112,0.22);
+}
+.rank-cat-tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 2px 0 4px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.rank-cat-tabs::-webkit-scrollbar {
+  display: none;
+}
+.rank-cat-tabs .cat-tab {
+  padding: 5px 13px;
+  border-radius: 14px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  border: 1px solid var(--color-line);
+  background: var(--color-surface);
+  color: var(--color-ink-faint);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.rank-cat-tabs .cat-tab.is-active {
+  background: var(--color-apricot);
+  color: #fff;
+  border-color: var(--color-apricot);
+  font-weight: 850;
+  box-shadow: 0 2px 8px rgba(240,148,107,0.3);
+}
 #app.is-home-view .figure-slot.has-photo .figure-thumb { background-size: contain; background-repeat: no-repeat; }
 
 /* Rain and snow use a cloud layer and precipitation layer; no sunny orb is shown. */
