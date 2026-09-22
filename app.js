@@ -94,6 +94,27 @@ const COLOR_FAMILIES = [
   { id: 'beige', name: '米/杏色', hex: '#F5EBE0' },
 ];
 
+const TEN_COLORS = [
+  { name: '紅', hex: '#DC2626' },
+  { name: '橘', hex: '#EA580C' },
+  { name: '黃', hex: '#EAB308' },
+  { name: '綠', hex: '#16A34A' },
+  { name: '藍', hex: '#2563EB' },
+  { name: '紫', hex: '#9333EA' },
+  { name: '黑', hex: '#18181B' },
+  { name: '白', hex: '#FFFFFF' },
+  { name: '粉紅', hex: '#EC4899' },
+  { name: '灰牛仔', hex: '#5C6B73' }
+];
+
+function getColorHexByName(name) {
+  if (!name) return '';
+  const match = TEN_COLORS.find(c => c.name === name || c.name === name.replace(/色$/, ''));
+  if (match) return match.hex;
+  const legacy = COMMON_COLOR_PRESETS.find(c => c.name === name || c.name.includes(name));
+  return legacy ? legacy.hex : '';
+}
+
 const COMMON_COLOR_PRESETS = [
   { name: '黑色', hex: '#1C1C1E', family: '黑色' },
   { name: '白色', hex: '#FFFFFF', family: '白色' },
@@ -705,12 +726,47 @@ function inferActionLabel(before, after) {
   const bItems = before.items || [];
   const aItems = after.items || [];
   if (aItems.length > bItems.length) {
-    const added = aItems[aItems.length - 1];
+    const added = aItems.find(it => !bItems.some(b => b.id === it.id)) || aItems[aItems.length - 1];
     return added ? `新增單品「${added.name}」` : '新增單品';
   }
   if (aItems.length < bItems.length) {
     const diff = bItems.find(it => !aItems.some(a => a.id === it.id));
     return diff ? `刪除單品「${diff.name}」` : '刪除單品';
+  }
+  // Check profile name change
+  if (before.profile?.name !== after.profile?.name) {
+    return `改名「${after.profile?.name || '無'}」`;
+  }
+  // Item specific diffs
+  for (let i = 0; i < aItems.length; i++) {
+    const a = aItems[i];
+    const b = bItems.find(it => it.id === a.id);
+    if (!b) continue;
+    if (a.name !== b.name) {
+      return `改名「${a.name}」`;
+    }
+    if (a.image !== b.image) {
+      return `更換「${a.name}」照片`;
+    }
+    if (a.status !== b.status) {
+      const statusMap = { clean: '乾淨', resting: '暫存衣架', dirty: '洗衣籃', retired: '典藏' };
+      return `「${a.name}」移至${statusMap[a.status] || a.status}`;
+    }
+    if (a.price !== b.price) {
+      return `修改「${a.name}」價格`;
+    }
+    if (a.color !== b.color || a.colorHex !== b.colorHex) {
+      return `修改「${a.name}」顏色`;
+    }
+    if (a.category !== b.category) {
+      return `修改「${a.name}」分類為${categoryLabel(a.category)}`;
+    }
+    if (a.brand !== b.brand) {
+      return `修改「${a.name}」品牌為「${a.brand || '無'}」`;
+    }
+    if (a.material !== b.material) {
+      return `修改「${a.name}」材質`;
+    }
   }
   // Detect tag additions or removals
   const bTags = new Set(bItems.flatMap(i => i.tags || []));
@@ -740,7 +796,14 @@ function inferActionLabel(before, after) {
   const aRet = aItems.filter(it => it.status === 'retired').length;
   if (aRet > bRet) return '移入典藏';
   if (bRet > aRet) return '恢復自典藏';
-  if (JSON.stringify(before.today) !== JSON.stringify(after.today)) return '今日穿搭變更';
+  if (JSON.stringify(before.today) !== JSON.stringify(after.today)) {
+    const changedSlot = ALL_SLOTS.find(s => before.today[s] !== after.today[s]);
+    if (changedSlot) {
+      const it = after.today[changedSlot] ? findItem(after.today[changedSlot]) : null;
+      return it ? `換上「${it.name}」` : `清除今日${categoryLabel(changedSlot)}`;
+    }
+    return '更換今日穿搭';
+  }
   return '資料修改';
 }
 
@@ -754,7 +817,7 @@ function updateHistoryControls() {
   const redoDesc = document.getElementById('redoActionDesc');
   if (undoDesc) {
     const lastLabel = undoLabels[undoLabels.length - 1];
-    undoDesc.textContent = undoStack.length ? `還原${lastLabel || '上一個變更'}` : '無可還原操作';
+    undoDesc.textContent = undoStack.length ? `復原${lastLabel || '上一個變更'}` : '無可復原操作';
   }
   if (redoDesc) {
     const lastLabel = redoLabels[redoLabels.length - 1];
@@ -1446,6 +1509,42 @@ function syncBrandForm(brand, brandIcon) {
   renderBrandSelectedPreview();
 }
 
+function renderEstablishedBrandChips() {
+  const wrap = document.getElementById('brandEstablishedWrap');
+  const chips = document.getElementById('brandEstablishedChips');
+  if (!wrap || !chips) return;
+  const brandMap = new Map();
+  state.items.forEach(it => {
+    const b = (it.brand || '').trim();
+    if (b && !brandMap.has(b.toLowerCase())) {
+      brandMap.set(b.toLowerCase(), { brand: b, brandIcon: it.brandIcon });
+    }
+  });
+  const list = Array.from(brandMap.values());
+  if (list.length > 0) {
+    wrap.hidden = false;
+    chips.innerHTML = list.map(b => `
+      <button type="button" class="brand-chip" data-brand="${escapeHtml(b.brand)}">
+        ${b.brandIcon ? brandIconMarkup(b, 'tiny') : ''}
+        <span>${escapeHtml(b.brand)}</span>
+      </button>
+    `).join('');
+    chips.querySelectorAll('.brand-chip').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const brandName = btn.dataset.brand;
+        const found = list.find(x => x.brand === brandName);
+        document.getElementById('fieldBrand').value = brandName;
+        pendingBrandName = brandName;
+        pendingBrandIcon = found?.brandIcon || null;
+        formDirty = true;
+        renderBrandSelectedPreview();
+      });
+    });
+  } else {
+    wrap.hidden = true;
+  }
+}
+
 function renderAvatar() {
   const img = document.getElementById('avatarImage');
   const fallback = document.getElementById('avatarFallback');
@@ -1746,6 +1845,7 @@ function renderHome() {
     const item = itemId ? findItem(itemId) : null;
     const ratio = HOME_SLOT_RATIOS[slot] || getCategoryAspectRatio(slot);
     if (item) {
+      btn.classList.remove('is-transparent-slot');
       btn.classList.add('is-filled');
       btn.classList.toggle('has-photo', !!item.image);
       const pos = (slot === 'top' || slot === 'hat') ? 'center bottom' : 'center top';
@@ -1780,12 +1880,23 @@ function renderHome() {
       }
     } else {
       btn.classList.remove('is-filled', 'has-photo');
-      thumb.setAttribute('style', `aspect-ratio:${ratio};background-color:transparent;`);
-      thumb.style.transform = `translate(${layout.x}%, ${layout.y}%) scale(${layout.scale / 100})`;
-      thumb.innerHTML = ICONS[slot] || '';
+      if (slot === 'hat') {
+        btn.classList.add('is-transparent-slot');
+        thumb.setAttribute('style', `aspect-ratio:${ratio};background-color:transparent;`);
+        thumb.style.transform = `translate(${layout.x}%, ${layout.y}%) scale(${layout.scale / 100})`;
+        thumb.innerHTML = '';
+      } else {
+        btn.classList.remove('is-transparent-slot');
+        thumb.setAttribute('style', `aspect-ratio:${ratio};background-color:transparent;`);
+        thumb.style.transform = `translate(${layout.x}%, ${layout.y}%) scale(${layout.scale / 100})`;
+        thumb.innerHTML = ICONS[slot] || '';
+      }
       btn.setAttribute('aria-label', btn.getAttribute('data-label'));
     }
   });
+
+  const boardScale = state.profile.figureBoardScale || 100;
+  document.documentElement.style.setProperty('--figure-board-scale', (boardScale / 100).toFixed(2));
 
   const outerItem = state.today.outer ? findItem(state.today.outer) : null;
   const accItem = state.today.accessory ? findItem(state.today.accessory) : null;
@@ -2055,10 +2166,14 @@ function renderWardrobe() {
   items.forEach(item => grid.appendChild(buildItemCard(item)));
   document.getElementById('deleteCategoryWrap').classList.toggle('is-hidden', !uiWardrobeCat.startsWith('custom-'));
 }
-function toggleItemSelection(id) {
+function toggleItemSelection(id, cardEl) {
   if (uiSelectedIds.has(id)) uiSelectedIds.delete(id); else uiSelectedIds.add(id);
+  const isSelected = uiSelectedIds.has(id);
   document.getElementById('selectCount').textContent = `已選 ${uiSelectedIds.size} 件`;
-  renderWardrobe();
+  const el = cardEl || document.querySelector(`.item-card[data-id="${id}"]`);
+  if (el) {
+    el.classList.toggle('is-selected', isSelected);
+  }
 }
 function washHistoryEntry(entry) {
   if (typeof entry === 'string') return { date: entry, basketAt: null, extraWash: false };
@@ -2074,6 +2189,8 @@ function buildItemCard(item, opts) {
   const card = document.createElement('button');
   card.type = 'button';
   card.className = 'item-card';
+  card.dataset.id = item.id;
+  card.dataset.category = item.category || '';
   const statusClass = item.status === 'dirty' ? 'is-dirty' : item.status === 'resting' ? 'is-resting' : '';
   const selected = uiSelectMode && uiSelectedIds.has(item.id);
   if (uiSelectMode) card.classList.add('is-selectable');
@@ -2143,7 +2260,7 @@ function buildItemCard(item, opts) {
   card.addEventListener('click', () => {
     if (longPressFired) { longPressFired = false; return; }
     if (opts.onClick) { opts.onClick(item); return; }
-    if (uiSelectMode) toggleItemSelection(item.id);
+    if (uiSelectMode) toggleItemSelection(item.id, card);
     else {
       if (opts.returnTo) modalReturnTo = opts.returnTo;
       else if (opts.laundryMode) modalReturnTo = 'modal-laundry';
@@ -3151,11 +3268,8 @@ function openItemDetail(itemId) {
     ` : ''}
     <p class="detail-name">${escapeHtml(item.name)}</p>
     <div class="detail-attributes-row">
-      ${item.color ? `
-        <div class="detail-color-badge">
-          <span class="color-dot" style="background-color:${item.colorHex || '#888'}"></span>
-          <span>${escapeHtml(item.color)}${item.colorFamily && item.colorFamily !== item.color ? `（${escapeHtml(item.colorFamily)}）` : ''}</span>
-        </div>
+      ${(item.color || item.colorHex) ? `
+        <span class="detail-color-circle" style="background-color:${item.colorHex || getColorHexByName(item.color) || '#888'};" title="${escapeHtml(item.color || '')}"></span>
       ` : ''}
       ${item.brand ? `<div class="detail-brand" style="margin:0">${brandIconMarkup(item, 'medium')}<span>${escapeHtml(item.brand)}</span></div>` : ''}
     </div>
@@ -3218,7 +3332,20 @@ function openItemDetail(itemId) {
     </div>
   `;
   body.querySelector('#btnEditItem').innerHTML = ICONS.edit;
-  body.querySelector('#btnEditItem').addEventListener('click', () => openAddModal(item.id));
+  body.querySelector('#btnEditItem').addEventListener('click', () => {
+    modalReturnTo = 'modal-item';
+    openAddModal(item.id);
+  });
+
+  const photoContainer = body.querySelector('#detailPhotoContainer');
+  if (photoContainer) {
+    photoContainer.style.cursor = 'pointer';
+    photoContainer.addEventListener('click', e => {
+      if (e.target.closest('#btnEditItem') || e.target.closest('#btnFlipPhoto')) return;
+      const isBack = hasBack && body.querySelector('#cardFlipBadge')?.textContent.includes('背面');
+      openPhotoOptions(item, isBack ? 'back' : 'front');
+    });
+  }
 
   // 2.5D interactive flip physics
   if (hasBack) {
@@ -3393,6 +3520,67 @@ function openItemDetail(itemId) {
     if (aTempRack) aTempRack.addEventListener('click', () => { sendToTempRackNow(item.id); closeModal(); });
   }
   openModal('modal-item');
+}
+
+function openPhotoOptions(item, side = 'front') {
+  const currentImg = side === 'back' ? item.imageBack : item.image;
+  const actions = [];
+  if (currentImg) {
+    actions.push({
+      label: '放大檢視照片',
+      kind: 'primary',
+      onClick: () => {
+        openPhotoViewerModal(currentImg);
+      }
+    });
+  }
+  actions.push({
+    label: currentImg ? '更換此面照片' : '新增照片',
+    kind: currentImg ? 'secondary' : 'primary',
+    onClick: () => {
+      pickAndReplaceItemPhoto(item, side);
+    }
+  });
+  actions.push({ label: '取消', kind: 'secondary' });
+  openConfirm(
+    `${item.name}（${side === 'back' ? '背面' : '正面'}）`,
+    currentImg ? '您可以全螢幕放大檢視照片，或直接更換此單品照片。' : '選擇一張照片上傳。',
+    actions
+  );
+}
+
+function openPhotoViewerModal(imgUrl) {
+  const modal = document.getElementById('photoViewerModal');
+  const img = document.getElementById('photoViewerImg');
+  if (!modal || !img) return;
+  img.src = imgUrl;
+  modal.classList.remove('is-hidden');
+}
+
+function pickAndReplaceItemPhoto(item, side = 'front') {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = async e => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    toast('處理照片中…');
+    try {
+      const dataUrl = await compressImageFile(file, 800, 0.85);
+      if (side === 'back') {
+        item.imageBack = dataUrl;
+      } else {
+        item.image = dataUrl;
+      }
+      saveState({ action: `更換「${item.name}」照片` });
+      openItemDetail(item.id);
+      renderAll();
+      toast('照片已更換');
+    } catch (_) {
+      toast('照片處理失敗，請換一張試試');
+    }
+  };
+  input.click();
 }
 
 const COMMON_MATERIALS = ['純棉', '聚酯纖維', '亞麻', '羊毛', '蠶絲', '丹寧/牛仔', '天絲/莫代爾', '羽絨', '尼龍', '混紡'];
@@ -3585,18 +3773,19 @@ function renderColorForm() {
   const chipsWrap = document.getElementById('colorPresetChips');
   if (!chipsWrap) return;
   chipsWrap.innerHTML = '';
-  COMMON_COLOR_PRESETS.forEach(preset => {
+  TEN_COLORS.forEach(c => {
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = 'color-preset-chip' + (pendingColor.family === preset.name ? ' is-active' : '');
-    btn.setAttribute('data-color', preset.name);
-    btn.title = preset.name;
-    btn.innerHTML = `<span class="preset-dot" style="background-color:${preset.hex};"></span><span>${preset.name}</span>`;
+    btn.className = 'color-swatch-chip' + (pendingColor.hex === c.hex || pendingColor.name === c.name ? ' is-active' : '');
+    btn.setAttribute('data-color', c.name);
+    btn.setAttribute('data-hex', c.hex);
+    btn.title = c.name;
+    btn.style.backgroundColor = c.hex;
     btn.addEventListener('click', () => {
-      if (pendingColor.family === preset.name && pendingColor.hex === preset.hex) {
+      if (pendingColor.hex === c.hex || pendingColor.name === c.name) {
         pendingColor = { hex: '', name: '', family: '' };
       } else {
-        pendingColor = { hex: preset.hex, name: preset.name, family: preset.name };
+        pendingColor = { hex: c.hex, name: c.name, family: c.name };
       }
       formDirty = true;
       syncColorFormUI();
@@ -3608,36 +3797,13 @@ function renderColorForm() {
 }
 
 function syncColorFormUI() {
-  const badge = document.getElementById('colorSelectedBadge');
-  const dot = document.getElementById('colorSelectedDot');
-  const text = document.getElementById('colorSelectedText');
-  const inputName = document.getElementById('fieldColorName');
-  const inputPicker = document.getElementById('fieldColorPicker');
   const btnClear = document.getElementById('btnClearColor');
-  const hint = document.getElementById('colorFamilyHint');
+  if (btnClear) btnClear.hidden = !pendingColor.hex && !pendingColor.name;
 
-  if (pendingColor.hex || pendingColor.name || pendingColor.family) {
-    if (badge) {
-      badge.hidden = false;
-      if (dot) dot.style.backgroundColor = pendingColor.hex || '#888';
-      if (text) text.textContent = pendingColor.name ? `${pendingColor.name}（${pendingColor.family}）` : pendingColor.family;
-    }
-    if (btnClear) btnClear.hidden = false;
-    if (hint) hint.textContent = `已自動辨識所屬色系：${pendingColor.family || '自訂色'}`;
-    if (inputPicker && pendingColor.hex && pendingColor.hex.startsWith('#')) {
-      inputPicker.value = pendingColor.hex;
-    }
-  } else {
-    if (badge) badge.hidden = true;
-    if (btnClear) btnClear.hidden = true;
-    if (hint) hint.textContent = '點選常用顏色或調色盤，系統會自動歸納色系。';
-  }
-  if (inputName && document.activeElement !== inputName) {
-    inputName.value = pendingColor.name || '';
-  }
-  document.querySelectorAll('#colorPresetChips .color-preset-chip').forEach(btn => {
+  document.querySelectorAll('#colorPresetChips .color-swatch-chip').forEach(btn => {
     const name = btn.getAttribute('data-color');
-    btn.classList.toggle('is-active', pendingColor.family === name || pendingColor.name === name);
+    const hex = btn.getAttribute('data-hex');
+    btn.classList.toggle('is-active', pendingColor.name === name || pendingColor.hex === hex);
   });
 }
 
@@ -3760,6 +3926,7 @@ function openAddModal(editId = null) {
   if (hintWrap) hintWrap.hidden = true;
   document.getElementById('btnReadjustPhoto').classList.add('is-hidden');
   syncBrandForm('', null);
+  renderEstablishedBrandChips();
   applyStaticIcons();
 
   const editExtra = document.getElementById('editExtraActions');
@@ -3842,17 +4009,24 @@ function openAddModal(editId = null) {
 /* ============================================================
    MODAL PLUMBING (incl. swipe-to-dismiss)
    ============================================================ */
-function openModal(id) {
+let modalStack = [];
+function openModal(id, opts = {}) {
   const current = document.querySelector('.modal-sheet.is-active');
-  if (current && current.id !== id) persistTransientForms();
-  document.querySelectorAll('.modal-sheet').forEach(s => { if (s.id !== id) { s.classList.remove('is-active', 'is-shown'); s.style.transform = ''; } });
+  if (current && current.id !== id && !opts.fromStack) {
+    persistTransientForms();
+    modalStack.push({ id: current.id, returnTo: modalReturnTo, editingItemId });
+  }
+  document.querySelectorAll('.modal-sheet').forEach(s => {
+    if (s.id !== id) {
+      s.classList.remove('is-active', 'is-shown');
+      s.style.transform = '';
+    }
+  });
   const sheet = document.getElementById(id);
-  if (sheet) sheet.scrollTop = 0;
+  if (!sheet) return;
+  sheet.scrollTop = 0;
   sheet.classList.add('is-active');
   document.getElementById('modalOverlay').classList.add('is-open');
-  // force layout so the browser registers the "closed" position first, THEN add
-  // is-shown on the next frame — otherwise display:none->block gives the sheet no
-  // animatable starting state and the slide-up transition just gets skipped.
   void sheet.offsetHeight;
   requestAnimationFrame(() => {
     sheet.classList.add('is-shown');
@@ -3867,8 +4041,9 @@ function forceCloseModal(options = {}) {
     sheet.classList.remove('is-shown');
     const finish = () => { sheet.classList.remove('is-active'); sheet.removeEventListener('transitionend', finish); };
     sheet.addEventListener('transitionend', finish);
-    setTimeout(finish, 360); // fallback in case transitionend doesn't fire
+    setTimeout(finish, 360);
   }
+  modalStack = [];
   backfillDraft = null;
   formDirty = false;
   wishlistDirty = false;
@@ -3890,22 +4065,52 @@ function closeModal() {
   if (activeBeforePersist?.id === 'modal-add' && formDirty) { openUnsavedPrompt('item'); return; }
   if (activeBeforePersist?.id === 'modal-wishlist' && wishlistDirty) { openUnsavedPrompt('wishlist'); return; }
   persistTransientForms();
-  // if we're picking an item for a backfill draft, closing the picker (X / backdrop /
-  // swipe) should return to the backfill sheet rather than abandon the whole draft.
+
   const activeSheet = document.querySelector('.modal-sheet.is-active');
-  if (backfillDraft && activeSheet && activeSheet.id === 'modal-tryon') {
-    renderBackfillModal();
-    openModal('modal-backfill');
+
+  // If canceling out of editing an item, return straight to that item's detail sheet!
+  if (activeSheet?.id === 'modal-add' && editingItemId) {
+    const returnId = editingItemId;
+    editingItemId = null;
+    modalStack = modalStack.filter(m => m.id !== 'modal-add' && m.id !== 'modal-item');
+    openItemDetail(returnId);
     return;
   }
-  // All form edits are persisted continuously; closing never discards them.
+
+  // if we're picking an item for a backfill draft, closing the picker returns to backfill
+  if (backfillDraft && activeSheet?.id === 'modal-tryon') {
+    renderBackfillModal();
+    openModal('modal-backfill', { fromStack: true });
+    return;
+  }
+
   if (modalReturnTo && activeSheet && activeSheet.id !== modalReturnTo) {
     const target = modalReturnTo;
     modalReturnTo = null;
-    openModal(target);
-    if (target === 'modal-tryon' && tryonCurrentSlot) renderTryonGridFor(tryonCurrentSlot, tryonCurrentCategory);
+    if (target === 'modal-item' && editingItemId) {
+      const returnId = editingItemId;
+      editingItemId = null;
+      openItemDetail(returnId);
+    } else {
+      openModal(target, { fromStack: true });
+      if (target === 'modal-tryon' && tryonCurrentSlot) renderTryonGridFor(tryonCurrentSlot, tryonCurrentCategory);
+    }
     return;
   }
+
+  if (modalStack.length > 0) {
+    const prev = modalStack.pop();
+    if (prev && prev.id && prev.id !== activeSheet?.id) {
+      modalReturnTo = prev.returnTo || null;
+      if (prev.id === 'modal-item' && prev.editingItemId) {
+        openItemDetail(prev.editingItemId);
+      } else {
+        openModal(prev.id, { fromStack: true });
+      }
+      return;
+    }
+  }
+
   forceCloseModal();
 }
 function openConfirm(title, body, actions) {
@@ -4112,6 +4317,24 @@ function renderTryonGridFor(slot, category) {
     clearBtn.addEventListener('click', () => selectSlotItem(slot, null));
     clearWrap.appendChild(clearBtn);
   }
+  if (slot === 'hat') {
+    const noneCard = document.createElement('button');
+    noneCard.type = 'button';
+    noneCard.className = 'item-card none-item-card' + (!current ? ' is-selected' : '');
+    noneCard.innerHTML = `
+      <div class="item-photo" style="background:transparent;border:1.5px dashed var(--color-line);display:flex;align-items:center;justify-content:center;">
+        <span style="font-size:12px;font-weight:700;color:var(--color-ink-muted);">無（透明）</span>
+      </div>
+      <div class="item-info">
+        <p class="item-name" style="text-align:center;font-size:12px;margin:2px 0;">不戴帽子</p>
+      </div>
+    `;
+    noneCard.addEventListener('click', () => {
+      selectSlotItem('hat', null);
+      closeModal();
+    });
+    grid.appendChild(noneCard);
+  }
   options.forEach(item => {
     const card = buildItemCard(item, { onClick: () => selectSlotItem(slot, item.id) });
     grid.appendChild(card);
@@ -4137,7 +4360,7 @@ function addExtrasClearAction() {
   clearWrap.innerHTML = '';
   const clearButton = document.createElement('button');
   clearButton.type = 'button';
-  clearButton.className = 'btn-secondary extras-clear-btn';
+  clearButton.className = 'extras-clear-btn';
   clearButton.innerHTML = `${ICONS.close || ''}<span>清空今日穿搭</span>`;
   clearButton.addEventListener('click', () => {
     ALL_SLOTS.forEach(s => { if (state.today[s]) setTodaySlot(s, null); });
@@ -4496,6 +4719,21 @@ function wireEvents() {
   document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', closeModal));
   document.querySelectorAll('.modal-sheet').forEach(enableSwipeToClose);
 
+  const pvModal = document.getElementById('photoViewerModal');
+  const pvClose = document.getElementById('btnPhotoViewerClose');
+  if (pvClose) {
+    pvClose.addEventListener('click', () => {
+      pvModal?.classList.add('is-hidden');
+    });
+  }
+  if (pvModal) {
+    pvModal.addEventListener('click', e => {
+      if (e.target === pvModal || e.target.closest('#btnPhotoViewerClose')) {
+        pvModal.classList.add('is-hidden');
+      }
+    });
+  }
+
   document.querySelectorAll('.figure-slot').forEach(btn => {
     btn.addEventListener('click', () => openTryonPicker(btn.getAttribute('data-slot')));
   });
@@ -4522,28 +4760,82 @@ function wireEvents() {
       entry[s] = backfillDraft[s] || null;
     });
 
-    if (isToday) {
-      ALL_SLOTS.forEach(s => {
-        setTodaySlot(s, entry[s]);
-      });
-    } else {
-      ALL_SLOTS.forEach(s => {
-        if (entry[s]) {
-          const it = findItem(entry[s]);
-          if (it) it.totalWearCount = (it.totalWearCount || 0) + 1;
-        }
-      });
-      const existingIdx = state.ootdHistory.findIndex(e => e.date === entry.date);
-      if (existingIdx >= 0) state.ootdHistory[existingIdx] = entry;
-      else state.ootdHistory.push(entry);
+    const commitBackfill = () => {
+      if (isToday) {
+        ALL_SLOTS.forEach(s => {
+          setTodaySlot(s, entry[s]);
+        });
+      } else {
+        ALL_SLOTS.forEach(s => {
+          if (entry[s]) {
+            const it = findItem(entry[s]);
+            if (it) it.totalWearCount = (it.totalWearCount || 0) + 1;
+          }
+        });
+        const existingIdx = state.ootdHistory.findIndex(e => e.date === entry.date);
+        if (existingIdx >= 0) state.ootdHistory[existingIdx] = entry;
+        else state.ootdHistory.push(entry);
+      }
+
+      saveState({ action: `更新 ${formatDayWithWeekday(entry.date)} 穿搭` });
+      backfillDraft = null;
+      forceCloseModal({ skipPersist: true });
+      renderHistory();
+      renderHome();
+      toast('已儲存穿搭紀錄');
+    };
+
+    const lastWash = state.laundry?.lastWashDate || '';
+    if (!isToday && (!lastWash || backfillDraft.date >= lastWash)) {
+      const itemsToAsk = ALL_SLOTS
+        .map(s => entry[s] ? findItem(entry[s]) : null)
+        .filter(it => it && it.status === 'clean');
+
+      if (itemsToAsk.length > 0) {
+        const askNextItem = index => {
+          if (index >= itemsToAsk.length) {
+            commitBackfill();
+            return;
+          }
+          const item = itemsToAsk[index];
+          openConfirm(
+            `「${item.name}」穿後狀態`,
+            `這件單品於上次洗衣日（${lastWash ? fmtDate(lastWash) : '近期'}）之後的 ${formatDayWithWeekday(entry.date)} 穿著。要移到暫存衣架或洗衣籃嗎？`,
+            [
+              {
+                label: '移至暫存衣架',
+                kind: 'primary',
+                onClick: () => {
+                  item.status = 'resting';
+                  item.restingSince = entry.date;
+                  askNextItem(index + 1);
+                }
+              },
+              {
+                label: '移至洗衣籃',
+                kind: 'secondary',
+                onClick: () => {
+                  item.status = 'dirty';
+                  item.basketAt = entry.date;
+                  askNextItem(index + 1);
+                }
+              },
+              {
+                label: '維持乾淨',
+                kind: 'secondary',
+                onClick: () => {
+                  askNextItem(index + 1);
+                }
+              }
+            ]
+          );
+        };
+        askNextItem(0);
+        return;
+      }
     }
 
-    saveState({ action: `更新 ${formatDayWithWeekday(backfillDraft.date)} 穿搭` });
-    backfillDraft = null;
-    forceCloseModal({ skipPersist: true });
-    renderHistory();
-    renderHome();
-    toast('已儲存穿搭紀錄');
+    commitBackfill();
   });
 
   document.getElementById('btnNotifications').addEventListener('click', () => { renderNotifications(); openModal('modal-notif'); });
@@ -4566,17 +4858,38 @@ function wireEvents() {
     setPickerBtn('pickThresholdTowel', towel ? towel.cycleDays : 7);
     document.getElementById('moreThresholdsWrap').classList.add('is-hidden');
     renderAvatar();
+    const boardScaleSlider = document.getElementById('figureBoardScaleSlider');
+    const boardScaleVal = document.getElementById('figureBoardScaleValue');
+    if (boardScaleSlider) {
+      const curVal = state.profile.figureBoardScale || 100;
+      boardScaleSlider.value = String(curVal);
+      if (boardScaleVal) boardScaleVal.textContent = `${curVal}%`;
+    }
     renderCardImageScale();
     syncWeatherSettings();
     document.getElementById('weatherSearchResults').innerHTML = '';
     modalReturnTo = null;
     openModal('modal-settings');
   });
+  const boardScaleSlider = document.getElementById('figureBoardScaleSlider');
+  const boardScaleVal = document.getElementById('figureBoardScaleValue');
+  if (boardScaleSlider) {
+    boardScaleSlider.addEventListener('input', e => {
+      const val = Math.min(140, Math.max(70, Number(e.target.value) || 100));
+      state.profile.figureBoardScale = val;
+      if (boardScaleVal) boardScaleVal.textContent = `${val}%`;
+      document.documentElement.style.setProperty('--figure-board-scale', (val / 100).toFixed(2));
+      clearTimeout(outfitScaleSaveTimer);
+      outfitScaleSaveTimer = setTimeout(() => saveState(), 320);
+    });
+  }
   document.getElementById('btnOpenOutfitEditor').addEventListener('click', openOutfitEditor);
   document.getElementById('btnCloseOutfitEditor').addEventListener('click', closeModal);
   document.getElementById('outfitScaleSlider').addEventListener('input', e => {
     const layout = state.profile.outfitLayout[outfitEditorSlot];
     layout.scale = Math.min(130, Math.max(70, Number(e.target.value) || 100));
+    const targetEl = document.querySelector(`[data-outfit-editor-object="${outfitEditorSlot}"]`);
+    if (targetEl) applyOutfitEditorObjectStyle(targetEl, outfitEditorSlot);
     updateOutfitEditorControls();
     renderHome();
     clearTimeout(outfitScaleSaveTimer);
@@ -5198,7 +5511,14 @@ function wireEvents() {
     saveState();
     renderAll();
     formDirty = false;
-    forceCloseModal({ skipPersist: true });
+    if (editingItemId) {
+      const returnId = editingItemId;
+      editingItemId = null;
+      modalStack = modalStack.filter(m => m.id !== 'modal-add' && m.id !== 'modal-item');
+      openItemDetail(returnId);
+    } else {
+      forceCloseModal({ skipPersist: true });
+    }
     return true;
   }
   document.getElementById('addItemForm').addEventListener('submit', e => {
@@ -5619,13 +5939,59 @@ function setupInspirationCarousel() {
 
 let selectedSandboxItemId = null;
 let sandboxMaxZIndex = 10;
+let sandboxUndoStack = [];
+let sandboxRedoStack = [];
+
+function pushSandboxHistory() {
+  sandboxUndoStack.push(cloneState(state.sandboxItems));
+  if (sandboxUndoStack.length > 40) sandboxUndoStack.shift();
+  sandboxRedoStack = [];
+  updateSandboxHistoryControls();
+}
+
+function updateSandboxHistoryControls() {
+  const btnUndo = document.getElementById('btnSandboxUndo');
+  const btnRedo = document.getElementById('btnSandboxRedo');
+  if (btnUndo) btnUndo.disabled = sandboxUndoStack.length === 0;
+  if (btnRedo) btnRedo.disabled = sandboxRedoStack.length === 0;
+}
+
+function sandboxUndo() {
+  if (sandboxUndoStack.length === 0) return;
+  sandboxRedoStack.push(cloneState(state.sandboxItems));
+  state.sandboxItems = sandboxUndoStack.pop();
+  if (selectedSandboxItemId && !state.sandboxItems.some(it => it.id === selectedSandboxItemId)) {
+    selectedSandboxItemId = null;
+  }
+  renderSandboxCanvas();
+  saveState();
+  updateSandboxHistoryControls();
+  toast('已復原');
+}
+
+function sandboxRedo() {
+  if (sandboxRedoStack.length === 0) return;
+  sandboxUndoStack.push(cloneState(state.sandboxItems));
+  state.sandboxItems = sandboxRedoStack.pop();
+  if (selectedSandboxItemId && !state.sandboxItems.some(it => it.id === selectedSandboxItemId)) {
+    selectedSandboxItemId = null;
+  }
+  renderSandboxCanvas();
+  saveState();
+  updateSandboxHistoryControls();
+  toast('已重做');
+}
 
 function openSandboxMode() {
   selectedSandboxItemId = null;
+  sandboxUndoStack = [];
+  sandboxRedoStack = [];
   const page = document.getElementById('page-sandbox');
   if (page) {
     page.classList.add('is-active');
   }
+  updateSandboxHeaderName();
+  updateSandboxHistoryControls();
   renderSandboxCanvas();
   applyStaticIcons();
 }
@@ -5681,7 +6047,9 @@ function renderSandboxCanvas() {
 
   state.sandboxItems.forEach(item => {
     const el = document.createElement('div');
-    el.className = 'sandbox-item' + (item.id === selectedSandboxItemId ? ' is-selected' : '');
+    el.className = 'sandbox-item' +
+      (item.id === selectedSandboxItemId ? ' is-selected' : '') +
+      (item.locked ? ' is-locked' : '');
     el.id = `sandbox-item-${item.id}`;
     el.dataset.id = item.id;
     el.style.left = `${item.x}px`;
@@ -5726,6 +6094,12 @@ function updateSandboxToolbar() {
     return;
   }
 
+  const currentItem = state.sandboxItems.find(it => it.id === selectedSandboxItemId);
+  const lockLabel = document.getElementById('sandboxLockLabel');
+  if (lockLabel && currentItem) {
+    lockLabel.textContent = currentItem.locked ? '解鎖' : '鎖定';
+  }
+
   const itemRect = itemEl.getBoundingClientRect();
   const vpRect = viewport.getBoundingClientRect();
 
@@ -5763,6 +6137,7 @@ function setupSandboxInteractions() {
   let pinchInitialDist = 0;
   let pinchInitialScale = 1;
   let pinchTargetItem = null;
+  let preGestureSnapshot = null;
 
   // 1. TOUCH EVENTS (Mobile Safari / iOS / Android)
   viewport.addEventListener('touchstart', e => {
@@ -5781,6 +6156,13 @@ function setupSandboxInteractions() {
         selectSandboxItem(id);
         pinchTargetItem = state.sandboxItems.find(it => it.id === id);
         if (pinchTargetItem) {
+          if (pinchTargetItem.locked) {
+            pinchTargetItem = null;
+            touchMode = 'none';
+            e.preventDefault();
+            return;
+          }
+          preGestureSnapshot = cloneState(state.sandboxItems);
           pinchInitialScale = pinchTargetItem.scale || 1;
           pinchInitialDist = Math.hypot(
             e.touches[0].clientX - e.touches[1].clientX,
@@ -5798,16 +6180,24 @@ function setupSandboxInteractions() {
     if (e.touches.length === 1) {
       const itemEl = e.target.closest('.sandbox-item');
       if (itemEl) {
-        touchMode = 'drag';
         const id = itemEl.dataset.id;
-        activeDragItem = state.sandboxItems.find(it => it.id === id);
-        if (activeDragItem) {
+        const targetItem = state.sandboxItems.find(it => it.id === id);
+        if (targetItem) {
+          selectSandboxItem(id);
+          if (targetItem.locked) {
+            touchMode = 'none';
+            activeDragItem = null;
+            e.preventDefault();
+            return;
+          }
+          touchMode = 'drag';
+          activeDragItem = targetItem;
+          preGestureSnapshot = cloneState(state.sandboxItems);
           sandboxMaxZIndex++;
           activeDragItem.zIndex = sandboxMaxZIndex;
           itemEl.style.zIndex = sandboxMaxZIndex;
           itemEl.classList.add('is-dragging');
-          selectSandboxItem(id);
-          hideSandboxToolbar(); // "不要跟著物件" - Hide during drag!
+          hideSandboxToolbar(); // Hide during drag!
 
           touchStartX = e.touches[0].clientX;
           touchStartY = e.touches[0].clientY;
@@ -5827,7 +6217,7 @@ function setupSandboxInteractions() {
   viewport.addEventListener('touchmove', e => {
     // Two fingers -> strictly pinch zoom, NO drag
     if (touchMode === 'pinch' && e.touches.length === 2) {
-      if (pinchTargetItem && pinchInitialDist > 10) {
+      if (pinchTargetItem && pinchInitialDist > 10 && !pinchTargetItem.locked) {
         const dist = Math.hypot(
           e.touches[0].clientX - e.touches[1].clientX,
           e.touches[0].clientY - e.touches[1].clientY
@@ -5845,7 +6235,7 @@ function setupSandboxInteractions() {
     }
 
     // Single finger -> strictly drag, strictly keep scale constant
-    if (touchMode === 'drag' && activeDragItem) {
+    if (touchMode === 'drag' && activeDragItem && !activeDragItem.locked) {
       if (e.touches.length > 1) {
         e.preventDefault();
         return;
@@ -5872,8 +6262,15 @@ function setupSandboxInteractions() {
         if (el) el.classList.remove('is-dragging');
       }
       if (touchMode === 'drag' || touchMode === 'pinch') {
+        if (preGestureSnapshot && JSON.stringify(preGestureSnapshot) !== JSON.stringify(state.sandboxItems)) {
+          sandboxUndoStack.push(preGestureSnapshot);
+          if (sandboxUndoStack.length > 40) sandboxUndoStack.shift();
+          sandboxRedoStack = [];
+          updateSandboxHistoryControls();
+        }
         saveState();
       }
+      preGestureSnapshot = null;
       touchMode = 'none';
       activeDragItem = null;
       pinchTargetItem = null;
@@ -5899,14 +6296,21 @@ function setupSandboxInteractions() {
     const itemEl = e.target.closest('.sandbox-item');
     if (itemEl) {
       const id = itemEl.dataset.id;
-      activeDragItem = state.sandboxItems.find(it => it.id === id);
-      if (activeDragItem) {
+      const targetItem = state.sandboxItems.find(it => it.id === id);
+      if (targetItem) {
+        selectSandboxItem(id);
+        if (targetItem.locked) {
+          activeDragItem = null;
+          isMouseDown = false;
+          return;
+        }
+        activeDragItem = targetItem;
+        preGestureSnapshot = cloneState(state.sandboxItems);
         isMouseDown = true;
         sandboxMaxZIndex++;
         activeDragItem.zIndex = sandboxMaxZIndex;
         itemEl.style.zIndex = sandboxMaxZIndex;
         itemEl.classList.add('is-dragging');
-        selectSandboxItem(id);
         hideSandboxToolbar();
 
         touchStartX = e.clientX;
@@ -5920,7 +6324,7 @@ function setupSandboxInteractions() {
   });
 
   window.addEventListener('mousemove', e => {
-    if (!isMouseDown || !activeDragItem) return;
+    if (!isMouseDown || !activeDragItem || activeDragItem.locked) return;
     const dx = e.clientX - touchStartX;
     const dy = e.clientY - touchStartY;
     activeDragItem.x = Math.round(itemStartX + dx);
@@ -5939,6 +6343,13 @@ function setupSandboxInteractions() {
         if (el) el.classList.remove('is-dragging');
       }
       isMouseDown = false;
+      if (preGestureSnapshot && JSON.stringify(preGestureSnapshot) !== JSON.stringify(state.sandboxItems)) {
+        sandboxUndoStack.push(preGestureSnapshot);
+        if (sandboxUndoStack.length > 40) sandboxUndoStack.shift();
+        sandboxRedoStack = [];
+        updateSandboxHistoryControls();
+      }
+      preGestureSnapshot = null;
       activeDragItem = null;
       saveState();
       if (selectedSandboxItemId) {
@@ -5951,8 +6362,9 @@ function setupSandboxInteractions() {
   viewport.addEventListener('wheel', e => {
     if (!selectedSandboxItemId) return;
     const item = state.sandboxItems.find(it => it.id === selectedSandboxItemId);
-    if (!item) return;
+    if (!item || item.locked) return;
     e.preventDefault();
+    pushSandboxHistory();
     const delta = e.deltaY < 0 ? 0.05 : -0.05;
     const currentScale = item.scale || 1;
     item.scale = Number(Math.min(3.5, Math.max(0.3, currentScale + delta)).toFixed(2));
@@ -5964,6 +6376,16 @@ function setupSandboxInteractions() {
     saveState();
   }, { passive: false });
 
+  // Topbar Undo & Redo buttons
+  const btnUndo = document.getElementById('btnSandboxUndo');
+  if (btnUndo) {
+    btnUndo.onclick = () => sandboxUndo();
+  }
+  const btnRedo = document.getElementById('btnSandboxRedo');
+  if (btnRedo) {
+    btnRedo.onclick = () => sandboxRedo();
+  }
+
   // Duplicate button
   const btnDup = document.getElementById('btnSandboxDuplicate');
   if (btnDup) {
@@ -5972,6 +6394,7 @@ function setupSandboxInteractions() {
       if (!selectedSandboxItemId) return;
       const src = state.sandboxItems.find(it => it.id === selectedSandboxItemId);
       if (!src) return;
+      pushSandboxHistory();
       sandboxMaxZIndex++;
       const clone = {
         ...src,
@@ -5988,12 +6411,68 @@ function setupSandboxInteractions() {
     };
   }
 
+  // Layer Up button
+  const btnLayerUp = document.getElementById('btnSandboxLayerUp');
+  if (btnLayerUp) {
+    btnLayerUp.onclick = e => {
+      e.stopPropagation();
+      if (!selectedSandboxItemId) return;
+      const src = state.sandboxItems.find(it => it.id === selectedSandboxItemId);
+      if (!src) return;
+      pushSandboxHistory();
+      sandboxMaxZIndex++;
+      src.zIndex = sandboxMaxZIndex;
+      const el = document.getElementById(`sandbox-item-${src.id}`);
+      if (el) el.style.zIndex = src.zIndex;
+      saveState();
+      toast('已上移圖層');
+    };
+  }
+
+  // Layer Down button
+  const btnLayerDown = document.getElementById('btnSandboxLayerDown');
+  if (btnLayerDown) {
+    btnLayerDown.onclick = e => {
+      e.stopPropagation();
+      if (!selectedSandboxItemId) return;
+      const src = state.sandboxItems.find(it => it.id === selectedSandboxItemId);
+      if (!src) return;
+      pushSandboxHistory();
+      const minZ = Math.min(...state.sandboxItems.map(it => it.zIndex || 1));
+      src.zIndex = Math.max(1, minZ - 1);
+      const el = document.getElementById(`sandbox-item-${src.id}`);
+      if (el) el.style.zIndex = src.zIndex;
+      saveState();
+      toast('已下移圖層');
+    };
+  }
+
+  // Lock / Unlock button
+  const btnLock = document.getElementById('btnSandboxLock');
+  if (btnLock) {
+    btnLock.onclick = e => {
+      e.stopPropagation();
+      if (!selectedSandboxItemId) return;
+      const src = state.sandboxItems.find(it => it.id === selectedSandboxItemId);
+      if (!src) return;
+      pushSandboxHistory();
+      src.locked = !src.locked;
+      const lockLabel = document.getElementById('sandboxLockLabel');
+      if (lockLabel) lockLabel.textContent = src.locked ? '解鎖' : '鎖定';
+      const el = document.getElementById(`sandbox-item-${src.id}`);
+      if (el) el.classList.toggle('is-locked', !!src.locked);
+      saveState();
+      toast(src.locked ? '已鎖定單品' : '已解除鎖定');
+    };
+  }
+
   // Delete button
   const btnDel = document.getElementById('btnSandboxDelete');
   if (btnDel) {
     btnDel.onclick = e => {
       e.stopPropagation();
       if (!selectedSandboxItemId) return;
+      pushSandboxHistory();
       state.sandboxItems = state.sandboxItems.filter(it => it.id !== selectedSandboxItemId);
       selectedSandboxItemId = null;
       hideSandboxToolbar();
@@ -6015,6 +6494,7 @@ function setupSandboxInteractions() {
     btnClear.onclick = () => {
       if (!state.sandboxItems || state.sandboxItems.length === 0) return;
       if (confirm('確定清空沙盒畫布上的所有單品嗎？')) {
+        pushSandboxHistory();
         state.sandboxItems = [];
         selectedSandboxItemId = null;
         hideSandboxToolbar();
@@ -6033,6 +6513,7 @@ function setupSandboxInteractions() {
       sb.items = cloneState(state.sandboxItems);
       saveState({ action: `儲存「${sb.name}」` });
       toast(`「${sb.name}」穿搭已儲存`);
+      closeSandboxMode();
     };
   }
 
@@ -6305,6 +6786,7 @@ function renderSandboxPickerItems(type) {
 
 function addItemToSandbox({ type, refId, name, image, category }) {
   if (!Array.isArray(state.sandboxItems)) state.sandboxItems = [];
+  pushSandboxHistory();
   sandboxMaxZIndex++;
   const viewport = document.getElementById('sandboxCanvasViewport');
   const cx = viewport ? Math.max(40, (viewport.clientWidth / 2) - 60) : 100;

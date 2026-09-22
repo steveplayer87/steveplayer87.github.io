@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Wardrobe Master">
-<link rel="stylesheet" href="styles.css?v=20260922i">
+<link rel="stylesheet" href="styles.css?v=20260922j">
 </head>
 <body>
 
@@ -195,18 +195,6 @@
       <button class="fab" id="btnAddItem" aria-label="新增單品">
         <svg viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
       </button>
-      <div class="select-bar is-hidden" id="selectBar">
-        <div class="select-bar-top">
-          <p id="selectCount">已選 0 件</p>
-          <button type="button" class="btn-secondary" id="btnSelectAll">全選</button>
-        </div>
-        <div class="select-bar-actions">
-          <button type="button" class="btn-secondary" id="btnSelectWash">送洗</button>
-          <button type="button" class="btn-secondary" id="btnSelectTemp">移至暫存</button>
-          <button type="button" class="btn-secondary" id="btnSelectRetire">移入典藏</button>
-          <button type="button" class="btn-secondary btn-danger" id="btnSelectDelete">刪除</button>
-        </div>
-      </div>
     </section>
 
     <!-- ---- Inspiration / wishlist ---- -->
@@ -306,6 +294,19 @@
     </section>
 
   </main>
+
+  <div class="select-bar is-hidden" id="selectBar">
+    <div class="select-bar-top">
+      <p id="selectCount">已選 0 件</p>
+      <button type="button" class="btn-secondary" id="btnSelectAll">全選</button>
+    </div>
+    <div class="select-bar-actions">
+      <button type="button" class="btn-secondary" id="btnSelectWash">送洗</button>
+      <button type="button" class="btn-secondary" id="btnSelectTemp">移至暫存</button>
+      <button type="button" class="btn-secondary" id="btnSelectRetire">移入典藏</button>
+      <button type="button" class="btn-secondary btn-danger" id="btnSelectDelete">刪除</button>
+    </div>
+  </div>
 
   <!-- ===== Tab bar ===== -->
   <nav class="tab-bar">
@@ -408,7 +409,10 @@
           <input type="text" id="fieldBrand" placeholder="例如：UNIQLO、Nike、GU" autocomplete="organization">
           <button type="button" class="btn-secondary brand-search-btn" id="btnBrandSearch"><span data-icon="search"></span><span>搜尋圖示</span></button>
         </div>
-        <p class="settings-helper" id="brandSearchStatus">輸入品牌名稱後搜尋官方風格圖示。</p>
+        <div class="brand-established-wrap" id="brandEstablishedWrap" hidden>
+          <div class="brand-established-chips" id="brandEstablishedChips"></div>
+        </div>
+        <p class="settings-helper" id="brandSearchStatus">輸入品牌名稱搜尋圖示，或直接點選既有品牌。</p>
         <div class="brand-search-results" id="brandSearchResults"></div>
         <div class="brand-selected-preview is-hidden" id="brandSelectedPreview"></div>
       </div>
@@ -416,22 +420,9 @@
       <div class="field color-field">
         <div class="color-field-head">
           <span>顏色（選填）</span>
-          <span class="color-selected-badge" id="colorSelectedBadge" hidden>
-            <span class="color-dot" id="colorSelectedDot"></span>
-            <span id="colorSelectedText"></span>
-          </span>
-        </div>
-        <div class="color-picker-quick-row" id="colorPresetChips"></div>
-        <div class="color-custom-row">
-          <label class="color-palette-btn" title="開啟調色盤">
-            <input type="color" id="fieldColorPicker" value="#2563EB" hidden>
-            <span class="icon-inline" data-icon="palette"></span>
-            <span>調色盤</span>
-          </label>
-          <input type="text" id="fieldColorName" placeholder="自訂顏色名稱（例如：深紅、軍綠、藏青）">
           <button type="button" class="btn-clear-color" id="btnClearColor" title="清除顏色" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
         </div>
-        <p class="settings-helper" id="colorFamilyHint">點選常用顏色或調色盤，系統會自動歸納色系。</p>
+        <div class="color-picker-quick-row" id="colorPresetChips"></div>
       </div>
 
       <div class="field">分類
@@ -608,8 +599,10 @@
       </div>
 
       <div class="settings-section outfit-layout-settings">
-        <div class="settings-label-row"><p class="field-label-standalone">今日穿搭版面</p><span class="settings-helper">大小與位置</span></div>
-        <button type="button" class="btn-secondary settings-wide-btn" id="btnOpenOutfitEditor"><span data-icon="edit"></span>編輯今日穿搭</button>
+        <div class="settings-label-row"><p class="field-label-standalone">今日穿搭版面</p><output id="figureBoardScaleValue">100%</output></div>
+        <input type="range" id="figureBoardScaleSlider" min="70" max="140" value="100">
+        <p class="settings-helper">調整主頁毛玻璃試穿區佔比大小。</p>
+        <button type="button" class="btn-secondary settings-wide-btn" id="btnOpenOutfitEditor" style="margin-top:8px"><span data-icon="edit"></span>調整試穿區衣物物件大小與位置</button>
       </div>
 
       <div class="settings-section">
@@ -1137,6 +1130,8 @@
       </button>
     </div>
     <div class="sandbox-topbar-actions">
+      <button type="button" class="sandbox-icon-btn" id="btnSandboxUndo" title="復原" aria-label="復原" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg></button>
+      <button type="button" class="sandbox-icon-btn" id="btnSandboxRedo" title="重做" aria-label="重做" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/></svg></button>
       <button type="button" class="sandbox-text-btn" id="btnSandboxClear">清空</button>
       <button type="button" class="btn-primary sandbox-save-btn" id="btnSandboxSave">儲存</button>
     </div>
@@ -1147,11 +1142,14 @@
       <div class="sandbox-empty-hint" id="sandboxEmptyHint">
         <span class="sandbox-hint-icon" data-icon="sandbox"></span>
         <p class="sandbox-hint-title">穿搭沙盒工作室</p>
-        <p class="sandbox-hint-sub">單指拖曳擺放・雙指捏合縮放大小<br>點擊單品可在旁複製或刪除</p>
+        <p class="sandbox-hint-sub">單指拖曳擺放・雙指捏合縮放大小<br>點擊單品可在旁複製、調整圖層或鎖定</p>
       </div>
     </div>
     <div class="sandbox-item-toolbar is-hidden" id="sandboxItemToolbar">
       <button type="button" class="sandbox-tool-btn" id="btnSandboxDuplicate" title="複製"><span data-icon="copy"></span><span>複製</span></button>
+      <button type="button" class="sandbox-tool-btn" id="btnSandboxLayerUp" title="圖層上移"><span data-icon="arrow-up"></span><span>上移</span></button>
+      <button type="button" class="sandbox-tool-btn" id="btnSandboxLayerDown" title="圖層下移"><span data-icon="arrow-down"></span><span>下移</span></button>
+      <button type="button" class="sandbox-tool-btn" id="btnSandboxLock" title="鎖定"><span data-icon="lock"></span><span id="sandboxLockLabel">鎖定</span></button>
       <button type="button" class="sandbox-tool-btn btn-danger" id="btnSandboxDelete" title="刪除"><span data-icon="trash"></span><span>刪除</span></button>
     </div>
   </div>
@@ -1172,7 +1170,12 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="seed-items.js?v=20260922i"></script>
-<script src="app.js?v=20260922i"></script>
+<div class="photo-viewer-modal is-hidden" id="photoViewerModal">
+  <button type="button" class="photo-viewer-close" id="btnPhotoViewerClose" aria-label="關閉檢視"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+  <img class="photo-viewer-img" id="photoViewerImg" alt="">
+</div>
+
+<script src="seed-items.js?v=20260922j"></script>
+<script src="app.js?v=20260922j"></script>
 </body>
 </html>
