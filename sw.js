@@ -3,13 +3,13 @@
 // (styles.css / seed-items.js / app.js). Mismatched versions just mean an
 // extra network fetch on first load, not breakage — but keeping them in sync
 // avoids stale duplicate entries piling up in the cache.
-const CACHE_NAME = 'wardrobe-master-v40';
+const CACHE_NAME = 'wardrobe-master-v41';
 const ASSETS = [
   './',
   './index.html',
-  './styles.css?v=20260922g',
-  './seed-items.js?v=20260922g',
-  './app.js?v=20260922g',
+  './styles.css?v=20260922h',
+  './seed-items.js?v=20260922h',
+  './app.js?v=20260922h',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
@@ -37,13 +37,14 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Network-first: always try to get the live version when online (so a fresh
-// deploy is visible immediately, not just "next time"). Cache is only used
-// when the network request fails, e.g. offline.
+// Network-first: always try to get the live version when online
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
+  const isNavigate = event.request.mode === 'navigate' || event.request.url.endsWith('/') || event.request.url.includes('index.html');
+  const fetchPromise = isNavigate ? fetch(event.request, { cache: 'no-store' }) : fetch(event.request);
+  
   event.respondWith(
-    fetch(event.request)
+    fetchPromise
       .then(networkResponse => {
         if (networkResponse && networkResponse.status === 200) {
           const clone = networkResponse.clone();

@@ -6570,21 +6570,53 @@ async function init() {
     setTimeout(() => splash.remove(), 400);
   }, 350);
 
+  // Viewport metrics synchronization for iOS PWA standalone mode
+  function syncAppViewportHeight() {
+    const isStandalone = Boolean(window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches);
+    const h = isStandalone ? window.screen.height : window.innerHeight;
+    document.documentElement.style.setProperty('--app-screen-height', `${h}px`);
+    const app = document.getElementById('app');
+    if (app && isStandalone) {
+      app.style.height = `${h}px`;
+    }
+  }
+  window.addEventListener('resize', syncAppViewportHeight);
+  window.addEventListener('orientationchange', syncAppViewportHeight);
+  syncAppViewportHeight();
+
+  const btnForceRefresh = document.getElementById('btnForceRefresh');
+  if (btnForceRefresh) {
+    btnForceRefresh.addEventListener('click', async () => {
+      btnForceRefresh.textContent = '正在重新整理...';
+      if ('serviceWorker' in navigator) {
+        try {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          for (const reg of regs) await reg.unregister();
+        } catch (e) {}
+      }
+      if ('caches' in window) {
+        try {
+          const keys = await caches.keys();
+          for (const key of keys) await caches.delete(key);
+        } catch (e) {}
+      }
+      window.location.href = window.location.pathname + '?v=' + Date.now();
+    });
+  }
+
   if ('serviceWorker' in navigator) {
     let refreshing = false;
     navigator.serviceWorker.addEventListener('controllerchange', () => {
-      // a new service worker just took over (skipWaiting + clients.claim in sw.js) —
-      // reload once so the freshly-fetched HTML/JS actually gets used, instead of
-      // leaving the old in-memory version running under the new SW.
       if (refreshing) return;
       refreshing = true;
       window.location.reload();
     });
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js').then(reg => {
+      navigator.serviceWorker.register('sw.js?v=20260922h').then(reg => {
         reg.update().catch(() => {});
       }).catch(() => {});
     });
   }
 }
 document.addEventListener('DOMContentLoaded', init);
+
