@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Wardrobe Master">
-<link rel="stylesheet" href="styles.css?v=20260922h">
+<link rel="stylesheet" href="styles.css?v=20260922i">
 </head>
 <body>
 
@@ -75,7 +75,10 @@
           </button>
         </div>
         <div class="figure-link-row">
-          <button class="figure-more-btn" id="figureExtrasLink" aria-label="更多今日穿搭操作" title="更多今日穿搭操作"><span data-icon="more"></span></button>
+          <button class="figure-more-btn" id="figureExtrasLink" aria-label="更多今日穿搭操作" title="更多今日穿搭操作">
+            <span data-icon="more"></span>
+            <span class="badge-dot" id="extrasOuterBadge" hidden></span>
+          </button>
         </div>
       </div>
 
@@ -330,7 +333,7 @@
   <!-- Try-on picker -->
   <div class="modal-sheet" id="modal-tryon" data-modal>
     <div class="modal-handle"></div>
-    <div class="modal-head"><h2 id="tryonTitle">選擇上衣</h2><button class="modal-close" data-close>✕</button></div>
+    <div class="modal-head"><h2 id="tryonTitle">選擇上衣</h2><button class="modal-close" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
     <div class="chip-row chip-row-form is-hidden" id="tryonCategoryChips"></div>
     <div class="sort-row">
       <select class="sort-select" id="tryonSortSelect">
@@ -368,7 +371,7 @@
         <button type="submit" form="addItemForm" class="modal-head-btn modal-save-btn" id="addModalHeaderSaveBtn" aria-label="儲存">
           <svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
-        <button type="button" class="modal-head-btn modal-close-btn" data-close aria-label="關閉">✕</button>
+        <button type="button" class="modal-head-btn modal-close-btn" data-close aria-label="關閉"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
       </div>
     </div>
     <form class="form" id="addItemForm">
@@ -380,7 +383,7 @@
         </span>
       </label>
       <div class="photo-back-hint-wrap" id="photoBackHintWrap" hidden>
-        <p class="photo-back-hint" id="photoBackHint">已加入背面照片 ✓</p>
+        <p class="photo-back-hint" id="photoBackHint">已加入背面照片</p>
         <button type="button" class="photo-swap-btn" id="btnSwapPhotos">交換正反</button>
       </div>
       <div class="photo-tools-row" id="photoAiToolsRow">
@@ -426,7 +429,7 @@
             <span>調色盤</span>
           </label>
           <input type="text" id="fieldColorName" placeholder="自訂顏色名稱（例如：深紅、軍綠、藏青）">
-          <button type="button" class="btn-clear-color" id="btnClearColor" title="清除顏色" hidden>✕</button>
+          <button type="button" class="btn-clear-color" id="btnClearColor" title="清除顏色" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
         </div>
         <p class="settings-helper" id="colorFamilyHint">點選常用顏色或調色盤，系統會自動歸納色系。</p>
       </div>
@@ -488,7 +491,7 @@
   <!-- Add custom category -->
   <div class="modal-sheet" id="modal-category" data-modal>
     <div class="modal-handle"></div>
-    <div class="modal-head"><h2>新增分類</h2><button class="modal-close" data-close>✕</button></div>
+    <div class="modal-head"><h2>新增分類</h2><button class="modal-close" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
     <form class="form" id="categoryForm">
       <label class="field">分類名稱
         <input type="text" id="fieldCategoryName" placeholder="例如：包包" required maxlength="8">
@@ -502,7 +505,7 @@
     <div class="modal-handle"></div>
     <div class="modal-head">
       <h2 id="filterModalTitle">篩選</h2>
-      <button class="modal-close" data-close>✕</button>
+      <button class="modal-close" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     </div>
     <div class="filter-invert-bar">
       <button type="button" class="filter-invert-btn" id="btnFilterInvert">
@@ -555,7 +558,7 @@
     <div class="modal-handle"></div>
     <div class="modal-head">
       <h2 id="managePropsTitle">管理標籤</h2>
-      <button class="modal-close" data-close>✕</button>
+      <button class="modal-close" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     </div>
     <div class="manage-props-body" id="managePropsBody" style="padding:10px 0 16px;"></div>
   </div>
@@ -563,7 +566,7 @@
   <!-- Notifications -->
   <div class="modal-sheet" id="modal-notif" data-modal>
     <div class="modal-handle"></div>
-    <div class="modal-head"><h2>提醒中心</h2><button class="modal-close" data-close>✕</button></div>
+    <div class="modal-head"><h2>提醒中心</h2><button class="modal-close" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
     <div class="notif-list" id="notifList"></div>
     <p class="empty-hint" id="notifEmpty" hidden>目前沒有需要處理的事項，太棒了</p>
   </div>
@@ -577,7 +580,7 @@
         <button type="button" class="modal-head-btn modal-save-btn" id="btnSettingsHeaderSave" aria-label="儲存">
           <svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
-        <button type="button" class="modal-head-btn modal-close-btn" data-close aria-label="關閉">✕</button>
+        <button type="button" class="modal-head-btn modal-close-btn" data-close aria-label="關閉"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
       </div>
     </div>
     <form class="form" id="settingsForm">
@@ -669,7 +672,7 @@
         <button type="button" class="btn-secondary" id="btnImportSeedList">匯入我的舊衣物清單</button>
       </div>
       <div class="settings-actions" style="margin-top:8px">
-        <button type="button" class="btn-secondary" id="btnForceRefresh" style="border-style:dashed;color:var(--color-ink-soft);">🔄 強制清除快取並立即重新整理</button>
+        <button type="button" class="btn-secondary" id="btnForceRefresh" style="border-style:dashed;color:var(--color-ink-soft);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:inline-block;vertical-align:-2px;margin-right:4px"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>強制清除快取並立即重新整理</button>
       </div>
       <div class="settings-history" id="settingsHistory">
         <p class="settings-note">全域變更紀錄</p>
@@ -686,7 +689,7 @@
     <div class="modal-handle"></div>
     <div class="modal-head">
       <h2>天氣設定</h2>
-      <button class="modal-close" data-close>✕</button>
+      <button class="modal-close" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     </div>
 
     <div class="weather-modal-content">
@@ -714,7 +717,7 @@
             <div class="weather-preview-info">
               <div class="weather-preview-location" id="weatherPreviewLocation">桃園市中壢區</div>
               <div class="weather-preview-weather" id="weatherPreviewWeather">晴天 26°</div>
-              <div class="weather-preview-badge" id="weatherPreviewBadge">☀️ 晴天・白天</div>
+              <div class="weather-preview-badge" id="weatherPreviewBadge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:inline-block;vertical-align:-2px;margin-right:4px"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>晴天・白天</div>
             </div>
           </div>
 
@@ -774,7 +777,7 @@
 
         <div style="margin-top:18px;">
           <button type="button" class="btn-secondary settings-wide-btn" id="btnWeatherRefresh">
-            🔄 立即重新整理氣象資料
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;display:inline-block;vertical-align:-2px;margin-right:4px"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>立即重新整理氣象資料
           </button>
         </div>
       </div>
@@ -784,7 +787,7 @@
   <!-- Today outfit layout editor -->
   <div class="modal-sheet modal-sheet-tall" id="modal-outfit-editor" data-modal>
     <div class="modal-handle"></div>
-    <div class="modal-head"><h2>編輯今日穿搭</h2><button class="modal-close" data-close>✕</button></div>
+    <div class="modal-head"><h2>編輯今日穿搭</h2><button class="modal-close" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
     <p class="section-intro outfit-editor-hint">先選擇物件，再用滑桿調整大小；直接拖曳預覽中的物件可以調整位置。</p>
     <div class="outfit-editor-stage" id="outfitEditorStage"></div>
     <div class="outfit-editor-controls">
@@ -804,7 +807,7 @@
   <!-- Number grid picker (reusable) -->
   <div class="modal-sheet" id="modal-number-grid" data-modal>
     <div class="modal-handle"></div>
-    <div class="modal-head"><h2 id="numberGridTitle">選擇次數</h2><button class="modal-close" data-close>✕</button></div>
+    <div class="modal-head"><h2 id="numberGridTitle">選擇次數</h2><button class="modal-close" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
     <div class="number-grid" id="numberGrid"></div>
     <p class="number-grid-caption is-hidden" id="numberGridCaption">太臭了！</p>
   </div>
@@ -812,7 +815,7 @@
   <!-- Photo adjust: crop/zoom/pan to the category's standard aspect ratio -->
   <div class="modal-sheet" id="modal-photo-adjust" data-modal>
     <div class="modal-handle"></div>
-    <div class="modal-head"><h2>調整照片</h2><button class="modal-close" data-close>✕</button></div>
+    <div class="modal-head"><h2>調整照片</h2><button class="modal-close" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
     <div class="photo-adjust-frame" id="photoAdjustFrame">
       <img id="photoAdjustImg" draggable="false" alt="">
     </div>
@@ -826,14 +829,14 @@
   <!-- Day detail (calendar) -->
   <div class="modal-sheet modal-sheet-tall" id="modal-day" data-modal>
     <div class="modal-handle"></div>
-    <div class="modal-head"><h2 id="dayDetailTitle">—</h2><button class="modal-close" data-close>✕</button></div>
+    <div class="modal-head"><h2 id="dayDetailTitle">—</h2><button class="modal-close" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
     <div class="day-detail-body" id="dayDetailBody"></div>
   </div>
 
   <!-- Jump to month/date -->
   <div class="modal-sheet" id="modal-jump" data-modal>
     <div class="modal-handle"></div>
-    <div class="modal-head"><h2>跳轉至指定日期</h2><button class="modal-close" data-close>✕</button></div>
+    <div class="modal-head"><h2>跳轉至指定日期</h2><button class="modal-close" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
     <label class="field">選擇日期
       <input type="date" id="jumpDateInput">
     </label>
@@ -843,7 +846,7 @@
   <!-- Backfill a past day's OOTD -->
   <div class="modal-sheet modal-sheet-tall" id="modal-backfill" data-modal>
     <div class="modal-handle"></div>
-    <div class="modal-head"><h2>補登穿搭紀錄</h2><button class="modal-close" data-close>✕</button></div>
+    <div class="modal-head"><h2>補登穿搭紀錄</h2><button class="modal-close" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
     <label class="field">日期
       <input type="date" id="backfillDate">
     </label>
@@ -860,7 +863,7 @@
   <!-- Laundry day (whole-basket household laundry cadence) -->
   <div class="modal-sheet" id="modal-laundry" data-modal>
     <div class="modal-handle"></div>
-    <div class="modal-head"><h2>洗衣日資訊</h2><button class="modal-close" data-close>✕</button></div>
+    <div class="modal-head"><h2>洗衣日資訊</h2><button class="modal-close" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
     <div class="detail-stats" id="laundryStats"></div>
     <div class="item-grid laundry-overview-grid" id="laundryOverviewGrid"></div>
     <div class="laundry-consumable-list" id="laundryConsumableGrid"></div>
@@ -874,7 +877,8 @@
   <!-- Temp rack overview -->
   <div class="modal-sheet modal-sheet-tall" id="modal-rack-overview" data-modal>
     <div class="modal-handle"></div>
-    <div class="modal-head"><h2>暫存衣架</h2><button class="modal-close" data-close>✕</button></div>
+    <div class="modal-head"><h2>暫存衣架</h2><button class="modal-close" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+    <div id="rackOverviewPinnedTowel"></div>
     <div class="item-grid" id="rackOverviewGrid"></div>
     <p class="empty-hint" id="rackOverviewEmpty" hidden>還沒有衣物在暫存</p>
   </div>
@@ -888,7 +892,7 @@
         <button type="submit" form="wishlistForm" class="modal-head-btn modal-save-btn" id="btnWishlistHeaderSave" aria-label="儲存">
           <svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
-        <button type="button" class="modal-head-btn modal-close-btn" data-close aria-label="關閉">✕</button>
+        <button type="button" class="modal-head-btn modal-close-btn" data-close aria-label="關閉"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
       </div>
     </div>
     <form class="form" id="wishlistForm">
@@ -910,7 +914,7 @@
   <!-- Style reference gallery manager -->
   <div class="modal-sheet modal-sheet-tall" id="modal-style-gallery" data-modal>
     <div class="modal-handle"></div>
-    <div class="modal-head"><h2>風格走廊</h2><button class="modal-close" data-close>✕</button></div>
+    <div class="modal-head"><h2>風格走廊</h2><button class="modal-close" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
     <p class="section-intro style-gallery-manager-intro">拖曳照片右上角的把手可以重新排序。</p>
     <div class="style-gallery-manager-toolbar">
       <p class="style-gallery-manager-count" id="styleGalleryManagerCount">0 張照片</p>
@@ -935,7 +939,7 @@
   <!-- Haircut Add/Edit Modal -->
   <div class="modal-sheet modal-sheet-tall" id="modal-haircut" data-modal>
     <div class="modal-handle"></div>
-    <div class="modal-head"><h2 id="haircutModalTitle" style="display:inline-flex;align-items:center;gap:6px;"><span class="icon-inline" data-icon="scissors" style="width:18px;height:18px;"></span>新增髮型記錄</h2><button class="modal-close" data-close>✕</button></div>
+    <div class="modal-head"><h2 id="haircutModalTitle" style="display:inline-flex;align-items:center;gap:6px;"><span class="icon-inline" data-icon="scissors" style="width:18px;height:18px;"></span>新增髮型記錄</h2><button class="modal-close" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
     <form class="form" id="haircutForm">
       <label class="photo-upload" id="haircutPhotoArea">
         <input type="file" accept="image/*" id="haircutPhotoInput" hidden>
@@ -985,7 +989,7 @@
   <!-- Stain Log Modal -->
   <div class="modal-sheet" id="modal-stain" data-modal>
     <div class="modal-handle"></div>
-    <div class="modal-head"><h2>記錄除污漬護理</h2><button class="modal-close" data-close>✕</button></div>
+    <div class="modal-head"><h2>記錄除污漬護理</h2><button class="modal-close" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
     <form class="form" id="stainForm">
       <label class="field">除污日期
         <input type="date" id="fieldStainDate" required>
@@ -1005,7 +1009,7 @@
         <h2>Gemini AI 影像工作室</h2>
         <span class="ai-badge"><span class="icon-inline" data-icon="sparkles"></span> AI</span>
       </div>
-      <button class="modal-close" data-close>✕</button>
+      <button class="modal-close" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     </div>
     <div class="ai-studio-body">
       <div class="ai-preview-container" id="aiPreviewContainer">
@@ -1081,7 +1085,7 @@
   <!-- Archive Confirm Modal -->
   <div class="modal-sheet" id="modal-archive-confirm" data-modal>
     <div class="modal-handle"></div>
-    <div class="modal-head"><h2>移至典藏確認</h2><button class="modal-close" data-close>✕</button></div>
+    <div class="modal-head"><h2>移至典藏確認</h2><button class="modal-close" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
     <div class="archive-confirm-content">
       <div class="archive-confirm-photo-wrap">
         <img id="archiveConfirmPhoto" class="archive-confirm-photo" src="" alt="" hidden>
@@ -1099,7 +1103,7 @@
   <!-- Sandbox Item Picker Modal -->
   <div class="modal-sheet modal-sheet-tall" id="modal-sandbox-picker" data-modal>
     <div class="modal-handle"></div>
-    <div class="modal-head"><h2 id="sandboxPickerTitle">選擇單品</h2><button class="modal-close" data-close>✕</button></div>
+    <div class="modal-head"><h2 id="sandboxPickerTitle">選擇單品</h2><button class="modal-close" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
     <div class="chip-row chip-row-form" id="sandboxPickerCategoryChips"></div>
     <div class="search-row" id="sandboxPickerSearchRow" style="margin-bottom:12px;">
       <input type="text" id="sandboxPickerSearchInput" placeholder="搜尋名稱、標籤…">
@@ -1111,7 +1115,7 @@
   <!-- Sandbox Manager Modal -->
   <div class="modal-sheet" id="modal-sandbox-manager" data-modal>
     <div class="modal-handle"></div>
-    <div class="modal-head"><h2>我的穿搭沙盒</h2><button class="modal-close" data-close>✕</button></div>
+    <div class="modal-head"><h2>我的穿搭沙盒</h2><button class="modal-close" data-close><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
     <div class="sandbox-manager-list" id="sandboxManagerList" style="display:flex;flex-direction:column;gap:8px;padding:8px 0 16px;"></div>
     <div class="settings-actions">
       <button type="button" class="btn-primary" id="btnCreateNewSandbox" style="width:100%;">+ 新增沙盒畫布</button>
@@ -1168,7 +1172,7 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="seed-items.js?v=20260922h"></script>
-<script src="app.js?v=20260922h"></script>
+<script src="seed-items.js?v=20260922i"></script>
+<script src="app.js?v=20260922i"></script>
 </body>
 </html>

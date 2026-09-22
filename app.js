@@ -54,11 +54,26 @@ const ICONS = {
   back: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>`,
   cloud: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>`,
   mapPin: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>`,
+  sun: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>`,
+  moon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>`,
+  rain: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M16 14v6M8 14v6M12 16v6"/></svg>`,
+  heavyRain: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="m9.2 22 3-7M9 13l-3 7M17 13l-3 7"/></svg>`,
+  cloudSun: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v2M4.93 4.93l1.41 1.41M20 12h2M19.07 4.93l-1.41 1.41M15.947 12.65a4 4 0 0 0-5.925-4.128"/><path d="M13 22H7a5 5 0 1 1 4.9-6H13a3 3 0 0 1 0 6Z"/></svg>`,
+  cloudRain: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M16 14v6M8 14v6M12 16v6"/></svg>`,
+  cloudLightning: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16.326A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 .5 8.973"/><path d="m13 12-3 5h4l-3 5"/></svg>`,
+  refresh: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>`,
+  check: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
+  chevronRight: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>`,
 };
 function applyStaticIcons() {
   document.querySelectorAll('[data-icon]').forEach(el => {
     const name = el.getAttribute('data-icon');
     if (ICONS[name]) el.innerHTML = ICONS[name];
+  });
+  document.querySelectorAll('.modal-close, .modal-close-btn').forEach(el => {
+    if (!el.querySelector('svg') || el.textContent.trim() === '✕') {
+      el.innerHTML = ICONS.close;
+    }
   });
 }
 
@@ -1290,7 +1305,57 @@ function renderHeader() {
 }
 
 function itemPhotoStyle(item) {
-  return item.image ? `background-color:#fff;background-image:url('${item.image}');background-repeat:no-repeat;background-position:center` : 'background-color:#fff';
+  return item.image ? `background-image:url('${item.image}');background-repeat:no-repeat;background-position:center;background-size:contain;background-color:transparent;mix-blend-mode:multiply;` : 'background-color:transparent;';
+}
+
+const trimBoundsCache = new Map();
+function getImageTrimBounds(imgUrl, callback) {
+  if (!imgUrl) return;
+  if (trimBoundsCache.has(imgUrl)) {
+    callback(trimBoundsCache.get(imgUrl));
+    return;
+  }
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => {
+    try {
+      const cvs = document.createElement('canvas');
+      const w = 100, h = Math.round(100 * (img.naturalHeight / img.naturalWidth || 1));
+      cvs.width = w; cvs.height = h;
+      const ctx = cvs.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      const data = ctx.getImageData(0, 0, w, h).data;
+      let minX = w, maxX = 0, minY = h, maxY = 0;
+      let found = false;
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const idx = (y * w + x) * 4;
+          const a = data[idx + 3];
+          const r = data[idx], g = data[idx+1], b = data[idx+2];
+          if (a > 25 && !(r > 246 && g > 246 && b > 246)) {
+            found = true;
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+          }
+        }
+      }
+      if (found) {
+        const bounds = {
+          padTop: minY / h,
+          padBottom: (h - 1 - maxY) / h,
+          contentWidth: (maxX - minX + 1) / w,
+          contentHeight: (maxY - minY + 1) / h
+        };
+        trimBoundsCache.set(imgUrl, bounds);
+        callback(bounds);
+      }
+    } catch(e) {
+      // ignore cross-origin security errors gracefully
+    }
+  };
+  img.src = imgUrl;
 }
 function itemPhotoMarkup(item) {
   return item.image
@@ -1417,19 +1482,15 @@ function renderCardImageScale() {
   if (output) output.textContent = `${value}%`;
 }
 const WEATHER_LABELS = {
-  0: ['晴朗', '☀'], 1: ['大致晴朗', '☀'], 2: ['局部多雲', '◒'], 3: ['陰天', '☁'],
-  45: ['霧', '≋'], 48: ['霧', '≋'], 51: ['細雨', '雨'], 53: ['細雨', '雨'], 55: ['細雨', '雨'],
-  56: ['冰雨', '雨'], 57: ['冰雨', '雨'], 61: ['小雨', '雨'], 63: ['中雨', '雨'], 65: ['大雨', '雨'],
-  66: ['冰雨', '雨'], 67: ['冰雨', '雨'], 71: ['小雪', '雪'], 73: ['中雪', '雪'], 75: ['大雪', '雪'],
-  77: ['雪粒', '雪'], 80: ['陣雨', '雨'], 81: ['陣雨', '雨'], 82: ['大陣雨', '雨'],
-  85: ['陣雪', '雪'], 86: ['大陣雪', '雪'], 95: ['雷雨', '雷'], 96: ['雷雨', '雷'], 99: ['雷雨', '雷'],
+  0: ['晴朗', ''], 1: ['大致晴朗', ''], 2: ['局部多雲', ''], 3: ['陰天', ''],
+  45: ['霧', ''], 48: ['霧', ''], 51: ['細雨', ''], 53: ['細雨', ''], 55: ['細雨', ''],
+  56: ['冰雨', ''], 57: ['冰雨', ''], 61: ['小雨', ''], 63: ['中雨', ''], 65: ['大雨', ''],
+  66: ['冰雨', ''], 67: ['冰雨', ''], 71: ['小雪', ''], 73: ['中雪', ''], 75: ['大雪', ''],
+  77: ['雪粒', ''], 80: ['陣雨', ''], 81: ['陣雨', ''], 82: ['大陣雨', ''],
+  85: ['陣雪', ''], 86: ['大陣雪', ''], 95: ['雷雨', ''], 96: ['雷雨', ''], 99: ['雷雨', ''],
 };
 function weatherText(code, isNight) {
-  const item = WEATHER_LABELS[Number(code)] || ['天氣', '•'];
-  if (isNight && (code === 0 || code === 1)) {
-    return [item[0], '🌙'];
-  }
-  return item;
+  return WEATHER_LABELS[Number(code)] || ['天氣', ''];
 }
 function formatDisplayTemp(celsius) {
   if (!Number.isFinite(Number(celsius))) return '';
@@ -1538,16 +1599,16 @@ async function selectWeatherLocation(location) {
 
 let currentPreviewSceneIndex = 0;
 const WEATHER_PREVIEW_SCENES = [
-  { id: 'real', name: '即時真實天氣', badge: '🔄 即時真實天氣', isReal: true },
-  { id: 'clear_day', name: '晴天・白天', badge: '☀️ 晴天・白天', label: '晴天', symbol: '☀', code: 0, is_day: 1, temp: 26, isNight: false, isRain: false, isCloudy: false, isClear: true },
-  { id: 'clear_night', name: '晴天・夜晚', badge: '🌙 晴天・夜晚', label: '晴朗夜晚', symbol: '🌙', code: 0, is_day: 0, temp: 20, isNight: true, isRain: false, isCloudy: false, isClear: true },
-  { id: 'cloudy_day', name: '陰天・白天', badge: '☁️ 陰天・白天', label: '陰天', symbol: '☁', code: 3, is_day: 1, temp: 22, isNight: false, isRain: false, isCloudy: true, isClear: false },
-  { id: 'cloudy_night', name: '陰天・夜晚', badge: '☁️ 陰天・夜晚', label: '陰天夜晚', symbol: '☁', code: 3, is_day: 0, temp: 19, isNight: true, isRain: false, isCloudy: true, isClear: false },
-  { id: 'rain_day', name: '雨天・白天', badge: '🌧️ 雨天・白天', label: '小雨', symbol: '🌧', code: 61, is_day: 1, temp: 21, isNight: false, isRain: true, isCloudy: true, isClear: false },
-  { id: 'rain_night', name: '雨天・夜晚', badge: '🌧️ 雨天・夜晚', label: '雨夜', symbol: '🌧', code: 61, is_day: 0, temp: 18, isNight: true, isRain: true, isCloudy: true, isClear: false },
-  { id: 'heavy_day', name: '大雨・白天', badge: '⛈️ 大雨・白天', label: '大雨', symbol: '⛈', code: 65, is_day: 1, temp: 19, isNight: false, isRain: true, isCloudy: true, isClear: false },
-  { id: 'heavy_night', name: '大雨・夜晚', badge: '⛈️ 大雨・夜晚', label: '大雨夜晚', symbol: '⛈', code: 65, is_day: 0, temp: 17, isNight: true, isRain: true, isCloudy: true, isClear: false },
-  { id: 'sun_shower', name: '晴時多雲偶陣雨', badge: '🌦️ 晴時多雲偶陣雨', label: '晴時多雲偶陣雨', symbol: '🌦', code: 80, is_day: 1, temp: 24, isNight: false, isRain: true, isCloudy: true, isClear: false },
+  { id: 'real', name: '即時真實天氣', isReal: true },
+  { id: 'clear_day', name: '晴天・白天', label: '晴天', code: 0, is_day: 1, temp: 26, isNight: false, isRain: false, isCloudy: false, isClear: true },
+  { id: 'clear_night', name: '晴天・夜晚', label: '晴朗夜晚', code: 0, is_day: 0, temp: 20, isNight: true, isRain: false, isCloudy: false, isClear: true },
+  { id: 'cloudy_day', name: '陰天・白天', label: '陰天', code: 3, is_day: 1, temp: 22, isNight: false, isRain: false, isCloudy: true, isClear: false },
+  { id: 'cloudy_night', name: '陰天・夜晚', label: '陰天夜晚', code: 3, is_day: 0, temp: 19, isNight: true, isRain: false, isCloudy: true, isClear: false },
+  { id: 'rain_day', name: '雨天・白天', label: '小雨', code: 61, is_day: 1, temp: 21, isNight: false, isRain: true, isCloudy: true, isClear: false },
+  { id: 'rain_night', name: '雨天・夜晚', label: '雨夜', code: 61, is_day: 0, temp: 18, isNight: true, isRain: true, isCloudy: true, isClear: false },
+  { id: 'heavy_day', name: '大雨・白天', label: '大雨', code: 65, is_day: 1, temp: 19, isNight: false, isRain: true, isCloudy: true, isClear: false },
+  { id: 'heavy_night', name: '大雨・夜晚', label: '大雨夜晚', code: 65, is_day: 0, temp: 17, isNight: true, isRain: true, isCloudy: true, isClear: false },
+  { id: 'sun_shower', name: '晴時多雲偶陣雨', label: '晴時多雲偶陣雨', code: 80, is_day: 1, temp: 24, isNight: false, isRain: true, isCloudy: true, isClear: false },
 ];
 
 function updateWeatherPreview() {
@@ -1601,7 +1662,8 @@ function updateWeatherPreview() {
     weatherEl.textContent = `${weatherTextStr} ${tempStr}`.trim();
   }
   if (badgeEl) {
-    badgeEl.textContent = scene.badge;
+    const iconSvg = scene.isReal ? ICONS.refresh : scene.isNight ? ICONS.moon : scene.isRain ? ICONS.rain : scene.isCloudy ? ICONS.cloud : ICONS.sun;
+    badgeEl.innerHTML = `<span class="icon-inline">${iconSvg}</span><span>${escapeHtml(scene.name)}</span>`;
   }
 
   if (sky) {
@@ -1627,7 +1689,7 @@ function updateWeatherPreview() {
   const isCurrentActive = scene.isReal ? !state.weatherSimulation : state.weatherSimulation === scene.id;
   if (btnApply) {
     if (isCurrentActive) {
-      btnApply.textContent = '✓ 目前首頁已套用此場景';
+      btnApply.innerHTML = `<span class="icon-inline">${ICONS.check}</span> 目前首頁已套用此場景`;
       btnApply.classList.add('is-active-btn');
     } else {
       btnApply.textContent = scene.isReal ? '套用即時真實天氣至首頁' : `套用「${scene.name}」至主頁`;
@@ -1677,22 +1739,49 @@ function renderHome() {
   syncHomeRackExpansion();
   ['hat', 'top', 'bottom', 'shoes'].forEach(slot => {
     const btn = document.querySelector(`.figure-slot[data-slot="${slot}"]`);
+    if (!btn) return;
     const thumb = btn.querySelector('.figure-thumb');
     const itemId = state.today[slot];
     const layout = (state.profile.outfitLayout && state.profile.outfitLayout[slot]) || OUTFIT_LAYOUT_DEFAULTS[slot];
-    thumb.style.transform = `translate(${layout.x}%, ${layout.y}%) scale(${layout.scale / 100})`;
-    thumb.style.transformOrigin = 'center center';
     const item = itemId ? findItem(itemId) : null;
     const ratio = HOME_SLOT_RATIOS[slot] || getCategoryAspectRatio(slot);
     if (item) {
       btn.classList.add('is-filled');
       btn.classList.toggle('has-photo', !!item.image);
-      thumb.setAttribute('style', `${itemPhotoStyle(item)};aspect-ratio:${ratio}`);
+      const pos = (slot === 'top' || slot === 'hat') ? 'center bottom' : 'center top';
+      const bgStyle = item.image
+        ? `background-image:url('${item.image}');background-repeat:no-repeat;background-position:${pos};background-size:contain;background-color:transparent;mix-blend-mode:multiply;aspect-ratio:${ratio};`
+        : `aspect-ratio:${ratio};background-color:transparent;`;
+      thumb.setAttribute('style', bgStyle);
+      thumb.style.transform = `translate(${layout.x}%, ${layout.y}%) scale(${layout.scale / 100})`;
+      thumb.style.transformOrigin = 'center center';
       thumb.innerHTML = thumbInner(item);
       btn.setAttribute('aria-label', item.name);
+
+      if (item.image && (slot === 'top' || slot === 'bottom')) {
+        getImageTrimBounds(item.image, bounds => {
+          let extraY = 0;
+          let scaleMul = 1;
+          if (slot === 'top' && bounds.padBottom > 0.04) {
+            extraY = Math.round(bounds.padBottom * 28);
+          } else if (slot === 'bottom') {
+            if (bounds.padTop > 0.03) extraY = -Math.round(bounds.padTop * 28);
+            const topItem = state.today.top ? findItem(state.today.top) : null;
+            if (topItem?.image && trimBoundsCache.has(topItem.image)) {
+              const topBounds = trimBoundsCache.get(topItem.image);
+              if (bounds.contentWidth >= topBounds.contentWidth) {
+                scaleMul = Math.min(0.9, (topBounds.contentWidth * 0.9) / bounds.contentWidth);
+              }
+            }
+          }
+          const baseScale = (layout.scale / 100) * scaleMul;
+          thumb.style.transform = `translate(${layout.x}%, calc(${layout.y}% + ${extraY}px)) scale(${baseScale})`;
+        });
+      }
     } else {
       btn.classList.remove('is-filled', 'has-photo');
-      thumb.setAttribute('style', `aspect-ratio:${ratio}`);
+      thumb.setAttribute('style', `aspect-ratio:${ratio};background-color:transparent;`);
+      thumb.style.transform = `translate(${layout.x}%, ${layout.y}%) scale(${layout.scale / 100})`;
       thumb.innerHTML = ICONS[slot] || '';
       btn.setAttribute('aria-label', btn.getAttribute('data-label'));
     }
@@ -1709,6 +1798,10 @@ function renderHome() {
     extrasButton.setAttribute('aria-label', extrasLabel);
     extrasButton.title = extrasLabel;
   }
+  const outerBadge = document.getElementById('extrasOuterBadge');
+  if (outerBadge) {
+    outerBadge.hidden = !state.today.outer;
+  }
 
   const rack = state.items.filter(i => i.status === 'resting');
   rack.sort((a, b) => {
@@ -1719,7 +1812,7 @@ function renderHome() {
   const basket = state.items.filter(i => i.status === 'dirty');
   const pendingConsumables = getPendingLaundryConsumables();
   renderChipList('tempRackList', 'tempRackEmpty', rack, { pinActiveTowel: true });
-  renderChipList('basketList', 'basketEmpty', basket, { pendingConsumables });
+  renderChipList('basketList', 'basketEmpty', basket, { pendingConsumables, isLaundry: true });
   const daysSinceWash = Math.max(0, daysBetween(state.laundry.lastWashDate, todayStr()));
   const totalBasketCount = basket.length + pendingConsumables.length;
   document.getElementById('basketTitle').textContent = `洗衣籃・${daysSinceWash}天`;
@@ -1775,14 +1868,23 @@ function renderChipList(listId, emptyId, items, opts) {
   }
   empty.hidden = true;
   empty.style.display = 'none';
-  items.slice(0, 8).forEach(item => {
+  items.forEach(item => {
     const chip = document.createElement('button');
     chip.className = 'rack-chip';
     chip.type = 'button';
     const thumb = item.image
       ? `<img class="rack-chip-thumb" src="${item.image}" alt="">`
       : `<span class="rack-chip-thumb">${categoryIcon(item.category)}</span>`;
-    chip.innerHTML = `${thumb}<span class="rack-chip-text">${escapeHtml(item.name)}（${item.wearCount || 0}次）</span>`;
+    
+    let textHtml = '';
+    if (opts && opts.isLaundry) {
+      const wornDates = (item.wearHistory || []).filter(d => !item.lastWashedDate || d > item.lastWashedDate);
+      const daysWorn = wornDates.length > 0 ? new Set(wornDates).size : (item.wearCount || 1);
+      textHtml = `${escapeHtml(item.name)}・已穿 ${daysWorn} 天`;
+    } else {
+      textHtml = `${escapeHtml(item.name)}（${item.wearCount || 0}次）`;
+    }
+    chip.innerHTML = `${thumb}<span class="rack-chip-text">${textHtml}</span>`;
     chip.addEventListener('click', e => { e.stopPropagation(); openItemDetail(item.id); });
     list.appendChild(chip);
   });
@@ -1793,7 +1895,37 @@ function openRackOverview() {
   const items = state.items.filter(i => i.status === 'resting');
   grid.innerHTML = '';
   empty.hidden = items.length !== 0;
-  items.forEach(item => grid.appendChild(buildItemCard(item, { rackMode: true })));
+
+  const pinnedWrap = document.getElementById('rackOverviewPinnedTowel');
+  if (pinnedWrap) {
+    const towel = state.consumables.find(c => c.id === state.activeTowel);
+    if (towel) {
+      const towelImg = consumableImage(towel);
+      const thumbHtml = towelImg ? `<img src="${towelImg}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">` : (ICONS[towel.icon] || '');
+      const lastWashedStr = towel.lastWashedDate ? fmtDate(towel.lastWashedDate) : '無紀錄';
+      pinnedWrap.innerHTML = `
+        <button type="button" class="rack-towel-pinned-card" id="btnRackTowelDetail">
+          <span class="rack-towel-pinned-thumb">${thumbHtml}</span>
+          <span class="rack-towel-pinned-info">
+            <span class="rack-towel-pinned-tag">使用中毛巾／浴巾（置頂）</span>
+            <span class="rack-towel-pinned-name">${escapeHtml(towel.name)}</span>
+            <span class="rack-towel-pinned-meta">已使用 ${daysUsed(towel)} 天 · 上次洗：${lastWashedStr}</span>
+          </span>
+          <span class="rack-towel-pinned-arrow">${ICONS.chevronRight || '›'}</span>
+        </button>
+      `;
+      pinnedWrap.hidden = false;
+      document.getElementById('btnRackTowelDetail')?.addEventListener('click', () => {
+        modalReturnTo = 'modal-rack-overview';
+        openConsumableDetail(towel.id);
+      });
+    } else {
+      pinnedWrap.innerHTML = '';
+      pinnedWrap.hidden = true;
+    }
+  }
+
+  items.forEach(item => grid.appendChild(buildItemCard(item, { rackMode: true, returnTo: 'modal-rack-overview' })));
   openModal('modal-rack-overview');
 }
 
@@ -1951,14 +2083,36 @@ function buildItemCard(item, opts) {
     : item.status === 'dirty' && item.basketAt
       ? `（${fmtDate(item.basketAt)} 入籃）`
       : '';
-  card.innerHTML = `
-    <div class="item-photo">${itemPhotoMarkup(item)}</div>
-    ${uiSelectMode ? `<span class="item-card-check"></span>` : (item.status !== 'retired' ? `<span class="item-status-dot ${statusClass}"></span>` : '')}
-    <div class="item-info">
+
+  let infoHtml = '';
+  if (opts && opts.laundryMode) {
+    const wornDates = (item.wearHistory || []).filter(d => !item.lastWashedDate || d > item.lastWashedDate);
+    const daysWorn = wornDates.length > 0 ? new Set(wornDates).size : (item.wearCount || 1);
+    const lastWashStr = item.lastWashedDate ? fmtDate(item.lastWashedDate) : (item.washHistory && item.washHistory[0]?.date ? fmtDate(item.washHistory[0].date) : '無紀錄');
+    infoHtml = `
+      ${item.brand ? `<p class="item-brand">${brandIconMarkup(item, 'tiny')}<span>${escapeHtml(item.brand)}</span></p>` : ''}
+      <p class="item-name">${escapeHtml(item.name)}</p>
+      <div class="laundry-item-meta">
+        <span class="lim-days">已穿 ${daysWorn} 天</span>
+        <span class="lim-icon">${ICONS.sparkles || ''}</span>
+        <span class="lim-wash">上次洗：${lastWashStr}</span>
+      </div>
+      ${washBoostMarkup(item, opts)}
+    `;
+  } else {
+    infoHtml = `
       ${item.brand ? `<p class="item-brand">${brandIconMarkup(item, 'tiny')}<span>${escapeHtml(item.brand)}</span></p>` : ''}
       <p class="item-name">${escapeHtml(item.name)}</p>
       <p class="item-wear">穿了 ${item.wearCount||0} 次${activityMeta}</p>
       ${washBoostMarkup(item, opts)}
+    `;
+  }
+
+  card.innerHTML = `
+    <div class="item-photo">${itemPhotoMarkup(item)}</div>
+    ${uiSelectMode ? `<span class="item-card-check"></span>` : (item.status !== 'retired' ? `<span class="item-status-dot ${statusClass}"></span>` : '')}
+    <div class="item-info">
+      ${infoHtml}
     </div>`;
 
   let longPressTimer = null;
@@ -1990,7 +2144,12 @@ function buildItemCard(item, opts) {
     if (longPressFired) { longPressFired = false; return; }
     if (opts.onClick) { opts.onClick(item); return; }
     if (uiSelectMode) toggleItemSelection(item.id);
-    else openItemDetail(item.id);
+    else {
+      if (opts.returnTo) modalReturnTo = opts.returnTo;
+      else if (opts.laundryMode) modalReturnTo = 'modal-laundry';
+      else if (opts.rackMode) modalReturnTo = 'modal-rack-overview';
+      openItemDetail(item.id);
+    }
   });
   return card;
 }
@@ -2428,7 +2587,7 @@ function openConsumableDetail(id) {
   const imgUrl = consumableImage(c);
   const photoHtml = imgUrl ? `<div class="consumable-detail-photo-wrap"><img src="${imgUrl}" alt="" class="consumable-detail-photo"></div>` : '';
   body.innerHTML = `
-    <div class="modal-head"><h2>${escapeHtml(c.name)}</h2><button class="modal-close" data-close>✕</button></div>
+    <div class="modal-head"><h2>${escapeHtml(c.name)}</h2><button class="modal-close" data-close>${ICONS.close}</button></div>
     ${photoHtml}
     ${statsHtml}
     <button class="btn-primary" id="btnResetConsumable"${c.laundryPending ? ' disabled' : ''}>${actionLabel}</button>
@@ -3781,11 +3940,14 @@ function renderLaundryOverview() {
   const pendingConsumables = getPendingLaundryConsumables();
   grid.innerHTML = '';
   empty.hidden = items.length !== 0 || pendingConsumables.length !== 0;
-  items.forEach(item => grid.appendChild(buildItemCard(item, { laundryMode: true })));
+  items.forEach(item => grid.appendChild(buildItemCard(item, { laundryMode: true, returnTo: 'modal-laundry' })));
   const consumableGrid = document.getElementById('laundryConsumableGrid');
   if (consumableGrid) {
-    consumableGrid.innerHTML = pendingConsumables.map(c => `<button type="button" class="laundry-consumable-row" data-consumable-id="${escapeHtml(c.id)}"><span class="laundry-consumable-icon">${ICONS[c.icon] || ''}</span><span class="laundry-consumable-name"><b>${escapeHtml(c.name)}</b><small>等待清洗中</small></span><span class="laundry-consumable-arrow">›</span></button>`).join('');
-    consumableGrid.querySelectorAll('[data-consumable-id]').forEach(row => row.addEventListener('click', () => openConsumableDetail(row.dataset.consumableId)));
+    consumableGrid.innerHTML = pendingConsumables.map(c => `<button type="button" class="laundry-consumable-row" data-consumable-id="${escapeHtml(c.id)}"><span class="laundry-consumable-icon">${ICONS[c.icon] || ''}</span><span class="laundry-consumable-name"><b>${escapeHtml(c.name)}</b><small>等待清洗中</small></span><span class="laundry-consumable-arrow">${ICONS.chevronRight || '›'}</span></button>`).join('');
+    consumableGrid.querySelectorAll('[data-consumable-id]').forEach(row => row.addEventListener('click', () => {
+      modalReturnTo = 'modal-laundry';
+      openConsumableDetail(row.dataset.consumableId);
+    }));
   }
 }
 function openLaundryModal() {
@@ -5232,15 +5394,15 @@ function wireEvents() {
       return;
     }
     const SIM_CONFIGS = {
-      clear_day: { weather_code: 0, is_day: 1, temperature_2m: 26, label: '晴朗・白天', symbol: '☀', city: '情境模擬' },
-      clear_night: { weather_code: 0, is_day: 0, temperature_2m: 20, label: '晴朗・夜晚', symbol: '🌙', city: '情境模擬' },
-      cloudy_day: { weather_code: 3, is_day: 1, temperature_2m: 22, label: '陰天・白天', symbol: '☁', city: '情境模擬' },
-      cloudy_night: { weather_code: 3, is_day: 0, temperature_2m: 19, label: '陰天・夜晚', symbol: '☁', city: '情境模擬' },
-      rain_day: { weather_code: 61, is_day: 1, temperature_2m: 21, label: '小雨・白天', symbol: '🌧', city: '情境模擬' },
-      rain_night: { weather_code: 61, is_day: 0, temperature_2m: 18, label: '小雨・夜晚', symbol: '🌧', city: '情境模擬' },
-      heavy_day: { weather_code: 65, is_day: 1, temperature_2m: 19, label: '大雨・白天', symbol: '⛈', city: '情境模擬' },
-      heavy_night: { weather_code: 65, is_day: 0, temperature_2m: 17, label: '大雨・夜晚', symbol: '⛈', city: '情境模擬' },
-      sun_shower: { weather_code: 80, is_day: 1, temperature_2m: 24, label: '晴時多雲偶陣雨', symbol: '🌦', city: '情境模擬' },
+      clear_day: { weather_code: 0, is_day: 1, temperature_2m: 26, label: '晴朗・白天', city: '情境模擬' },
+      clear_night: { weather_code: 0, is_day: 0, temperature_2m: 20, label: '晴朗・夜晚', city: '情境模擬' },
+      cloudy_day: { weather_code: 3, is_day: 1, temperature_2m: 22, label: '陰天・白天', city: '情境模擬' },
+      cloudy_night: { weather_code: 3, is_day: 0, temperature_2m: 19, label: '陰天・夜晚', city: '情境模擬' },
+      rain_day: { weather_code: 61, is_day: 1, temperature_2m: 21, label: '小雨・白天', city: '情境模擬' },
+      rain_night: { weather_code: 61, is_day: 0, temperature_2m: 18, label: '小雨・夜晚', city: '情境模擬' },
+      heavy_day: { weather_code: 65, is_day: 1, temperature_2m: 19, label: '大雨・白天', city: '情境模擬' },
+      heavy_night: { weather_code: 65, is_day: 0, temperature_2m: 17, label: '大雨・夜晚', city: '情境模擬' },
+      sun_shower: { weather_code: 80, is_day: 1, temperature_2m: 24, label: '晴時多雲偶陣雨', city: '情境模擬' },
     };
     const cfg = SIM_CONFIGS[simKey];
     if (!cfg) return;
@@ -5256,7 +5418,7 @@ function wireEvents() {
     renderHeader();
     renderWeather();
     syncWeatherSettings();
-    toast(`已套用天氣情境：${cfg.symbol} ${cfg.label}`);
+    toast(`已套用天氣情境：${cfg.label}`);
   }
 
   document.getElementById('btnApplyPreviewScene')?.addEventListener('click', () => {
@@ -5284,7 +5446,7 @@ function wireEvents() {
     }
     btn.disabled = true;
     const oldText = btn.innerHTML;
-    btn.innerHTML = '<span>📍 正在取得 GPS 定位…</span>';
+    btn.innerHTML = `<span class="icon-inline">${ICONS.mapPin}</span> 正在取得 GPS 定位…`;
     if (statusEl) statusEl.textContent = '正在連線 GPS 衛星…';
 
     navigator.geolocation.getCurrentPosition(
