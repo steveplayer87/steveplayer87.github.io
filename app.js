@@ -1452,48 +1452,78 @@ function cleanTransparentImage(imgUrl, callback) {
         if (data[idx + 3] < 20) transCorners++;
         else if (data[idx] >= 230 && data[idx + 1] >= 230 && data[idx + 2] >= 230) whiteCorners++;
       }
-      if (transCorners === 4 || (transCorners > 0 && whiteCorners === 0)) {
-        transparentCleanCache.set(imgUrl, imgUrl);
-        if (callback) callback(imgUrl, false);
-        return;
-      }
 
-      const visited = new Uint8Array(w * h);
-      const queue = new Int32Array(w * h);
-      let qHead = 0, qTail = 0;
-      const isWhite = (idx) => {
-        if (data[idx + 3] < 20) return true;
-        return data[idx] >= 230 && data[idx + 1] >= 230 && data[idx + 2] >= 230;
-      };
-      for (let x = 0; x < w; x++) {
-        let p = x;
-        if (isWhite(p * 4)) { visited[p] = 1; queue[qTail++] = p; }
-        p = (h - 1) * w + x;
-        if (isWhite(p * 4)) { visited[p] = 1; queue[qTail++] = p; }
-      }
-      for (let y = 0; y < h; y++) {
-        let p = y * w;
-        if (!visited[p] && isWhite(p * 4)) { visited[p] = 1; queue[qTail++] = p; }
-        p = y * w + (w - 1);
-        if (!visited[p] && isWhite(p * 4)) { visited[p] = 1; queue[qTail++] = p; }
-      }
-      while (qHead < qTail) {
-        const p = queue[qHead++];
-        const x = p % w;
-        const y = (p / w) | 0;
-        if (x > 0 && !visited[p - 1] && isWhite((p - 1) * 4)) { visited[p - 1] = 1; queue[qTail++] = p - 1; }
-        if (x < w - 1 && !visited[p + 1] && isWhite((p + 1) * 4)) { visited[p + 1] = 1; queue[qTail++] = p + 1; }
-        if (y > 0 && !visited[p - w] && isWhite((p - w) * 4)) { visited[p - w] = 1; queue[qTail++] = p - w; }
-        if (y < h - 1 && !visited[p + w] && isWhite((p + w) * 4)) { visited[p + w] = 1; queue[qTail++] = p + w; }
-      }
       let modified = false;
-      for (let i = 0; i < w * h; i++) {
-        if (visited[i]) {
-          if (data[i * 4 + 3] !== 0) { data[i * 4 + 3] = 0; modified = true; }
+      if (!(transCorners === 4 || (transCorners > 0 && whiteCorners === 0))) {
+        const visited = new Uint8Array(w * h);
+        const queue = new Int32Array(w * h);
+        let qHead = 0, qTail = 0;
+        const isWhite = (idx) => {
+          if (data[idx + 3] < 20) return true;
+          return data[idx] >= 230 && data[idx + 1] >= 230 && data[idx + 2] >= 230;
+        };
+        for (let x = 0; x < w; x++) {
+          let p = x;
+          if (isWhite(p * 4)) { visited[p] = 1; queue[qTail++] = p; }
+          p = (h - 1) * w + x;
+          if (isWhite(p * 4)) { visited[p] = 1; queue[qTail++] = p; }
+        }
+        for (let y = 0; y < h; y++) {
+          let p = y * w;
+          if (!visited[p] && isWhite(p * 4)) { visited[p] = 1; queue[qTail++] = p; }
+          p = y * w + (w - 1);
+          if (!visited[p] && isWhite(p * 4)) { visited[p] = 1; queue[qTail++] = p; }
+        }
+        while (qHead < qTail) {
+          const p = queue[qHead++];
+          const x = p % w;
+          const y = (p / w) | 0;
+          if (x > 0 && !visited[p - 1] && isWhite((p - 1) * 4)) { visited[p - 1] = 1; queue[qTail++] = p - 1; }
+          if (x < w - 1 && !visited[p + 1] && isWhite((p + 1) * 4)) { visited[p + 1] = 1; queue[qTail++] = p + 1; }
+          if (y > 0 && !visited[p - w] && isWhite((p - w) * 4)) { visited[p - w] = 1; queue[qTail++] = p - w; }
+          if (y < h - 1 && !visited[p + w] && isWhite((p + w) * 4)) { visited[p + w] = 1; queue[qTail++] = p + w; }
+        }
+        for (let i = 0; i < w * h; i++) {
+          if (visited[i]) {
+            if (data[i * 4 + 3] !== 0) { data[i * 4 + 3] = 0; modified = true; }
+          }
+        }
+        if (modified) {
+          ctx.putImageData(imgData, 0, 0);
         }
       }
+
+      // Auto-crop / trim transparent borders so cutout clothes have no empty margins
+      let minX = w, maxX = -1, minY = h, maxY = -1;
+      const latestData = ctx.getImageData(0, 0, w, h).data;
+      for (let y = 0; y < h; y++) {
+        for (let x = 0; x < w; x++) {
+          const a = latestData[(y * w + x) * 4 + 3];
+          if (a > 20) {
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+          }
+        }
+      }
+      if (maxX >= minX && maxY >= minY) {
+        const cropW = maxX - minX + 1;
+        const cropH = maxY - minY + 1;
+        if (minX > 3 || minY > 3 || maxX < w - 4 || maxY < h - 4) {
+          const trimCvs = document.createElement('canvas');
+          trimCvs.width = cropW;
+          trimCvs.height = cropH;
+          const trimCtx = trimCvs.getContext('2d');
+          trimCtx.drawImage(cvs, minX, minY, cropW, cropH, 0, 0, cropW, cropH);
+          const cleanUrl = trimCvs.toDataURL('image/png');
+          transparentCleanCache.set(imgUrl, cleanUrl);
+          if (callback) callback(cleanUrl, true);
+          return;
+        }
+      }
+
       if (modified) {
-        ctx.putImageData(imgData, 0, 0);
         const cleanUrl = cvs.toDataURL('image/png');
         transparentCleanCache.set(imgUrl, cleanUrl);
         if (callback) callback(cleanUrl, true);
@@ -2045,6 +2075,27 @@ function renderHome() {
   const boardScale = state.profile.figureBoardScale || 100;
   document.documentElement.style.setProperty('--figure-board-scale', (boardScale / 100).toFixed(2));
 
+  const boardEl = document.getElementById('figureBoard');
+  if (boardEl) {
+    let maxRatio = 0.82;
+    const equipped = ['top', 'bottom', 'shoes', 'hat'].map(s => state.today[s] ? findItem(state.today[s]) : null).filter(Boolean);
+    const hasPhotoItem = equipped.some(it => !!it.image);
+    if (hasPhotoItem) {
+      equipped.forEach(it => {
+        if (it.image && trimBoundsCache.has(it.image)) {
+          const b = trimBoundsCache.get(it.image);
+          if (b && b.contentWidth) {
+            maxRatio = Math.max(maxRatio, b.contentWidth);
+          }
+        }
+      });
+      const snugW = Math.round(Math.min(142, Math.max(116, 134 * maxRatio + 12)));
+      boardEl.style.setProperty('--figure-board-width', snugW + 'px');
+    } else {
+      boardEl.style.removeProperty('--figure-board-width');
+    }
+  }
+
   const outerItem = state.today.outer ? findItem(state.today.outer) : null;
   const accItem = state.today.accessory ? findItem(state.today.accessory) : null;
   const hintParts = [];
@@ -2062,14 +2113,9 @@ function renderHome() {
   }
 
   const rack = state.items.filter(i => i.status === 'resting');
-  rack.sort((a, b) => {
-    if (a.category === 'towel' && b.category !== 'towel') return -1;
-    if (b.category === 'towel' && a.category !== 'towel') return 1;
-    return 0;
-  });
   const basket = state.items.filter(i => i.status === 'dirty');
   const pendingConsumables = getPendingLaundryConsumables();
-  renderChipList('tempRackList', 'tempRackEmpty', rack, { pinActiveTowel: true });
+  renderChipList('tempRackList', 'tempRackEmpty', rack, { pinActiveTowel: false });
   renderChipList('basketList', 'basketEmpty', basket, { pendingConsumables, isLaundry: true });
   const daysSinceWash = Math.max(0, daysBetween(state.laundry.lastWashDate, todayStr()));
   const totalBasketCount = basket.length + pendingConsumables.length;
@@ -2079,8 +2125,7 @@ function renderHome() {
     basketBadge.textContent = totalBasketCount > 0 ? String(totalBasketCount) : '';
     basketBadge.style.display = totalBasketCount > 0 ? 'inline-flex' : 'none';
   }
-  const activeTowelCount = (state.activeTowel && state.consumables.some(c => c.id === state.activeTowel)) ? 1 : 0;
-  const rackCount = rack.length + activeTowelCount;
+  const rackCount = rack.length;
   const rackTitle = document.getElementById('rackTitle') || document.querySelector('#card-rack .rack-title');
   if (rackTitle) rackTitle.textContent = '暫存衣架';
   const rackBadge = document.getElementById('rackBadge');
@@ -2156,31 +2201,8 @@ function openRackOverview() {
 
   const pinnedWrap = document.getElementById('rackOverviewPinnedTowel');
   if (pinnedWrap) {
-    const towel = state.consumables.find(c => c.id === state.activeTowel);
-    if (towel) {
-      const towelImg = consumableImage(towel);
-      const thumbHtml = towelImg ? `<img src="${towelImg}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">` : (ICONS[towel.icon] || '');
-      const lastWashedStr = towel.lastWashedDate ? fmtDate(towel.lastWashedDate) : '無紀錄';
-      pinnedWrap.innerHTML = `
-        <button type="button" class="rack-towel-pinned-card" id="btnRackTowelDetail">
-          <span class="rack-towel-pinned-thumb">${thumbHtml}</span>
-          <span class="rack-towel-pinned-info">
-            <span class="rack-towel-pinned-tag">使用中毛巾／浴巾（置頂）</span>
-            <span class="rack-towel-pinned-name">${escapeHtml(towel.name)}</span>
-            <span class="rack-towel-pinned-meta">已使用 ${daysUsed(towel)} 天 · 上次洗：${lastWashedStr}</span>
-          </span>
-          <span class="rack-towel-pinned-arrow">${ICONS.chevronRight || '›'}</span>
-        </button>
-      `;
-      pinnedWrap.hidden = false;
-      document.getElementById('btnRackTowelDetail')?.addEventListener('click', () => {
-        modalReturnTo = 'modal-rack-overview';
-        openConsumableDetail(towel.id);
-      });
-    } else {
-      pinnedWrap.innerHTML = '';
-      pinnedWrap.hidden = true;
-    }
+    pinnedWrap.innerHTML = '';
+    pinnedWrap.hidden = true;
   }
 
   items.forEach(item => grid.appendChild(buildItemCard(item, { rackMode: true, returnTo: 'modal-rack-overview' })));
@@ -4133,6 +4155,15 @@ function renderOutfitStudio() {
   if (slider) slider.value = String(activeLayout.scale);
   if (valOut) valOut.textContent = `${activeLayout.scale}%`;
   if (label) label.textContent = `${categoryLabel(studioActiveSlot)}大小`;
+
+  const posXSlider = document.getElementById('studioPosXSlider');
+  const posXVal = document.getElementById('studioPosXValue');
+  const posYSlider = document.getElementById('studioPosYSlider');
+  const posYVal = document.getElementById('studioPosYValue');
+  if (posXSlider) posXSlider.value = String(activeLayout.x || 0);
+  if (posXVal) posXVal.textContent = `${activeLayout.x || 0}%`;
+  if (posYSlider) posYSlider.value = String(activeLayout.y || 0);
+  if (posYVal) posYVal.textContent = `${activeLayout.y || 0}%`;
 }
 
 function openOutfitStudio() {
@@ -4220,6 +4251,28 @@ function wireOutfitStudioEvents() {
     layout.scale = Math.min(140, Math.max(70, Number(e.target.value) || 100));
     const valOut = document.getElementById('studioScaleValue');
     if (valOut) valOut.textContent = `${layout.scale}%`;
+    const thumb = document.getElementById(`studioThumb${studioActiveSlot.charAt(0).toUpperCase() + studioActiveSlot.slice(1)}`);
+    if (thumb) {
+      thumb.style.transform = `translate(${layout.x}%, ${layout.y}%) scale(${layout.scale / 100})`;
+    }
+  });
+
+  document.getElementById('studioPosXSlider')?.addEventListener('input', e => {
+    const layout = state.profile.outfitLayout[studioActiveSlot] = state.profile.outfitLayout[studioActiveSlot] || { ...OUTFIT_LAYOUT_DEFAULTS[studioActiveSlot] };
+    layout.x = Math.min(35, Math.max(-35, Number(e.target.value) || 0));
+    const valOut = document.getElementById('studioPosXValue');
+    if (valOut) valOut.textContent = `${layout.x}%`;
+    const thumb = document.getElementById(`studioThumb${studioActiveSlot.charAt(0).toUpperCase() + studioActiveSlot.slice(1)}`);
+    if (thumb) {
+      thumb.style.transform = `translate(${layout.x}%, ${layout.y}%) scale(${layout.scale / 100})`;
+    }
+  });
+
+  document.getElementById('studioPosYSlider')?.addEventListener('input', e => {
+    const layout = state.profile.outfitLayout[studioActiveSlot] = state.profile.outfitLayout[studioActiveSlot] || { ...OUTFIT_LAYOUT_DEFAULTS[studioActiveSlot] };
+    layout.y = Math.min(35, Math.max(-35, Number(e.target.value) || 0));
+    const valOut = document.getElementById('studioPosYValue');
+    if (valOut) valOut.textContent = `${layout.y}%`;
     const thumb = document.getElementById(`studioThumb${studioActiveSlot.charAt(0).toUpperCase() + studioActiveSlot.slice(1)}`);
     if (thumb) {
       thumb.style.transform = `translate(${layout.x}%, ${layout.y}%) scale(${layout.scale / 100})`;
@@ -4730,29 +4783,56 @@ function wireCalendarSwipe() {
 
 function enableSwipeToClose(sheet) {
   let startY = 0, currentY = 0, dragging = false;
-  const threshold = 90;
+  const threshold = 85;
+
   sheet.addEventListener('touchstart', e => {
-    if (sheet.scrollTop > 2) return;
+    if (sheet.scrollTop > 1) return;
     dragging = true;
     startY = e.touches[0].clientY;
     currentY = startY;
     sheet.classList.add('is-dragging');
+    sheet.style.transition = 'none';
   }, { passive: true });
+
   sheet.addEventListener('touchmove', e => {
     if (!dragging) return;
     currentY = e.touches[0].clientY;
     const dy = currentY - startY;
-    if (dy > 0) sheet.style.transform = `translateY(${dy}px)`;
-  }, { passive: true });
-  sheet.addEventListener('touchend', () => {
+    if (dy > 0 && sheet.scrollTop <= 0) {
+      if (e.cancelable) e.preventDefault();
+      sheet.style.transform = `translateY(${dy}px)`;
+    } else if (dy <= 0) {
+      sheet.style.transform = 'translateY(0)';
+    }
+  }, { passive: false });
+
+  const endDrag = () => {
     if (!dragging) return;
     dragging = false;
     sheet.classList.remove('is-dragging');
     const dy = currentY - startY;
-    sheet.style.transform = '';
-    if (dy > threshold) closeModal();
-    startY = 0; currentY = 0;
-  });
+    if (dy > threshold) {
+      sheet.style.transition = 'transform 0.22s cubic-bezier(0.25, 1, 0.5, 1)';
+      sheet.style.transform = 'translateY(100%)';
+      setTimeout(() => {
+        closeModal();
+        sheet.style.transform = '';
+        sheet.style.transition = '';
+      }, 220);
+    } else {
+      sheet.style.transition = 'transform 0.2s cubic-bezier(0.25, 1, 0.5, 1)';
+      sheet.style.transform = 'translateY(0)';
+      setTimeout(() => {
+        sheet.style.transform = '';
+        sheet.style.transition = '';
+      }, 200);
+    }
+    startY = 0;
+    currentY = 0;
+  };
+
+  sheet.addEventListener('touchend', endDrag);
+  sheet.addEventListener('touchcancel', endDrag);
 }
 
 /* ============================================================
@@ -4859,12 +4939,12 @@ function addExtrasClearAction() {
   clearWrap.appendChild(clearButton);
 }
 function openExtrasPicker() {
-  document.getElementById('tryonTitle').textContent = '選擇外套或配件';
+  document.getElementById('tryonTitle').textContent = '選擇外套、配件或帽子';
   resetTryonToolbar();
   const chipsWrap = document.getElementById('tryonCategoryChips');
   chipsWrap.classList.remove('is-hidden');
   chipsWrap.innerHTML = '';
-  ['outer', 'accessory'].forEach((cat, i) => {
+  ['outer', 'accessory', 'hat'].forEach((cat, i) => {
     const chip = document.createElement('button');
     chip.type = 'button';
     chip.className = 'chip' + (i === 0 ? ' is-active' : '');
